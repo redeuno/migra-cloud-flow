@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,33 +33,35 @@ export function ConfiguracoesEvolution() {
   });
 
   const [formData, setFormData] = useState({
-    evolution_api_enabled: config?.evolution_api_enabled || false,
-    evolution_api_url: config?.evolution_api_url || "",
-    evolution_api_key: config?.evolution_api_key || "",
-    evolution_instance_name: config?.evolution_instance_name || "",
-    notificacoes_whatsapp_enabled: config?.notificacoes_whatsapp_enabled || false,
-    notificacoes_email_enabled: config?.notificacoes_email_enabled || false,
-    email_remetente: config?.email_remetente || "",
-    template_lembrete_pagamento: config?.template_lembrete_pagamento || "",
-    template_confirmacao_pagamento: config?.template_confirmacao_pagamento || "",
+    evolution_api_enabled: false,
+    evolution_api_url: "",
+    evolution_api_key: "",
+    evolution_instance_name: "",
+    notificacoes_whatsapp_enabled: false,
+    notificacoes_email_enabled: false,
+    email_remetente: "",
+    template_lembrete_pagamento: "Olá {{nome}}, seu pagamento de {{valor}} vence em {{data_vencimento}}. Link para pagamento: {{link_pagamento}}",
+    template_confirmacao_pagamento: "Olá {{nome}}, confirmamos o recebimento do seu pagamento de {{valor}}. Obrigado!",
   });
 
   // Atualizar form quando config carregar
-  useState(() => {
+  useEffect(() => {
     if (config) {
       setFormData({
-        evolution_api_enabled: config.evolution_api_enabled || false,
-        evolution_api_url: config.evolution_api_url || "",
-        evolution_api_key: config.evolution_api_key || "",
-        evolution_instance_name: config.evolution_instance_name || "",
-        notificacoes_whatsapp_enabled: config.notificacoes_whatsapp_enabled || false,
-        notificacoes_email_enabled: config.notificacoes_email_enabled || false,
-        email_remetente: config.email_remetente || "",
-        template_lembrete_pagamento: config.template_lembrete_pagamento || "",
-        template_confirmacao_pagamento: config.template_confirmacao_pagamento || "",
+        evolution_api_enabled: config.evolution_api_enabled ?? false,
+        evolution_api_url: config.evolution_api_url ?? "",
+        evolution_api_key: config.evolution_api_key ?? "",
+        evolution_instance_name: config.evolution_instance_name ?? "",
+        notificacoes_whatsapp_enabled: config.notificacoes_whatsapp_enabled ?? false,
+        notificacoes_email_enabled: config.notificacoes_email_enabled ?? false,
+        email_remetente: config.email_remetente ?? "",
+        template_lembrete_pagamento: config.template_lembrete_pagamento ?? 
+          "Olá {{nome}}, seu pagamento de {{valor}} vence em {{data_vencimento}}. Link para pagamento: {{link_pagamento}}",
+        template_confirmacao_pagamento: config.template_confirmacao_pagamento ?? 
+          "Olá {{nome}}, confirmamos o recebimento do seu pagamento de {{valor}}. Obrigado!",
       });
     }
-  });
+  }, [config]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
