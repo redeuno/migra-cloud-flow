@@ -5,3 +5,9 @@ verify_jwt = true
 
 [functions.asaas-webhook]
 verify_jwt = false
+
+[functions.gerar-mensalidades-automaticas]
+verify_jwt = false
+
+[functions.gerar-fatura-sistema]
+verify_jwt = false

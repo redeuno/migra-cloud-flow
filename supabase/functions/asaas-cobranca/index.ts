@@ -15,6 +15,7 @@ interface CobrancaRequest {
   clienteNome: string;
   clienteEmail: string;
   clienteCpf: string;
+  formaPagamento?: "BOLETO" | "PIX" | "CREDIT_CARD"; // Novo campo
 }
 
 serve(async (req) => {
@@ -41,6 +42,7 @@ serve(async (req) => {
       clienteNome,
       clienteEmail,
       clienteCpf,
+      formaPagamento = "BOLETO", // Default para Boleto
     }: CobrancaRequest = await req.json();
 
     console.log("Criando cobrança no Asaas:", {
@@ -75,7 +77,21 @@ serve(async (req) => {
     const customer = await customerResponse.json();
     console.log("Cliente Asaas criado/encontrado:", customer.id);
 
-    // Criar cobrança
+    // Criar cobrança com suporte a PIX e outros métodos
+    const paymentData: any = {
+      customer: customer.id,
+      billingType: formaPagamento,
+      dueDate: vencimento,
+      value: valor,
+      description: `Mensalidade - Contrato ${contratoId.substring(0, 8)}`,
+      externalReference: mensalidadeId,
+    };
+
+    // Se for PIX, solicitar QR Code
+    if (formaPagamento === "PIX") {
+      paymentData.expirationDate = vencimento; // PIX expira no vencimento
+    }
+
     const paymentResponse = await fetch(
       "https://api.asaas.com/v3/payments",
       {
@@ -84,14 +100,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
           access_token: ASAAS_API_KEY,
         },
-        body: JSON.stringify({
-          customer: customer.id,
-          billingType: "BOLETO",
-          dueDate: vencimento,
-          value: valor,
-          description: `Mensalidade - Contrato ${contratoId.substring(0, 8)}`,
-          externalReference: mensalidadeId,
-        }),
+        body: JSON.stringify(paymentData),
       }
     );
 
@@ -104,25 +113,65 @@ serve(async (req) => {
     const payment = await paymentResponse.json();
     console.log("Cobrança criada no Asaas:", payment.id);
 
-    // Atualizar mensalidade no Supabase com dados do Asaas
+    // Se for PIX, buscar dados do QR Code
+    let pixQrCodeData: any = null;
+    if (formaPagamento === "PIX" && payment.id) {
+      const pixResponse = await fetch(
+        `https://api.asaas.com/v3/payments/${payment.id}/pixQrCode`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            access_token: ASAAS_API_KEY,
+          },
+        }
+      );
+
+      if (pixResponse.ok) {
+        pixQrCodeData = await pixResponse.json();
+        console.log("QR Code PIX obtido:", pixQrCodeData);
+      }
+    }
+
+    // Atualizar mensalidade no Supabase com TODOS os dados do Asaas
+    const updateData: any = {
+      asaas_payment_id: payment.id,
+      asaas_customer_id: customer.id,
+      asaas_invoice_url: payment.invoiceUrl,
+      linha_digitavel: payment.identificationField || null,
+      qr_code_pix: pixQrCodeData?.encodedImage || null,
+      pix_copy_paste: pixQrCodeData?.payload || null,
+      historico_status: [
+        {
+          evento: "PAYMENT_CREATED",
+          status: "pendente",
+          data: new Date().toISOString(),
+          dados_asaas: payment,
+        },
+      ],
+    };
+
     const { error: updateError } = await supabaseClient
       .from("mensalidades")
-      .update({
-        observacoes: `ID Asaas: ${payment.id} | ${payment.bankSlipUrl || ""}`,
-      })
+      .update(updateData)
       .eq("id", mensalidadeId);
 
     if (updateError) {
       console.error("Erro ao atualizar mensalidade:", updateError);
+      throw new Error(`Erro ao atualizar mensalidade: ${updateError.message}`);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
         asaasId: payment.id,
+        customerId: customer.id,
         invoiceUrl: payment.invoiceUrl,
         bankSlipUrl: payment.bankSlipUrl,
-        pixQrCode: payment.pixQrCodeId,
+        linhaDigitavel: payment.identificationField,
+        pixQrCode: pixQrCodeData?.encodedImage,
+        pixCopyPaste: pixQrCodeData?.payload,
+        formaPagamento: formaPagamento,
       }),
       {
         status: 200,

@@ -271,6 +271,69 @@ export type Database = {
           },
         ]
       }
+      assinaturas_arena: {
+        Row: {
+          arena_id: string
+          asaas_customer_id: string | null
+          asaas_subscription_id: string | null
+          created_at: string | null
+          data_fim: string | null
+          data_inicio: string
+          dia_vencimento: number
+          id: string
+          numero_assinatura: string
+          plano_sistema_id: string | null
+          status: Database["public"]["Enums"]["status_contrato"]
+          updated_at: string | null
+          valor_mensal: number
+        }
+        Insert: {
+          arena_id: string
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio: string
+          dia_vencimento?: number
+          id?: string
+          numero_assinatura: string
+          plano_sistema_id?: string | null
+          status?: Database["public"]["Enums"]["status_contrato"]
+          updated_at?: string | null
+          valor_mensal: number
+        }
+        Update: {
+          arena_id?: string
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          dia_vencimento?: number
+          id?: string
+          numero_assinatura?: string
+          plano_sistema_id?: string | null
+          status?: Database["public"]["Enums"]["status_contrato"]
+          updated_at?: string | null
+          valor_mensal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinaturas_arena_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_arena_plano_sistema_id_fkey"
+            columns: ["plano_sistema_id"]
+            isOneToOne: false
+            referencedRelation: "planos_sistema"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aulas: {
         Row: {
           agendamento_id: string | null
@@ -620,6 +683,7 @@ export type Database = {
         Row: {
           arena_id: string
           beneficios: Json | null
+          clausulas_especiais: string | null
           created_at: string | null
           data_cancelamento: string | null
           data_fim: string | null
@@ -628,6 +692,7 @@ export type Database = {
           descricao: string | null
           dia_vencimento: number
           id: string
+          modalidade: Database["public"]["Enums"]["tipo_esporte"] | null
           motivo_cancelamento: string | null
           numero_contrato: string | null
           observacoes: string | null
@@ -642,6 +707,7 @@ export type Database = {
         Insert: {
           arena_id: string
           beneficios?: Json | null
+          clausulas_especiais?: string | null
           created_at?: string | null
           data_cancelamento?: string | null
           data_fim?: string | null
@@ -650,6 +716,7 @@ export type Database = {
           descricao?: string | null
           dia_vencimento: number
           id?: string
+          modalidade?: Database["public"]["Enums"]["tipo_esporte"] | null
           motivo_cancelamento?: string | null
           numero_contrato?: string | null
           observacoes?: string | null
@@ -664,6 +731,7 @@ export type Database = {
         Update: {
           arena_id?: string
           beneficios?: Json | null
+          clausulas_especiais?: string | null
           created_at?: string | null
           data_cancelamento?: string | null
           data_fim?: string | null
@@ -672,6 +740,7 @@ export type Database = {
           descricao?: string | null
           dia_vencimento?: number
           id?: string
+          modalidade?: Database["public"]["Enums"]["tipo_esporte"] | null
           motivo_cancelamento?: string | null
           numero_contrato?: string | null
           observacoes?: string | null
@@ -703,6 +772,91 @@ export type Database = {
             columns: ["vendedor_id"]
             isOneToOne: false
             referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faturas_sistema: {
+        Row: {
+          arena_id: string
+          asaas_invoice_url: string | null
+          asaas_payment_id: string | null
+          assinatura_arena_id: string
+          competencia: string
+          created_at: string | null
+          data_pagamento: string | null
+          data_vencimento: string
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
+          historico_status: Json | null
+          id: string
+          linha_digitavel: string | null
+          numero_fatura: string
+          observacoes: string | null
+          pix_copy_paste: string | null
+          qr_code_pix: string | null
+          status_pagamento: Database["public"]["Enums"]["status_pagamento"]
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          arena_id: string
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
+          assinatura_arena_id: string
+          competencia: string
+          created_at?: string | null
+          data_pagamento?: string | null
+          data_vencimento: string
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          historico_status?: Json | null
+          id?: string
+          linha_digitavel?: string | null
+          numero_fatura: string
+          observacoes?: string | null
+          pix_copy_paste?: string | null
+          qr_code_pix?: string | null
+          status_pagamento?: Database["public"]["Enums"]["status_pagamento"]
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          arena_id?: string
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
+          assinatura_arena_id?: string
+          competencia?: string
+          created_at?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          historico_status?: Json | null
+          id?: string
+          linha_digitavel?: string | null
+          numero_fatura?: string
+          observacoes?: string | null
+          pix_copy_paste?: string | null
+          qr_code_pix?: string | null
+          status_pagamento?: Database["public"]["Enums"]["status_pagamento"]
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faturas_sistema_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturas_sistema_assinatura_arena_id_fkey"
+            columns: ["assinatura_arena_id"]
+            isOneToOne: false
+            referencedRelation: "assinaturas_arena"
             referencedColumns: ["id"]
           },
         ]
@@ -770,14 +924,21 @@ export type Database = {
       mensalidades: {
         Row: {
           acrescimo: number | null
+          asaas_customer_id: string | null
+          asaas_invoice_url: string | null
+          asaas_payment_id: string | null
           contrato_id: string
           created_at: string | null
           data_pagamento: string | null
           data_vencimento: string
           desconto: number | null
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
+          historico_status: Json | null
           id: string
+          linha_digitavel: string | null
           observacoes: string | null
+          pix_copy_paste: string | null
+          qr_code_pix: string | null
           referencia: string
           status_pagamento:
             | Database["public"]["Enums"]["status_pagamento"]
@@ -788,6 +949,9 @@ export type Database = {
         }
         Insert: {
           acrescimo?: number | null
+          asaas_customer_id?: string | null
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
           contrato_id: string
           created_at?: string | null
           data_pagamento?: string | null
@@ -796,8 +960,12 @@ export type Database = {
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
+          historico_status?: Json | null
           id?: string
+          linha_digitavel?: string | null
           observacoes?: string | null
+          pix_copy_paste?: string | null
+          qr_code_pix?: string | null
           referencia: string
           status_pagamento?:
             | Database["public"]["Enums"]["status_pagamento"]
@@ -808,6 +976,9 @@ export type Database = {
         }
         Update: {
           acrescimo?: number | null
+          asaas_customer_id?: string | null
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
           contrato_id?: string
           created_at?: string | null
           data_pagamento?: string | null
@@ -816,8 +987,12 @@ export type Database = {
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
+          historico_status?: Json | null
           id?: string
+          linha_digitavel?: string | null
           observacoes?: string | null
+          pix_copy_paste?: string | null
+          qr_code_pix?: string | null
           referencia?: string
           status_pagamento?:
             | Database["public"]["Enums"]["status_pagamento"]

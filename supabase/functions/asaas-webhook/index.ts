@@ -13,9 +13,16 @@ serve(async (req) => {
   }
 
   try {
-    const ASAAS_WEBHOOK_URL = Deno.env.get("ASAAS_WEBHOOK_URL");
-    if (!ASAAS_WEBHOOK_URL) {
-      console.error("ASAAS_WEBHOOK_URL não configurado");
+    // SEGURANÇA: Validar token do webhook (opcional mas recomendado)
+    const asaasToken = req.headers.get("asaas-access-token");
+    const ASAAS_API_KEY = Deno.env.get("ASAAS_API_KEY");
+    
+    if (asaasToken && ASAAS_API_KEY && asaasToken !== ASAAS_API_KEY) {
+      console.error("Token do webhook inválido");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: corsHeaders }
+      );
     }
 
     const supabaseClient = createClient(
@@ -24,7 +31,7 @@ serve(async (req) => {
     );
 
     const payload = await req.json();
-    console.log("Webhook Asaas recebido:", payload);
+    console.log("Webhook recebido do Asaas:", JSON.stringify(payload, null, 2));
 
     const { event, payment } = payload;
 
@@ -32,67 +39,125 @@ serve(async (req) => {
       throw new Error("Payload inválido do webhook Asaas");
     }
 
-    // Buscar mensalidade pelo externalReference
-    const { data: mensalidade, error: findError } = await supabaseClient
-      .from("mensalidades")
-      .select("*")
-      .eq("id", payment.externalReference)
-      .single();
+    // Identificar se é mensalidade ou fatura_sistema
+    let tipoCobranca: "mensalidade" | "fatura_sistema" = "mensalidade";
+    let recordId = payment.externalReference;
 
-    if (findError || !mensalidade) {
-      console.error("Mensalidade não encontrada:", payment.externalReference);
-      throw new Error("Mensalidade não encontrada");
+    // Se não tem externalReference, pode ser fatura_sistema
+    if (!recordId) {
+      // Buscar pela asaas_payment_id
+      const { data: fatura } = await supabaseClient
+        .from("faturas_sistema")
+        .select("id")
+        .eq("asaas_payment_id", payment.id)
+        .maybeSingle();
+
+      if (fatura) {
+        tipoCobranca = "fatura_sistema";
+        recordId = fatura.id;
+      }
     }
 
-    // Mapear evento Asaas para status
-    let novoStatus: string | null = null;
-    let dataPagamento: string | null = null;
+    if (!recordId) {
+      console.error("Não foi possível identificar a cobrança");
+      throw new Error("Cobrança não identificada");
+    }
 
+    // Buscar o registro correto
+    const tabela = tipoCobranca === "mensalidade" ? "mensalidades" : "faturas_sistema";
+    const { data: registro, error: findError } = await supabaseClient
+      .from(tabela)
+      .select("*")
+      .eq("id", recordId)
+      .single();
+
+    if (findError || !registro) {
+      console.error(`${tipoCobranca} não encontrada:`, recordId);
+      throw new Error(`${tipoCobranca} não encontrada`);
+    }
+
+    console.log(`${tipoCobranca} encontrada:`, registro.id);
+
+    // Mapear evento do Asaas para status interno (COMPLETO)
+    let novoStatus: string;
+    let deveCriarMovimentacao = false;
+    
     switch (event) {
+      case "PAYMENT_CREATED":
+        novoStatus = "pendente";
+        break;
+      case "PAYMENT_AWAITING_PAYMENT":
+        novoStatus = "pendente";
+        break;
       case "PAYMENT_RECEIVED":
       case "PAYMENT_CONFIRMED":
+      case "PAYMENT_RECEIVED_IN_CASH":
         novoStatus = "pago";
-        dataPagamento = payment.paymentDate || new Date().toISOString();
+        deveCriarMovimentacao = true;
         break;
       case "PAYMENT_OVERDUE":
         novoStatus = "vencido";
         break;
-      case "PAYMENT_DELETED":
       case "PAYMENT_REFUNDED":
+      case "PAYMENT_CHARGEBACK_REQUESTED":
+      case "PAYMENT_CHARGEBACK_DISPUTE":
+      case "PAYMENT_DELETED":
+        novoStatus = "cancelado";
+        break;
+      case "PAYMENT_RESTORED":
+        novoStatus = "pendente";
+        break;
+      case "PAYMENT_REFUND_IN_PROGRESS":
         novoStatus = "cancelado";
         break;
       default:
-        console.log("Evento não tratado:", event);
+        console.log(`Evento não mapeado: ${event}`);
+        novoStatus = registro.status_pagamento || "pendente";
     }
 
-    if (novoStatus) {
-      // Atualizar mensalidade
-      const updateData: any = {
-        status_pagamento: novoStatus,
-        updated_at: new Date().toISOString(),
-      };
+    console.log(`Atualizando ${tipoCobranca} para status: ${novoStatus}`);
 
-      if (dataPagamento) {
-        updateData.data_pagamento = dataPagamento;
-      }
+    // Adicionar ao histórico de status
+    const historicoAtual = registro.historico_status || [];
+    historicoAtual.push({
+      evento: event,
+      status: novoStatus,
+      data: new Date().toISOString(),
+      dados_asaas: payment,
+    });
 
-      const { error: updateError } = await supabaseClient
-        .from("mensalidades")
-        .update(updateData)
-        .eq("id", mensalidade.id);
+    // Atualizar status + histórico
+    const updateData: any = {
+      status_pagamento: novoStatus,
+      historico_status: historicoAtual,
+    };
 
-      if (updateError) {
-        console.error("Erro ao atualizar mensalidade:", updateError);
-        throw updateError;
-      }
+    if (novoStatus === "pago" && payment.paymentDate) {
+      updateData.data_pagamento = payment.paymentDate;
+      updateData.forma_pagamento = payment.billingType?.toLowerCase();
+    }
 
-      // Se foi pago, criar movimentação financeira
-      if (novoStatus === "pago" && mensalidade.contrato_id) {
+    const { error: updateError } = await supabaseClient
+      .from(tabela)
+      .update(updateData)
+      .eq("id", registro.id);
+
+    if (updateError) {
+      console.error(`Erro ao atualizar ${tipoCobranca}:`, updateError);
+      throw new Error(`Erro ao atualizar: ${updateError.message}`);
+    }
+
+    console.log(`${tipoCobranca} ${registro.id} atualizada para: ${novoStatus}`);
+
+    // Se o pagamento foi confirmado, criar movimentação financeira
+    if (deveCriarMovimentacao && novoStatus === "pago") {
+      if (tipoCobranca === "mensalidade") {
+        // Para mensalidades: criar receita na arena
         const { data: contrato } = await supabaseClient
           .from("contratos")
           .select("arena_id, usuario_id")
-          .eq("id", mensalidade.contrato_id)
-          .single();
+          .eq("id", registro.contrato_id)
+          .maybeSingle();
 
         if (contrato) {
           const { error: movError } = await supabaseClient
@@ -102,27 +167,29 @@ serve(async (req) => {
               usuario_id: contrato.usuario_id,
               tipo: "receita",
               categoria: "mensalidade",
-              descricao: `Pagamento de mensalidade - Ref: ${mensalidade.referencia}`,
-              valor: payment.value || mensalidade.valor_final,
-              data_movimentacao: dataPagamento,
+              descricao: `Pagamento de mensalidade - Ref: ${registro.referencia}`,
+              valor: payment.value || registro.valor_final,
+              data_movimentacao: payment.paymentDate || new Date().toISOString().split("T")[0],
               forma_pagamento: payment.billingType?.toLowerCase() || "outros",
               referencia_tipo: "mensalidade",
-              referencia_id: mensalidade.id,
+              referencia_id: registro.id,
             });
 
           if (movError) {
             console.error("Erro ao criar movimentação:", movError);
+          } else {
+            console.log("Movimentação financeira criada com sucesso");
           }
         }
       }
-
-      console.log(`Mensalidade ${mensalidade.id} atualizada para ${novoStatus}`);
+      // Para faturas_sistema: não criar movimentação (é pagamento da arena para o Super Admin)
     }
 
     // Enviar para webhook externo do usuário
+    const ASAAS_WEBHOOK_URL = Deno.env.get("ASAAS_WEBHOOK_URL");
     if (ASAAS_WEBHOOK_URL) {
       try {
-        await fetch(ASAAS_WEBHOOK_URL, {
+        const webhookResponse = await fetch(ASAAS_WEBHOOK_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -130,12 +197,18 @@ serve(async (req) => {
           body: JSON.stringify({
             event,
             payment,
-            mensalidade_id: mensalidade.id,
+            tipo: tipoCobranca,
+            registro_id: registro.id,
             status: novoStatus,
             timestamp: new Date().toISOString(),
           }),
         });
-        console.log("Webhook externo notificado com sucesso");
+
+        if (webhookResponse.ok) {
+          console.log("Webhook externo notificado com sucesso");
+        } else {
+          console.error("Erro ao notificar webhook externo:", await webhookResponse.text());
+        }
       } catch (webhookError) {
         console.error("Erro ao notificar webhook externo:", webhookError);
       }
@@ -145,7 +218,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: "Webhook processado com sucesso",
-        mensalidade_id: mensalidade.id,
+        tipo: tipoCobranca,
+        registro_id: registro.id,
         novo_status: novoStatus,
       }),
       {

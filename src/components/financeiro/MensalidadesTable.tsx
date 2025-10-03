@@ -5,8 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, ExternalLink, DollarSign, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MoreHorizontal, ExternalLink, DollarSign, Copy, QrCode, CreditCard } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { MensalidadeDialog } from "./MensalidadeDialog";
@@ -15,7 +17,10 @@ export function MensalidadesTable() {
   const { arenaId } = useAuth();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [pixDialogOpen, setPixDialogOpen] = useState(false);
   const [selectedMensalidade, setSelectedMensalidade] = useState<any>(null);
+  const [selectedPixData, setSelectedPixData] = useState<any>(null);
+  const [formaPagamento, setFormaPagamento] = useState<"BOLETO" | "PIX" | "CREDIT_CARD">("PIX");
 
   const { data: mensalidades, isLoading } = useQuery({
     queryKey: ["mensalidades", arenaId],
@@ -44,7 +49,7 @@ export function MensalidadesTable() {
   });
 
   const gerarCobrancaMutation = useMutation({
-    mutationFn: async (mensalidade: any) => {
+    mutationFn: async ({ mensalidade, formaPagamento }: { mensalidade: any; formaPagamento: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
@@ -57,20 +62,28 @@ export function MensalidadesTable() {
           clienteNome: mensalidade.contratos.usuarios.nome_completo,
           clienteEmail: mensalidade.contratos.usuarios.email,
           clienteCpf: mensalidade.contratos.usuarios.cpf,
+          formaPagamento,
         },
       });
 
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       toast({
         title: "Cobrança gerada",
-        description: "Cobrança criada no Asaas com sucesso",
+        description: `Cobrança ${variables.formaPagamento} criada com sucesso`,
       });
       queryClient.invalidateQueries({ queryKey: ["mensalidades"] });
-      if (data.bankSlipUrl) {
+      
+      // Se for PIX, mostrar QR Code
+      if (variables.formaPagamento === "PIX" && data.pixQrCode) {
+        setSelectedPixData(data);
+        setPixDialogOpen(true);
+      } else if (data.bankSlipUrl) {
         window.open(data.bankSlipUrl, "_blank");
+      } else if (data.invoiceUrl) {
+        window.open(data.invoiceUrl, "_blank");
       }
     },
     onError: (error: any) => {
@@ -111,6 +124,14 @@ export function MensalidadesTable() {
     },
   });
 
+  const copiarTexto = (texto: string, label: string) => {
+    navigator.clipboard.writeText(texto);
+    toast({
+      title: "Copiado!",
+      description: `${label} copiado para a área de transferência`,
+    });
+  };
+
   const getStatusBadge = (status: string, dataVencimento: string) => {
     const hoje = new Date();
     const vencimento = new Date(dataVencimento);
@@ -131,12 +152,41 @@ export function MensalidadesTable() {
     setDialogOpen(true);
   };
 
+  const handleGerarCobranca = (mensalidade: any) => {
+    setSelectedMensalidade(mensalidade);
+    // Mostrar o modal de seleção de forma de pagamento inline
+    gerarCobrancaMutation.mutate({ mensalidade, formaPagamento });
+  };
+
+  const mostrarPixDialog = (mensalidade: any) => {
+    setSelectedPixData({
+      pixQrCode: mensalidade.qr_code_pix,
+      pixCopyPaste: mensalidade.pix_copy_paste,
+      invoiceUrl: mensalidade.asaas_invoice_url,
+    });
+    setPixDialogOpen(true);
+  };
+
   if (isLoading) {
     return <div className="flex justify-center p-8">Carregando...</div>;
   }
 
   return (
     <>
+      <div className="mb-4 flex items-center gap-4">
+        <label className="text-sm font-medium">Forma de pagamento padrão:</label>
+        <Select value={formaPagamento} onValueChange={(value: any) => setFormaPagamento(value)}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="PIX">PIX (Instantâneo)</SelectItem>
+            <SelectItem value="BOLETO">Boleto Bancário</SelectItem>
+            <SelectItem value="CREDIT_CARD">Cartão de Crédito</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -146,6 +196,7 @@ export function MensalidadesTable() {
             <TableHead>Vencimento</TableHead>
             <TableHead>Valor</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Pagamento</TableHead>
             <TableHead>Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -163,6 +214,52 @@ export function MensalidadesTable() {
               <TableCell>{format(new Date(mensalidade.data_vencimento), "dd/MM/yyyy")}</TableCell>
               <TableCell>R$ {mensalidade.valor_final.toFixed(2)}</TableCell>
               <TableCell>{getStatusBadge(mensalidade.status_pagamento, mensalidade.data_vencimento)}</TableCell>
+              <TableCell>
+                <div className="flex flex-col gap-1">
+                  {/* PIX */}
+                  {mensalidade.qr_code_pix && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => mostrarPixDialog(mensalidade)}
+                    >
+                      <QrCode className="mr-2 h-3 w-3" />
+                      Ver QR Code PIX
+                    </Button>
+                  )}
+                  
+                  {/* Boleto */}
+                  {mensalidade.linha_digitavel && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copiarTexto(mensalidade.linha_digitavel, "Linha digitável")}
+                    >
+                      <Copy className="mr-2 h-3 w-3" />
+                      Copiar Boleto
+                    </Button>
+                  )}
+                  
+                  {/* Link de pagamento */}
+                  {mensalidade.asaas_invoice_url && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(mensalidade.asaas_invoice_url, "_blank")}
+                    >
+                      <ExternalLink className="mr-2 h-3 w-3" />
+                      Abrir Link
+                    </Button>
+                  )}
+
+                  {/* Forma de pagamento usada */}
+                  {mensalidade.forma_pagamento && mensalidade.status_pagamento === "pago" && (
+                    <Badge variant="outline" className="text-xs">
+                      Pago via {mensalidade.forma_pagamento.toUpperCase()}
+                    </Badge>
+                  )}
+                </div>
+              </TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -182,25 +279,16 @@ export function MensalidadesTable() {
                           <DollarSign className="mr-2 h-4 w-4" />
                           Marcar como Pago
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => gerarCobrancaMutation.mutate(mensalidade)}
-                          disabled={gerarCobrancaMutation.isPending}
-                        >
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          Gerar Cobrança Asaas
-                        </DropdownMenuItem>
+                        {!mensalidade.asaas_payment_id && (
+                          <DropdownMenuItem
+                            onClick={() => handleGerarCobranca(mensalidade)}
+                            disabled={gerarCobrancaMutation.isPending}
+                          >
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Gerar Cobrança {formaPagamento}
+                          </DropdownMenuItem>
+                        )}
                       </>
-                    )}
-                    {mensalidade.observacoes?.includes("bankSlipUrl") && (
-                      <DropdownMenuItem
-                        onClick={() => {
-                          const url = mensalidade.observacoes.split(" | ")[1];
-                          if (url) window.open(url, "_blank");
-                        }}
-                      >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Ver Boleto
-                      </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -210,11 +298,65 @@ export function MensalidadesTable() {
         </TableBody>
       </Table>
 
+      {/* Dialog de edição */}
       <MensalidadeDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         mensalidade={selectedMensalidade}
       />
+
+      {/* Dialog para mostrar QR Code PIX */}
+      <Dialog open={pixDialogOpen} onOpenChange={setPixDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Pagamento via PIX</DialogTitle>
+            <DialogDescription>
+              Escaneie o QR Code ou copie o código PIX abaixo
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {selectedPixData?.pixQrCode && (
+              <div className="flex justify-center p-4 bg-white rounded-lg">
+                <img 
+                  src={selectedPixData.pixQrCode} 
+                  alt="QR Code PIX" 
+                  className="w-64 h-64"
+                />
+              </div>
+            )}
+            
+            {selectedPixData?.pixCopyPaste && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Código PIX Copia e Cola:</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={selectedPixData.pixCopyPaste}
+                    readOnly
+                    className="flex-1 p-2 text-sm border rounded-md bg-muted"
+                  />
+                  <Button
+                    onClick={() => copiarTexto(selectedPixData.pixCopyPaste, "Código PIX")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {selectedPixData?.invoiceUrl && (
+              <Button
+                className="w-full"
+                onClick={() => window.open(selectedPixData.invoiceUrl, "_blank")}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Abrir Página de Pagamento
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
