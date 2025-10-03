@@ -63,16 +63,30 @@ export function QuadraDialog({ open, onOpenChange, quadra }: QuadraDialogProps) 
 
   const mutation = useMutation({
     mutationFn: async (data: QuadraFormData) => {
+      const quadraData = {
+        nome: data.nome,
+        numero: data.numero,
+        tipo_esporte: data.tipo_esporte,
+        tipo_piso: data.tipo_piso,
+        valor_hora_normal: data.valor_hora_normal,
+        valor_hora_pico: data.valor_hora_pico,
+        cobertura: data.cobertura,
+        iluminacao: data.iluminacao,
+        capacidade_jogadores: data.capacidade_jogadores,
+        status: data.status,
+        observacoes: data.observacoes || null,
+      };
+
       if (quadra) {
         const { error } = await supabase
           .from("quadras")
-          .update(data as any)
+          .update(quadraData)
           .eq("id", quadra.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("quadras")
-          .insert([{ ...data, arena_id: arenaId } as any]);
+          .insert([{ ...quadraData, arena_id: arenaId }]);
         if (error) throw error;
       }
     },
