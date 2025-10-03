@@ -15,17 +15,18 @@ import { MovimentacaoDialog } from "@/components/financeiro/MovimentacaoDialog";
 import { AssinaturasArenaTable } from "@/components/financeiro/AssinaturasArenaTable";
 import { AssinaturaArenaDialog } from "@/components/financeiro/AssinaturaArenaDialog";
 import { FaturasSistemaTable } from "@/components/financeiro/FaturasSistemaTable";
+import { ArenaSelector } from "@/components/financeiro/ArenaSelector";
 
 export default function Financeiro() {
-  const { arenaId } = useAuth();
+  const { arenaId, user } = useAuth();
   const [movimentacaoDialogOpen, setMovimentacaoDialogOpen] = useState(false);
   const [assinaturaDialogOpen, setAssinaturaDialogOpen] = useState(false);
+  const [selectedArenaFilter, setSelectedArenaFilter] = useState<string>("all");
 
   // Verificar se é Super Admin
   const { data: userRoles } = useQuery({
-    queryKey: ["user-roles"],
+    queryKey: ["user-roles", user?.id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
       const { data, error } = await supabase
@@ -36,22 +37,31 @@ export default function Financeiro() {
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 
   const isSuperAdmin = userRoles?.some((r) => r.role === "super_admin");
+  
+  // Use filtered arena or user's arena
+  const effectiveArenaId = isSuperAdmin && selectedArenaFilter !== "all" ? selectedArenaFilter : arenaId;
 
   const { data: resumo } = useQuery({
-    queryKey: ["resumo-financeiro", arenaId],
+    queryKey: ["resumo-financeiro", effectiveArenaId, selectedArenaFilter],
     queryFn: async () => {
       const hoje = new Date();
       const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
       const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
 
       // Buscar movimentações do mês
-      const { data: movimentacoes } = await supabase
+      let movimentacoesQuery = supabase
         .from("movimentacoes_financeiras")
-        .select("tipo, valor")
-        .eq("arena_id", arenaId!)
+        .select("tipo, valor");
+      
+      if (selectedArenaFilter !== "all" && effectiveArenaId) {
+        movimentacoesQuery = movimentacoesQuery.eq("arena_id", effectiveArenaId);
+      }
+      
+      const { data: movimentacoes } = await movimentacoesQuery
         .gte("data_movimentacao", inicioMes.toISOString().split("T")[0])
         .lte("data_movimentacao", fimMes.toISOString().split("T")[0]);
 
@@ -59,14 +69,19 @@ export default function Financeiro() {
       const despesas = movimentacoes?.filter((m) => m.tipo === "despesa").reduce((sum, m) => sum + m.valor, 0) || 0;
 
       // Buscar contratos ativos
-      const { count: contratosAtivos } = await supabase
+      let contratosQuery = supabase
         .from("contratos")
         .select("*", { count: "exact", head: true })
-        .eq("arena_id", arenaId!)
         .eq("status", "ativo");
+      
+      if (selectedArenaFilter !== "all" && effectiveArenaId) {
+        contratosQuery = contratosQuery.eq("arena_id", effectiveArenaId);
+      }
+      
+      const { count: contratosAtivos } = await contratosQuery;
 
       // Buscar mensalidades pendentes
-      const { data: mensalidadesPendentes } = await supabase
+      let mensalidadesQuery = supabase
         .from("mensalidades")
         .select(`
           valor_final,
@@ -74,8 +89,13 @@ export default function Financeiro() {
             arena_id
           )
         `)
-        .eq("status_pagamento", "pendente")
-        .eq("contratos.arena_id", arenaId!);
+        .eq("status_pagamento", "pendente");
+      
+      if (selectedArenaFilter !== "all" && effectiveArenaId) {
+        mensalidadesQuery = mensalidadesQuery.eq("contratos.arena_id", effectiveArenaId);
+      }
+      
+      const { data: mensalidadesPendentes } = await mensalidadesQuery;
 
       const valorPendente = mensalidadesPendentes?.reduce((sum, m) => sum + m.valor_final, 0) || 0;
 
@@ -87,23 +107,31 @@ export default function Financeiro() {
         valorPendente,
       };
     },
-    enabled: !!arenaId,
+    enabled: !!(effectiveArenaId || (isSuperAdmin && selectedArenaFilter === "all")),
   });
 
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Financeiro</h1>
             <p className="text-muted-foreground">
-              Controle completo das finanças da sua arena
+              Gerencie as finanças {isSuperAdmin ? "do sistema" : "da sua arena"}
             </p>
           </div>
-          <Button onClick={() => setMovimentacaoDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Movimentação
-          </Button>
+          <div className="flex items-center gap-3">
+            {isSuperAdmin && (
+              <ArenaSelector 
+                value={selectedArenaFilter} 
+                onChange={setSelectedArenaFilter} 
+              />
+            )}
+            <Button onClick={() => setMovimentacaoDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Movimentação
+            </Button>
+          </div>
         </div>
 
         {/* Cards de Resumo */}

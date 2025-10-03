@@ -37,6 +37,7 @@ const navItems = [
   { title: "Agendamentos", url: "/agendamentos", icon: Calendar, roles: ["super_admin", "arena_admin", "staff", "cliente"] },
   { title: "Clientes", url: "/clientes", icon: Users, roles: ["super_admin", "arena_admin", "staff"] },
   { title: "Financeiro", url: "/financeiro", icon: DollarSign, roles: ["super_admin", "arena_admin"] },
+  { title: "Meu Financeiro", url: "/meu-financeiro", icon: DollarSign, roles: ["cliente"] },
   { title: "Aulas", url: "/aulas", icon: GraduationCap, roles: ["super_admin", "arena_admin", "staff", "professor"] },
   { title: "Torneios", url: "/torneios", icon: Trophy, roles: ["super_admin", "arena_admin", "staff"] },
 ];
