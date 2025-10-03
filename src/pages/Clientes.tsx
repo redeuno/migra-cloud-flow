@@ -1,9 +1,45 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, Search, Users } from "lucide-react";
+import { ClientesTable } from "@/components/clientes/ClientesTable";
+import { ClienteDialog } from "@/components/clientes/ClienteDialog";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function Clientes() {
+  const { arenaId } = useAuth();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const { data: clientes, isLoading } = useQuery({
+    queryKey: ["clientes", arenaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("*")
+        .eq("arena_id", arenaId)
+        .order("nome_completo", { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!arenaId,
+  });
+
+  const filteredClientes = clientes?.filter((cliente) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      cliente.nome_completo?.toLowerCase().includes(searchLower) ||
+      cliente.email?.toLowerCase().includes(searchLower) ||
+      cliente.cpf?.includes(searchTerm)
+    );
+  });
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -14,25 +50,53 @@ export default function Clientes() {
               Gerencie os clientes cadastrados
             </p>
           </div>
-          <Button>
+          <Button onClick={() => setDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Novo Cliente
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Em Construção</CardTitle>
-            <CardDescription>
-              Esta página está em desenvolvimento
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Em breve você poderá visualizar e gerenciar todos os clientes aqui.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome, email ou CPF..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ) : !filteredClientes || filteredClientes.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title={searchTerm ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
+            description={
+              searchTerm
+                ? "Tente ajustar os filtros de busca"
+                : "Comece cadastrando seu primeiro cliente"
+            }
+            action={
+              !searchTerm
+                ? {
+                    label: "Cadastrar Cliente",
+                    onClick: () => setDialogOpen(true),
+                  }
+                : undefined
+            }
+          />
+        ) : (
+          <ClientesTable clientes={filteredClientes} />
+        )}
+
+        <ClienteDialog open={dialogOpen} onOpenChange={setDialogOpen} />
       </div>
     </Layout>
   );
