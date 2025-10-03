@@ -13,14 +13,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 interface ContratoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contrato?: any;
+  preSelectedUsuarioId?: string;
 }
 
-export function ContratoDialog({ open, onOpenChange, contrato }: ContratoDialogProps) {
+export function ContratoDialog({ open, onOpenChange, contrato, preSelectedUsuarioId }: ContratoDialogProps) {
   const { arenaId } = useAuth();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,6 +66,13 @@ export function ContratoDialog({ open, onOpenChange, contrato }: ContratoDialogP
     },
     enabled: !!arenaId && open,
   });
+
+  // Pre-select user if provided
+  useEffect(() => {
+    if (preSelectedUsuarioId && !contrato) {
+      form.setValue("usuario_id", preSelectedUsuarioId);
+    }
+  }, [preSelectedUsuarioId, contrato, form]);
 
   const mutation = useMutation({
     mutationFn: async (data: ContratoFormData) => {

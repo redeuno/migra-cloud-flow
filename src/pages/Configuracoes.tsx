@@ -1,6 +1,7 @@
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ConfiguracoesEvolution } from "@/components/configuracoes/ConfiguracoesEvolution";
 
 export default function Configuracoes() {
   return (
@@ -16,9 +17,9 @@ export default function Configuracoes() {
         <Tabs defaultValue="geral" className="space-y-4">
           <TabsList>
             <TabsTrigger value="geral">Geral</TabsTrigger>
+            <TabsTrigger value="evolution">Evolution API</TabsTrigger>
             <TabsTrigger value="horarios">Horários</TabsTrigger>
             <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
-            <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
           </TabsList>
 
           <TabsContent value="geral" className="space-y-4">
@@ -35,6 +36,10 @@ export default function Configuracoes() {
                 </p>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="evolution" className="space-y-4">
+            <ConfiguracoesEvolution />
           </TabsContent>
 
           <TabsContent value="horarios" className="space-y-4">
@@ -64,22 +69,6 @@ export default function Configuracoes() {
               <CardContent>
                 <p className="text-muted-foreground">
                   Em breve você poderá configurar formas de pagamento aqui.
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="notificacoes" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Em Construção</CardTitle>
-                <CardDescription>
-                  Esta seção está em desenvolvimento
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Em breve você poderá configurar notificações aqui.
                 </p>
               </CardContent>
             </Card>

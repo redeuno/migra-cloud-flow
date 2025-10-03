@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.gerar-fatura-sistema]
 verify_jwt = false
+
+[functions.enviar-link-pagamento]
+verify_jwt = true

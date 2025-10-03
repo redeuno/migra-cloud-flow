@@ -679,6 +679,62 @@ export type Database = {
           },
         ]
       }
+      configuracoes_arena: {
+        Row: {
+          arena_id: string
+          created_at: string | null
+          email_remetente: string | null
+          evolution_api_enabled: boolean | null
+          evolution_api_key: string | null
+          evolution_api_url: string | null
+          evolution_instance_name: string | null
+          id: string
+          notificacoes_email_enabled: boolean | null
+          notificacoes_whatsapp_enabled: boolean | null
+          template_confirmacao_pagamento: string | null
+          template_lembrete_pagamento: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          arena_id: string
+          created_at?: string | null
+          email_remetente?: string | null
+          evolution_api_enabled?: boolean | null
+          evolution_api_key?: string | null
+          evolution_api_url?: string | null
+          evolution_instance_name?: string | null
+          id?: string
+          notificacoes_email_enabled?: boolean | null
+          notificacoes_whatsapp_enabled?: boolean | null
+          template_confirmacao_pagamento?: string | null
+          template_lembrete_pagamento?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          arena_id?: string
+          created_at?: string | null
+          email_remetente?: string | null
+          evolution_api_enabled?: boolean | null
+          evolution_api_key?: string | null
+          evolution_api_url?: string | null
+          evolution_instance_name?: string | null
+          id?: string
+          notificacoes_email_enabled?: boolean | null
+          notificacoes_whatsapp_enabled?: boolean | null
+          template_confirmacao_pagamento?: string | null
+          template_lembrete_pagamento?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "configuracoes_arena_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: true
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratos: {
         Row: {
           arena_id: string

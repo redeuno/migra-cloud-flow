@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Form,
   FormControl,
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { clienteSchema, type ClienteFormData } from "@/lib/validations/cliente";
+import { ClienteFinanceiroTab } from "./ClienteFinanceiroTab";
 
 interface ClienteDialogProps {
   open: boolean;
@@ -158,7 +160,7 @@ export function ClienteDialog({ open, onOpenChange, cliente }: ClienteDialogProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{cliente ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
           <DialogDescription>
@@ -168,8 +170,17 @@ export function ClienteDialog({ open, onOpenChange, cliente }: ClienteDialogProp
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <Tabs defaultValue="dados" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="dados">Dados Cadastrais</TabsTrigger>
+            <TabsTrigger value="financeiro" disabled={!cliente}>
+              Financeiro
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dados">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Dados Pessoais */}
             <div className="space-y-4">
               <h3 className="text-sm font-semibold">Dados Pessoais</h3>
@@ -351,8 +362,14 @@ export function ClienteDialog({ open, onOpenChange, cliente }: ClienteDialogProp
                 {isSubmitting ? "Salvando..." : cliente ? "Atualizar" : "Cadastrar"}
               </Button>
             </div>
-          </form>
-        </Form>
+              </form>
+            </Form>
+          </TabsContent>
+
+          <TabsContent value="financeiro">
+            {cliente && <ClienteFinanceiroTab clienteId={cliente.id} />}
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
