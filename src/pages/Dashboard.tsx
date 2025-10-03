@@ -1,12 +1,14 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Calendar, DollarSign, Users, SquareActivity } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
-import { format } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 
 export default function Dashboard() {
   const { user, userRoles, arenaId } = useAuth();
@@ -112,6 +114,107 @@ export default function Dashboard() {
     },
     enabled: !!arenaId,
   });
+
+  // Query para agendamentos semanais (gráfico)
+  const { data: weeklyData, isLoading: loadingWeekly } = useQuery({
+    queryKey: ['weekly-bookings', arenaId],
+    queryFn: async () => {
+      if (!arenaId) return [];
+      
+      const startDate = subDays(new Date(), 6);
+      const { data, error } = await supabase
+        .from('agendamentos')
+        .select('data_agendamento, valor_total')
+        .eq('arena_id', arenaId)
+        .gte('data_agendamento', startDate.toISOString().split('T')[0])
+        .order('data_agendamento', { ascending: true });
+
+      if (error) throw error;
+
+      const grouped = (data || []).reduce((acc: any, item: any) => {
+        const day = format(new Date(item.data_agendamento), 'EEE', { locale: ptBR });
+        if (!acc[day]) {
+          acc[day] = { dia: day, agendamentos: 0, receita: 0 };
+        }
+        acc[day].agendamentos += 1;
+        acc[day].receita += Number(item.valor_total || 0);
+        return acc;
+      }, {});
+
+      return Object.values(grouped);
+    },
+    enabled: !!arenaId,
+  });
+
+  // Query para receita mensal (gráfico)
+  const { data: monthlyRevenue, isLoading: loadingMonthly } = useQuery({
+    queryKey: ['monthly-revenue', arenaId],
+    queryFn: async () => {
+      if (!arenaId) return [];
+      
+      const start = startOfMonth(new Date());
+      const end = endOfMonth(new Date());
+      
+      const { data, error } = await supabase
+        .from('movimentacoes_financeiras')
+        .select('data_movimentacao, valor, tipo')
+        .eq('arena_id', arenaId)
+        .gte('data_movimentacao', start.toISOString().split('T')[0])
+        .lte('data_movimentacao', end.toISOString().split('T')[0])
+        .order('data_movimentacao', { ascending: true });
+
+      if (error) throw error;
+
+      const grouped = (data || []).reduce((acc: any, item: any) => {
+        const day = format(new Date(item.data_movimentacao), 'dd/MM');
+        if (!acc[day]) {
+          acc[day] = { dia: day, receita: 0, despesa: 0 };
+        }
+        if (item.tipo === 'receita') {
+          acc[day].receita += Number(item.valor);
+        } else {
+          acc[day].despesa += Number(item.valor);
+        }
+        return acc;
+      }, {});
+
+      return Object.values(grouped);
+    },
+    enabled: !!arenaId,
+  });
+
+  // Query para uso de quadras (gráfico pizza)
+  const { data: courtUsage, isLoading: loadingCourts } = useQuery({
+    queryKey: ['court-usage', arenaId],
+    queryFn: async () => {
+      if (!arenaId) return [];
+      
+      const { data, error } = await supabase
+        .from('agendamentos')
+        .select(`
+          quadra_id,
+          quadras (nome)
+        `)
+        .eq('arena_id', arenaId)
+        .gte('data_agendamento', subDays(new Date(), 30).toISOString().split('T')[0]);
+
+      if (error) throw error;
+
+      const counted = (data || []).reduce((acc: any, item: any) => {
+        const name = item.quadras?.nome || 'Sem quadra';
+        if (!acc[name]) {
+          acc[name] = { nome: name, total: 0 };
+        }
+        acc[name].total += 1;
+        return acc;
+      }, {});
+
+      return Object.values(counted);
+    },
+    enabled: !!arenaId,
+  });
+
+  const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
 
   return (
     <div className="space-y-6">
@@ -220,6 +323,129 @@ export default function Dashboard() {
               <p className="text-sm font-medium text-muted-foreground">Arena ID</p>
               <p className="font-mono text-xs break-all">{arenaId || "N/A"}</p>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Seção de Gráficos */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Gráfico de Agendamentos Semanais */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Agendamentos da Semana</CardTitle>
+            <CardDescription>Últimos 7 dias</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingWeekly ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : (
+              <ChartContainer
+                config={{
+                  agendamentos: {
+                    label: "Agendamentos",
+                    color: "hsl(var(--primary))",
+                  },
+                }}
+                className="h-[300px]"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="dia" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="agendamentos" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Receitas e Despesas */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Receitas e Despesas</CardTitle>
+            <CardDescription>Mês atual</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingMonthly ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : (
+              <ChartContainer
+                config={{
+                  receita: {
+                    label: "Receita",
+                    color: "hsl(var(--primary))",
+                  },
+                  despesa: {
+                    label: "Despesa",
+                    color: "hsl(var(--destructive))",
+                  },
+                }}
+                className="h-[300px]"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={monthlyRevenue}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="dia" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="receita" stroke="hsl(var(--primary))" strokeWidth={2} />
+                    <Line type="monotone" dataKey="despesa" stroke="hsl(var(--destructive))" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Uso de Quadras */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Uso de Quadras</CardTitle>
+            <CardDescription>Últimos 30 dias</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingCourts ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : courtUsage && courtUsage.length > 0 ? (
+              <ChartContainer
+                config={{
+                  total: {
+                    label: "Agendamentos",
+                    color: "hsl(var(--primary))",
+                  },
+                }}
+                className="h-[300px]"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Pie
+                      data={courtUsage}
+                      dataKey="total"
+                      nameKey="nome"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label
+                    >
+                      {courtUsage.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            ) : (
+              <EmptyState
+                icon={SquareActivity}
+                title="Sem dados de uso"
+                description="Nenhum agendamento encontrado nos últimos 30 dias"
+                className="py-8"
+              />
+            )}
           </CardContent>
         </Card>
       </div>
