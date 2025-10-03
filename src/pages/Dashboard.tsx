@@ -110,7 +110,11 @@ export default function Dashboard() {
         .limit(5);
 
       if (error) throw error;
-      return data || [];
+      
+      // Filtrar agendamentos com dados válidos
+      return (data || []).filter((booking: any) => 
+        booking.quadras && booking.usuarios
+      );
     },
     enabled: !!arenaId,
   });
