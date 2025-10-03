@@ -4,7 +4,7 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, DollarSign, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
+import { Plus, DollarSign, TrendingUp, TrendingDown, AlertCircle, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { ContratosTable } from "@/components/financeiro/ContratosTable";
@@ -12,10 +12,33 @@ import { MensalidadesTable } from "@/components/financeiro/MensalidadesTable";
 import { MovimentacoesTable } from "@/components/financeiro/MovimentacoesTable";
 import { RelatoriosFinanceiros } from "@/components/financeiro/RelatoriosFinanceiros";
 import { MovimentacaoDialog } from "@/components/financeiro/MovimentacaoDialog";
+import { AssinaturasArenaTable } from "@/components/financeiro/AssinaturasArenaTable";
+import { AssinaturaArenaDialog } from "@/components/financeiro/AssinaturaArenaDialog";
+import { FaturasSistemaTable } from "@/components/financeiro/FaturasSistemaTable";
 
 export default function Financeiro() {
   const { arenaId } = useAuth();
   const [movimentacaoDialogOpen, setMovimentacaoDialogOpen] = useState(false);
+  const [assinaturaDialogOpen, setAssinaturaDialogOpen] = useState(false);
+
+  // Verificar se é Super Admin
+  const { data: userRoles } = useQuery({
+    queryKey: ["user-roles"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const isSuperAdmin = userRoles?.some((r) => r.role === "super_admin");
 
   const { data: resumo } = useQuery({
     queryKey: ["resumo-financeiro", arenaId],
@@ -142,6 +165,15 @@ export default function Financeiro() {
             <TabsTrigger value="mensalidades">Mensalidades</TabsTrigger>
             <TabsTrigger value="movimentacoes">Movimentações</TabsTrigger>
             <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
+            {isSuperAdmin && (
+              <>
+                <TabsTrigger value="assinaturas">
+                  <Building2 className="mr-2 h-4 w-4" />
+                  Assinaturas Arena
+                </TabsTrigger>
+                <TabsTrigger value="faturas-sistema">Faturas Sistema</TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <TabsContent value="contratos" className="space-y-4">
@@ -180,12 +212,50 @@ export default function Financeiro() {
           <TabsContent value="relatorios" className="space-y-4">
             <RelatoriosFinanceiros />
           </TabsContent>
+
+          {isSuperAdmin && (
+            <>
+              <TabsContent value="assinaturas" className="space-y-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Assinaturas das Arenas</CardTitle>
+                    <Button onClick={() => setAssinaturaDialogOpen(true)}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Nova Assinatura
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <AssinaturasArenaTable />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="faturas-sistema" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Faturas do Sistema</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Cobranças das arenas para o sistema Verana
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <FaturasSistemaTable />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
 
       <MovimentacaoDialog
         open={movimentacaoDialogOpen}
         onOpenChange={setMovimentacaoDialogOpen}
+      />
+
+      <AssinaturaArenaDialog
+        open={assinaturaDialogOpen}
+        onOpenChange={setAssinaturaDialogOpen}
       />
     </Layout>
   );
