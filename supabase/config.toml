@@ -1,1 +1,4 @@
 project_id = "nxissybzirfxjewvamgy"
+
+[functions.asaas-cobranca]
+verify_jwt = true
