@@ -111,6 +111,54 @@ export type Database = {
           },
         ]
       }
+      arena_modulos: {
+        Row: {
+          arena_id: string
+          ativo: boolean | null
+          created_at: string | null
+          data_ativacao: string
+          data_expiracao: string | null
+          id: string
+          modulo_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          arena_id: string
+          ativo?: boolean | null
+          created_at?: string | null
+          data_ativacao?: string
+          data_expiracao?: string | null
+          id?: string
+          modulo_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          arena_id?: string
+          ativo?: boolean | null
+          created_at?: string | null
+          data_ativacao?: string
+          data_expiracao?: string | null
+          id?: string
+          modulo_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arena_modulos_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arena_modulos_modulo_id_fkey"
+            columns: ["modulo_id"]
+            isOneToOne: false
+            referencedRelation: "modulos_sistema"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       arenas: {
         Row: {
           cnpj: string
@@ -182,6 +230,269 @@ export type Database = {
           },
         ]
       }
+      aulas: {
+        Row: {
+          arena_id: string
+          created_at: string | null
+          data_aula: string
+          descricao: string | null
+          duracao_minutos: number
+          hora_fim: string
+          hora_inicio: string
+          id: string
+          max_alunos: number
+          nivel: string | null
+          observacoes: string | null
+          professor_id: string
+          quadra_id: string | null
+          status: Database["public"]["Enums"]["status_aula"] | null
+          tipo_aula: Database["public"]["Enums"]["tipo_aula"]
+          titulo: string
+          updated_at: string | null
+          valor_por_aluno: number
+        }
+        Insert: {
+          arena_id: string
+          created_at?: string | null
+          data_aula: string
+          descricao?: string | null
+          duracao_minutos: number
+          hora_fim: string
+          hora_inicio: string
+          id?: string
+          max_alunos?: number
+          nivel?: string | null
+          observacoes?: string | null
+          professor_id: string
+          quadra_id?: string | null
+          status?: Database["public"]["Enums"]["status_aula"] | null
+          tipo_aula: Database["public"]["Enums"]["tipo_aula"]
+          titulo: string
+          updated_at?: string | null
+          valor_por_aluno: number
+        }
+        Update: {
+          arena_id?: string
+          created_at?: string | null
+          data_aula?: string
+          descricao?: string | null
+          duracao_minutos?: number
+          hora_fim?: string
+          hora_inicio?: string
+          id?: string
+          max_alunos?: number
+          nivel?: string | null
+          observacoes?: string | null
+          professor_id?: string
+          quadra_id?: string | null
+          status?: Database["public"]["Enums"]["status_aula"] | null
+          tipo_aula?: Database["public"]["Enums"]["tipo_aula"]
+          titulo?: string
+          updated_at?: string | null
+          valor_por_aluno?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aulas_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aulas_professor_id_fkey"
+            columns: ["professor_id"]
+            isOneToOne: false
+            referencedRelation: "professores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aulas_quadra_id_fkey"
+            columns: ["quadra_id"]
+            isOneToOne: false
+            referencedRelation: "quadras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aulas_alunos: {
+        Row: {
+          aula_id: string
+          avaliacao: number | null
+          comentario_avaliacao: string | null
+          created_at: string | null
+          data_checkin: string | null
+          data_pagamento: string | null
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
+          id: string
+          presenca: boolean | null
+          status_pagamento:
+            | Database["public"]["Enums"]["status_pagamento"]
+            | null
+          updated_at: string | null
+          usuario_id: string
+          valor_pago: number
+        }
+        Insert: {
+          aula_id: string
+          avaliacao?: number | null
+          comentario_avaliacao?: string | null
+          created_at?: string | null
+          data_checkin?: string | null
+          data_pagamento?: string | null
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          presenca?: boolean | null
+          status_pagamento?:
+            | Database["public"]["Enums"]["status_pagamento"]
+            | null
+          updated_at?: string | null
+          usuario_id: string
+          valor_pago: number
+        }
+        Update: {
+          aula_id?: string
+          avaliacao?: number | null
+          comentario_avaliacao?: string | null
+          created_at?: string | null
+          data_checkin?: string | null
+          data_pagamento?: string | null
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          presenca?: boolean | null
+          status_pagamento?:
+            | Database["public"]["Enums"]["status_pagamento"]
+            | null
+          updated_at?: string | null
+          usuario_id?: string
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aulas_alunos_aula_id_fkey"
+            columns: ["aula_id"]
+            isOneToOne: false
+            referencedRelation: "aulas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aulas_alunos_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      avaliacoes: {
+        Row: {
+          arena_id: string
+          avaliado_id: string
+          comentario: string | null
+          created_at: string | null
+          id: string
+          nota: number
+          referencia_id: string | null
+          tipo: string
+          updated_at: string | null
+          usuario_id: string
+        }
+        Insert: {
+          arena_id: string
+          avaliado_id: string
+          comentario?: string | null
+          created_at?: string | null
+          id?: string
+          nota: number
+          referencia_id?: string | null
+          tipo: string
+          updated_at?: string | null
+          usuario_id: string
+        }
+        Update: {
+          arena_id?: string
+          avaliado_id?: string
+          comentario?: string | null
+          created_at?: string | null
+          id?: string
+          nota?: number
+          referencia_id?: string | null
+          tipo?: string
+          updated_at?: string | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avaliacoes_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_avaliado_id_fkey"
+            columns: ["avaliado_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "avaliacoes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bloqueios_quadra: {
+        Row: {
+          created_at: string | null
+          criado_por: string | null
+          data_fim: string
+          data_inicio: string
+          id: string
+          motivo: string
+          quadra_id: string
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          criado_por?: string | null
+          data_fim: string
+          data_inicio: string
+          id?: string
+          motivo: string
+          quadra_id: string
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          criado_por?: string | null
+          data_fim?: string
+          data_inicio?: string
+          id?: string
+          motivo?: string
+          quadra_id?: string
+          tipo?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bloqueios_quadra_quadra_id_fkey"
+            columns: ["quadra_id"]
+            isOneToOne: false
+            referencedRelation: "quadras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkins: {
         Row: {
           agendamento_id: string | null
@@ -220,6 +531,310 @@ export type Database = {
           },
           {
             foreignKeyName: "checkins_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contratos: {
+        Row: {
+          arena_id: string
+          beneficios: Json | null
+          created_at: string | null
+          data_fim: string | null
+          data_inicio: string
+          descricao: string | null
+          dia_vencimento: number
+          id: string
+          observacoes: string | null
+          status: Database["public"]["Enums"]["status_contrato"] | null
+          tipo_contrato: Database["public"]["Enums"]["tipo_contrato"]
+          updated_at: string | null
+          usuario_id: string
+          valor_mensal: number
+        }
+        Insert: {
+          arena_id: string
+          beneficios?: Json | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio: string
+          descricao?: string | null
+          dia_vencimento: number
+          id?: string
+          observacoes?: string | null
+          status?: Database["public"]["Enums"]["status_contrato"] | null
+          tipo_contrato: Database["public"]["Enums"]["tipo_contrato"]
+          updated_at?: string | null
+          usuario_id: string
+          valor_mensal: number
+        }
+        Update: {
+          arena_id?: string
+          beneficios?: Json | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          descricao?: string | null
+          dia_vencimento?: number
+          id?: string
+          observacoes?: string | null
+          status?: Database["public"]["Enums"]["status_contrato"] | null
+          tipo_contrato?: Database["public"]["Enums"]["tipo_contrato"]
+          updated_at?: string | null
+          usuario_id?: string
+          valor_mensal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funcionarios: {
+        Row: {
+          arena_id: string
+          cargo: string
+          created_at: string | null
+          data_admissao: string
+          data_demissao: string | null
+          horario_trabalho: Json
+          id: string
+          permissoes: Json | null
+          salario: number | null
+          status: Database["public"]["Enums"]["status_geral"] | null
+          updated_at: string | null
+          usuario_id: string
+        }
+        Insert: {
+          arena_id: string
+          cargo: string
+          created_at?: string | null
+          data_admissao: string
+          data_demissao?: string | null
+          horario_trabalho?: Json
+          id?: string
+          permissoes?: Json | null
+          salario?: number | null
+          status?: Database["public"]["Enums"]["status_geral"] | null
+          updated_at?: string | null
+          usuario_id: string
+        }
+        Update: {
+          arena_id?: string
+          cargo?: string
+          created_at?: string | null
+          data_admissao?: string
+          data_demissao?: string | null
+          horario_trabalho?: Json
+          id?: string
+          permissoes?: Json | null
+          salario?: number | null
+          status?: Database["public"]["Enums"]["status_geral"] | null
+          updated_at?: string | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funcionarios_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funcionarios_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mensalidades: {
+        Row: {
+          acrescimo: number | null
+          contrato_id: string
+          created_at: string | null
+          data_pagamento: string | null
+          data_vencimento: string
+          desconto: number | null
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
+          id: string
+          observacoes: string | null
+          referencia: string
+          status_pagamento:
+            | Database["public"]["Enums"]["status_pagamento"]
+            | null
+          updated_at: string | null
+          valor: number
+          valor_final: number
+        }
+        Insert: {
+          acrescimo?: number | null
+          contrato_id: string
+          created_at?: string | null
+          data_pagamento?: string | null
+          data_vencimento: string
+          desconto?: number | null
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          observacoes?: string | null
+          referencia: string
+          status_pagamento?:
+            | Database["public"]["Enums"]["status_pagamento"]
+            | null
+          updated_at?: string | null
+          valor: number
+          valor_final: number
+        }
+        Update: {
+          acrescimo?: number | null
+          contrato_id?: string
+          created_at?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string
+          desconto?: number | null
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          observacoes?: string | null
+          referencia?: string
+          status_pagamento?:
+            | Database["public"]["Enums"]["status_pagamento"]
+            | null
+          updated_at?: string | null
+          valor?: number
+          valor_final?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensalidades_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      modulos_sistema: {
+        Row: {
+          created_at: string | null
+          dependencias: Json | null
+          descricao: string | null
+          icone: string | null
+          id: string
+          nome: string
+          ordem: number
+          slug: string
+          status: Database["public"]["Enums"]["status_geral"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dependencias?: Json | null
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome: string
+          ordem: number
+          slug: string
+          status?: Database["public"]["Enums"]["status_geral"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dependencias?: Json | null
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          slug?: string
+          status?: Database["public"]["Enums"]["status_geral"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      movimentacoes_financeiras: {
+        Row: {
+          arena_id: string
+          categoria: Database["public"]["Enums"]["categoria_financeira"]
+          created_at: string | null
+          data_movimentacao: string
+          descricao: string
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
+          id: string
+          observacoes: string | null
+          referencia_id: string | null
+          referencia_tipo: string | null
+          tipo: Database["public"]["Enums"]["tipo_movimentacao"]
+          updated_at: string | null
+          usuario_id: string | null
+          valor: number
+        }
+        Insert: {
+          arena_id: string
+          categoria: Database["public"]["Enums"]["categoria_financeira"]
+          created_at?: string | null
+          data_movimentacao: string
+          descricao: string
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          observacoes?: string | null
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          tipo: Database["public"]["Enums"]["tipo_movimentacao"]
+          updated_at?: string | null
+          usuario_id?: string | null
+          valor: number
+        }
+        Update: {
+          arena_id?: string
+          categoria?: Database["public"]["Enums"]["categoria_financeira"]
+          created_at?: string | null
+          data_movimentacao?: string
+          descricao?: string
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          observacoes?: string | null
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_movimentacao"]
+          updated_at?: string | null
+          usuario_id?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_financeiras_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_financeiras_usuario_id_fkey"
             columns: ["usuario_id"]
             isOneToOne: false
             referencedRelation: "usuarios"
@@ -268,6 +883,72 @@ export type Database = {
           valor_mensal?: number
         }
         Relationships: []
+      }
+      professores: {
+        Row: {
+          arena_id: string
+          avaliacao_media: number | null
+          biografia: string | null
+          created_at: string | null
+          disponibilidade: Json
+          especialidades: Json | null
+          foto_url: string | null
+          id: string
+          registro_profissional: string | null
+          status: Database["public"]["Enums"]["status_geral"] | null
+          total_avaliacoes: number | null
+          updated_at: string | null
+          usuario_id: string
+          valor_hora_aula: number
+        }
+        Insert: {
+          arena_id: string
+          avaliacao_media?: number | null
+          biografia?: string | null
+          created_at?: string | null
+          disponibilidade?: Json
+          especialidades?: Json | null
+          foto_url?: string | null
+          id?: string
+          registro_profissional?: string | null
+          status?: Database["public"]["Enums"]["status_geral"] | null
+          total_avaliacoes?: number | null
+          updated_at?: string | null
+          usuario_id: string
+          valor_hora_aula: number
+        }
+        Update: {
+          arena_id?: string
+          avaliacao_media?: number | null
+          biografia?: string | null
+          created_at?: string | null
+          disponibilidade?: Json
+          especialidades?: Json | null
+          foto_url?: string | null
+          id?: string
+          registro_profissional?: string | null
+          status?: Database["public"]["Enums"]["status_geral"] | null
+          total_avaliacoes?: number | null
+          updated_at?: string | null
+          usuario_id?: string
+          valor_hora_aula?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professores_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professores_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quadras: {
         Row: {
@@ -346,6 +1027,292 @@ export type Database = {
           },
         ]
       }
+      torneios: {
+        Row: {
+          arena_id: string
+          created_at: string | null
+          data_fim: string
+          data_fim_inscricoes: string
+          data_inicio: string
+          data_inicio_inscricoes: string
+          descricao: string | null
+          id: string
+          imagem_url: string | null
+          max_participantes: number | null
+          modalidade: Database["public"]["Enums"]["tipo_esporte"]
+          nome: string
+          premiacao: Json | null
+          regulamento: string | null
+          status: Database["public"]["Enums"]["status_torneio"] | null
+          tipo_chaveamento: Database["public"]["Enums"]["tipo_chaveamento"]
+          updated_at: string | null
+          valor_inscricao: number | null
+        }
+        Insert: {
+          arena_id: string
+          created_at?: string | null
+          data_fim: string
+          data_fim_inscricoes: string
+          data_inicio: string
+          data_inicio_inscricoes: string
+          descricao?: string | null
+          id?: string
+          imagem_url?: string | null
+          max_participantes?: number | null
+          modalidade: Database["public"]["Enums"]["tipo_esporte"]
+          nome: string
+          premiacao?: Json | null
+          regulamento?: string | null
+          status?: Database["public"]["Enums"]["status_torneio"] | null
+          tipo_chaveamento: Database["public"]["Enums"]["tipo_chaveamento"]
+          updated_at?: string | null
+          valor_inscricao?: number | null
+        }
+        Update: {
+          arena_id?: string
+          created_at?: string | null
+          data_fim?: string
+          data_fim_inscricoes?: string
+          data_inicio?: string
+          data_inicio_inscricoes?: string
+          descricao?: string | null
+          id?: string
+          imagem_url?: string | null
+          max_participantes?: number | null
+          modalidade?: Database["public"]["Enums"]["tipo_esporte"]
+          nome?: string
+          premiacao?: Json | null
+          regulamento?: string | null
+          status?: Database["public"]["Enums"]["status_torneio"] | null
+          tipo_chaveamento?: Database["public"]["Enums"]["tipo_chaveamento"]
+          updated_at?: string | null
+          valor_inscricao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "torneios_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      torneios_inscricoes: {
+        Row: {
+          created_at: string | null
+          data_pagamento: string | null
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
+          id: string
+          observacoes: string | null
+          parceiro_id: string | null
+          status_pagamento:
+            | Database["public"]["Enums"]["status_pagamento"]
+            | null
+          torneio_id: string
+          updated_at: string | null
+          usuario_id: string
+          valor_pago: number
+        }
+        Insert: {
+          created_at?: string | null
+          data_pagamento?: string | null
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          observacoes?: string | null
+          parceiro_id?: string | null
+          status_pagamento?:
+            | Database["public"]["Enums"]["status_pagamento"]
+            | null
+          torneio_id: string
+          updated_at?: string | null
+          usuario_id: string
+          valor_pago: number
+        }
+        Update: {
+          created_at?: string | null
+          data_pagamento?: string | null
+          forma_pagamento?:
+            | Database["public"]["Enums"]["forma_pagamento"]
+            | null
+          id?: string
+          observacoes?: string | null
+          parceiro_id?: string | null
+          status_pagamento?:
+            | Database["public"]["Enums"]["status_pagamento"]
+            | null
+          torneio_id?: string
+          updated_at?: string | null
+          usuario_id?: string
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "torneios_inscricoes_parceiro_id_fkey"
+            columns: ["parceiro_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "torneios_inscricoes_torneio_id_fkey"
+            columns: ["torneio_id"]
+            isOneToOne: false
+            referencedRelation: "torneios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "torneios_inscricoes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      torneios_jogos: {
+        Row: {
+          created_at: string | null
+          data_jogo: string | null
+          dupla1_jogador1_id: string | null
+          dupla1_jogador2_id: string | null
+          dupla2_jogador1_id: string | null
+          dupla2_jogador2_id: string | null
+          fase: string
+          hora_inicio: string | null
+          id: string
+          numero_jogo: number
+          observacoes: string | null
+          placar_dupla1: number | null
+          placar_dupla2: number | null
+          quadra_id: string | null
+          torneio_id: string
+          updated_at: string | null
+          vencedor: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_jogo?: string | null
+          dupla1_jogador1_id?: string | null
+          dupla1_jogador2_id?: string | null
+          dupla2_jogador1_id?: string | null
+          dupla2_jogador2_id?: string | null
+          fase: string
+          hora_inicio?: string | null
+          id?: string
+          numero_jogo: number
+          observacoes?: string | null
+          placar_dupla1?: number | null
+          placar_dupla2?: number | null
+          quadra_id?: string | null
+          torneio_id: string
+          updated_at?: string | null
+          vencedor?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          data_jogo?: string | null
+          dupla1_jogador1_id?: string | null
+          dupla1_jogador2_id?: string | null
+          dupla2_jogador1_id?: string | null
+          dupla2_jogador2_id?: string | null
+          fase?: string
+          hora_inicio?: string | null
+          id?: string
+          numero_jogo?: number
+          observacoes?: string | null
+          placar_dupla1?: number | null
+          placar_dupla2?: number | null
+          quadra_id?: string | null
+          torneio_id?: string
+          updated_at?: string | null
+          vencedor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "torneios_jogos_dupla1_jogador1_id_fkey"
+            columns: ["dupla1_jogador1_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "torneios_jogos_dupla1_jogador2_id_fkey"
+            columns: ["dupla1_jogador2_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "torneios_jogos_dupla2_jogador1_id_fkey"
+            columns: ["dupla2_jogador1_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "torneios_jogos_dupla2_jogador2_id_fkey"
+            columns: ["dupla2_jogador2_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "torneios_jogos_quadra_id_fkey"
+            columns: ["quadra_id"]
+            isOneToOne: false
+            referencedRelation: "quadras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "torneios_jogos_torneio_id_fkey"
+            columns: ["torneio_id"]
+            isOneToOne: false
+            referencedRelation: "torneios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          arena_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          arena_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          arena_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usuarios: {
         Row: {
           aceite_termos: boolean
@@ -413,9 +1380,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role:
+        | "super_admin"
+        | "arena_admin"
+        | "funcionario"
+        | "professor"
+        | "aluno"
+      categoria_financeira:
+        | "mensalidade"
+        | "agendamento"
+        | "aula"
+        | "torneio"
+        | "evento"
+        | "equipamento"
+        | "manutencao"
+        | "salario"
+        | "outros"
       forma_pagamento:
         | "pix"
         | "cartao_credito"
@@ -430,6 +1419,13 @@ export type Database = {
         | "cancelado"
         | "realizado"
         | "no_show"
+      status_aula:
+        | "agendada"
+        | "confirmada"
+        | "realizada"
+        | "cancelada"
+        | "remarcada"
+      status_contrato: "ativo" | "suspenso" | "cancelado" | "finalizado"
       status_geral: "ativo" | "inativo" | "suspenso" | "bloqueado"
       status_pagamento:
         | "pendente"
@@ -438,7 +1434,21 @@ export type Database = {
         | "cancelado"
         | "vencido"
         | "estornado"
+      status_torneio:
+        | "planejamento"
+        | "inscricoes_abertas"
+        | "em_andamento"
+        | "finalizado"
+        | "cancelado"
+      tipo_aula: "individual" | "grupo" | "clinica" | "curso"
+      tipo_chaveamento:
+        | "eliminacao_simples"
+        | "eliminacao_dupla"
+        | "round_robin"
+        | "suico"
+      tipo_contrato: "mensal" | "trimestral" | "semestral" | "anual"
       tipo_esporte: "beach_tennis" | "padel" | "tenis" | "futevolei"
+      tipo_movimentacao: "receita" | "despesa" | "transferencia"
       tipo_piso: "areia" | "saibro" | "sintetico" | "concreto" | "grama"
       user_role:
         | "super_admin"
@@ -573,6 +1583,24 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: [
+        "super_admin",
+        "arena_admin",
+        "funcionario",
+        "professor",
+        "aluno",
+      ],
+      categoria_financeira: [
+        "mensalidade",
+        "agendamento",
+        "aula",
+        "torneio",
+        "evento",
+        "equipamento",
+        "manutencao",
+        "salario",
+        "outros",
+      ],
       forma_pagamento: [
         "pix",
         "cartao_credito",
@@ -589,6 +1617,14 @@ export const Constants = {
         "realizado",
         "no_show",
       ],
+      status_aula: [
+        "agendada",
+        "confirmada",
+        "realizada",
+        "cancelada",
+        "remarcada",
+      ],
+      status_contrato: ["ativo", "suspenso", "cancelado", "finalizado"],
       status_geral: ["ativo", "inativo", "suspenso", "bloqueado"],
       status_pagamento: [
         "pendente",
@@ -598,7 +1634,23 @@ export const Constants = {
         "vencido",
         "estornado",
       ],
+      status_torneio: [
+        "planejamento",
+        "inscricoes_abertas",
+        "em_andamento",
+        "finalizado",
+        "cancelado",
+      ],
+      tipo_aula: ["individual", "grupo", "clinica", "curso"],
+      tipo_chaveamento: [
+        "eliminacao_simples",
+        "eliminacao_dupla",
+        "round_robin",
+        "suico",
+      ],
+      tipo_contrato: ["mensal", "trimestral", "semestral", "anual"],
       tipo_esporte: ["beach_tennis", "padel", "tenis", "futevolei"],
+      tipo_movimentacao: ["receita", "despesa", "transferencia"],
       tipo_piso: ["areia", "saibro", "sintetico", "concreto", "grama"],
       user_role: [
         "super_admin",
