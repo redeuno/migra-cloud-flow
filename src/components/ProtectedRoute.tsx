@@ -7,9 +7,10 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, loading, hasRole } = useAuth();
+  const { user, loading, rolesLoading, hasRole } = useAuth();
 
-  if (loading) {
+  // Wait for auth AND roles to load if role check is needed
+  if (loading || (requiredRole && rolesLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -24,7 +25,8 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return <Navigate to="/auth" replace />;
   }
 
-  if (requiredRole && !hasRole(requiredRole)) {
+  // Super admin has access to everything
+  if (requiredRole && !hasRole("super_admin") && !hasRole(requiredRole)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">

@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  rolesLoading: boolean;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   userRoles: AppRole[];
@@ -23,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // Fetch user roles from database
-  const { data: userRolesData } = useQuery({
+  const { data: userRolesData, isLoading: rolesLoading } = useQuery({
     queryKey: ["user-roles", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -94,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         session,
         loading,
+        rolesLoading: rolesLoading && !!user,
         signOut,
         hasRole,
         userRoles,
