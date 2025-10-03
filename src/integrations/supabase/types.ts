@@ -16,22 +16,31 @@ export type Database = {
     Tables: {
       agendamentos: {
         Row: {
+          agendamento_pai_id: string | null
           arena_id: string | null
+          checkin_aberto_em: string | null
+          checkin_fechado_em: string | null
           checkin_realizado: boolean | null
           cliente_id: string | null
           created_at: string | null
+          criado_por_id: string | null
           data_agendamento: string
           data_checkin: string | null
           desconto_aplicado: number | null
+          e_recorrente: boolean | null
           hora_fim: string
           hora_inicio: string
           id: string
+          lembrete_enviado: boolean | null
           max_participantes: number | null
           modalidade: Database["public"]["Enums"]["tipo_esporte"]
+          notificacoes_enviadas: Json | null
           observacoes: string | null
           observacoes_internas: string | null
           participantes: Json | null
+          permite_checkin: boolean | null
           quadra_id: string | null
+          recorrencia_config: Json | null
           status: Database["public"]["Enums"]["status_agendamento"]
           status_pagamento: Database["public"]["Enums"]["status_pagamento"]
           tipo_agendamento: string
@@ -40,22 +49,31 @@ export type Database = {
           valor_total: number
         }
         Insert: {
+          agendamento_pai_id?: string | null
           arena_id?: string | null
+          checkin_aberto_em?: string | null
+          checkin_fechado_em?: string | null
           checkin_realizado?: boolean | null
           cliente_id?: string | null
           created_at?: string | null
+          criado_por_id?: string | null
           data_agendamento: string
           data_checkin?: string | null
           desconto_aplicado?: number | null
+          e_recorrente?: boolean | null
           hora_fim: string
           hora_inicio: string
           id?: string
+          lembrete_enviado?: boolean | null
           max_participantes?: number | null
           modalidade: Database["public"]["Enums"]["tipo_esporte"]
+          notificacoes_enviadas?: Json | null
           observacoes?: string | null
           observacoes_internas?: string | null
           participantes?: Json | null
+          permite_checkin?: boolean | null
           quadra_id?: string | null
+          recorrencia_config?: Json | null
           status?: Database["public"]["Enums"]["status_agendamento"]
           status_pagamento?: Database["public"]["Enums"]["status_pagamento"]
           tipo_agendamento?: string
@@ -64,22 +82,31 @@ export type Database = {
           valor_total?: number
         }
         Update: {
+          agendamento_pai_id?: string | null
           arena_id?: string | null
+          checkin_aberto_em?: string | null
+          checkin_fechado_em?: string | null
           checkin_realizado?: boolean | null
           cliente_id?: string | null
           created_at?: string | null
+          criado_por_id?: string | null
           data_agendamento?: string
           data_checkin?: string | null
           desconto_aplicado?: number | null
+          e_recorrente?: boolean | null
           hora_fim?: string
           hora_inicio?: string
           id?: string
+          lembrete_enviado?: boolean | null
           max_participantes?: number | null
           modalidade?: Database["public"]["Enums"]["tipo_esporte"]
+          notificacoes_enviadas?: Json | null
           observacoes?: string | null
           observacoes_internas?: string | null
           participantes?: Json | null
+          permite_checkin?: boolean | null
           quadra_id?: string | null
+          recorrencia_config?: Json | null
           status?: Database["public"]["Enums"]["status_agendamento"]
           status_pagamento?: Database["public"]["Enums"]["status_pagamento"]
           tipo_agendamento?: string
@@ -88,6 +115,13 @@ export type Database = {
           valor_total?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "agendamentos_agendamento_pai_id_fkey"
+            columns: ["agendamento_pai_id"]
+            isOneToOne: false
+            referencedRelation: "agendamentos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "agendamentos_arena_id_fkey"
             columns: ["arena_id"]
@@ -98,6 +132,13 @@ export type Database = {
           {
             foreignKeyName: "agendamentos_cliente_id_fkey"
             columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agendamentos_criado_por_id_fkey"
+            columns: ["criado_por_id"]
             isOneToOne: false
             referencedRelation: "usuarios"
             referencedColumns: ["id"]
@@ -232,19 +273,29 @@ export type Database = {
       }
       aulas: {
         Row: {
+          agendamento_id: string | null
           arena_id: string
+          checkin_config: Json | null
+          checkin_habilitado: boolean | null
+          conteudo_programatico: string | null
           created_at: string | null
           data_aula: string
+          data_realizacao: string | null
           descricao: string | null
           duracao_minutos: number
           hora_fim: string
           hora_inicio: string
           id: string
+          material_necessario: string | null
           max_alunos: number
+          min_alunos: number | null
           nivel: string | null
+          objetivos: string | null
           observacoes: string | null
+          presencas: Json | null
           professor_id: string
           quadra_id: string | null
+          realizada: boolean | null
           status: Database["public"]["Enums"]["status_aula"] | null
           tipo_aula: Database["public"]["Enums"]["tipo_aula"]
           titulo: string
@@ -252,19 +303,29 @@ export type Database = {
           valor_por_aluno: number
         }
         Insert: {
+          agendamento_id?: string | null
           arena_id: string
+          checkin_config?: Json | null
+          checkin_habilitado?: boolean | null
+          conteudo_programatico?: string | null
           created_at?: string | null
           data_aula: string
+          data_realizacao?: string | null
           descricao?: string | null
           duracao_minutos: number
           hora_fim: string
           hora_inicio: string
           id?: string
+          material_necessario?: string | null
           max_alunos?: number
+          min_alunos?: number | null
           nivel?: string | null
+          objetivos?: string | null
           observacoes?: string | null
+          presencas?: Json | null
           professor_id: string
           quadra_id?: string | null
+          realizada?: boolean | null
           status?: Database["public"]["Enums"]["status_aula"] | null
           tipo_aula: Database["public"]["Enums"]["tipo_aula"]
           titulo: string
@@ -272,19 +333,29 @@ export type Database = {
           valor_por_aluno: number
         }
         Update: {
+          agendamento_id?: string | null
           arena_id?: string
+          checkin_config?: Json | null
+          checkin_habilitado?: boolean | null
+          conteudo_programatico?: string | null
           created_at?: string | null
           data_aula?: string
+          data_realizacao?: string | null
           descricao?: string | null
           duracao_minutos?: number
           hora_fim?: string
           hora_inicio?: string
           id?: string
+          material_necessario?: string | null
           max_alunos?: number
+          min_alunos?: number | null
           nivel?: string | null
+          objetivos?: string | null
           observacoes?: string | null
+          presencas?: Json | null
           professor_id?: string
           quadra_id?: string | null
+          realizada?: boolean | null
           status?: Database["public"]["Enums"]["status_aula"] | null
           tipo_aula?: Database["public"]["Enums"]["tipo_aula"]
           titulo?: string
@@ -292,6 +363,13 @@ export type Database = {
           valor_por_aluno?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "aulas_agendamento_id_fkey"
+            columns: ["agendamento_id"]
+            isOneToOne: false
+            referencedRelation: "agendamentos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "aulas_arena_id_fkey"
             columns: ["arena_id"]
@@ -543,49 +621,67 @@ export type Database = {
           arena_id: string
           beneficios: Json | null
           created_at: string | null
+          data_cancelamento: string | null
           data_fim: string | null
           data_inicio: string
+          desconto_percentual: number | null
           descricao: string | null
           dia_vencimento: number
           id: string
+          motivo_cancelamento: string | null
+          numero_contrato: string | null
           observacoes: string | null
           status: Database["public"]["Enums"]["status_contrato"] | null
           tipo_contrato: Database["public"]["Enums"]["tipo_contrato"]
           updated_at: string | null
           usuario_id: string
           valor_mensal: number
+          valor_taxa_adesao: number | null
+          vendedor_id: string | null
         }
         Insert: {
           arena_id: string
           beneficios?: Json | null
           created_at?: string | null
+          data_cancelamento?: string | null
           data_fim?: string | null
           data_inicio: string
+          desconto_percentual?: number | null
           descricao?: string | null
           dia_vencimento: number
           id?: string
+          motivo_cancelamento?: string | null
+          numero_contrato?: string | null
           observacoes?: string | null
           status?: Database["public"]["Enums"]["status_contrato"] | null
           tipo_contrato: Database["public"]["Enums"]["tipo_contrato"]
           updated_at?: string | null
           usuario_id: string
           valor_mensal: number
+          valor_taxa_adesao?: number | null
+          vendedor_id?: string | null
         }
         Update: {
           arena_id?: string
           beneficios?: Json | null
           created_at?: string | null
+          data_cancelamento?: string | null
           data_fim?: string | null
           data_inicio?: string
+          desconto_percentual?: number | null
           descricao?: string | null
           dia_vencimento?: number
           id?: string
+          motivo_cancelamento?: string | null
+          numero_contrato?: string | null
           observacoes?: string | null
           status?: Database["public"]["Enums"]["status_contrato"] | null
           tipo_contrato?: Database["public"]["Enums"]["tipo_contrato"]
           updated_at?: string | null
           usuario_id?: string
           valor_mensal?: number
+          valor_taxa_adesao?: number | null
+          vendedor_id?: string | null
         }
         Relationships: [
           {
@@ -598,6 +694,13 @@ export type Database = {
           {
             foreignKeyName: "contratos_usuario_id_fkey"
             columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_vendedor_id_fkey"
+            columns: ["vendedor_id"]
             isOneToOne: false
             referencedRelation: "usuarios"
             referencedColumns: ["id"]
