@@ -40,10 +40,12 @@ export default function Financeiro() {
     enabled: !!user,
   });
 
-  const isSuperAdmin = userRoles?.some((r) => r.role === "super_admin");
+  const isSuperAdmin = userRoles?.some((r) => r.role === "super_admin") ?? false;
   
-  // Use filtered arena or user's arena
-  const effectiveArenaId = isSuperAdmin && selectedArenaFilter !== "all" ? selectedArenaFilter : arenaId;
+  // Use filtered arena or user's arena - default to arenaId if loading
+  const effectiveArenaId = isSuperAdmin && selectedArenaFilter !== "all" 
+    ? selectedArenaFilter 
+    : (arenaId || null);
 
   const { data: resumo } = useQuery({
     queryKey: ["resumo-financeiro", effectiveArenaId, selectedArenaFilter],
