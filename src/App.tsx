@@ -72,7 +72,7 @@ const App = () => (
             <Route
               path="/meu-financeiro"
               element={
-                <ProtectedRoute requiredRole="cliente">
+                <ProtectedRoute requiredRole="aluno">
                   <MeuFinanceiro />
                 </ProtectedRoute>
               }

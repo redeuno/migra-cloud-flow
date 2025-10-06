@@ -32,14 +32,14 @@ import {
 } from "@/components/ui/tooltip";
 
 const navItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["super_admin", "arena_admin", "staff"] },
-  { title: "Quadras", url: "/quadras", icon: SquareActivity, roles: ["super_admin", "arena_admin", "staff"] },
-  { title: "Agendamentos", url: "/agendamentos", icon: Calendar, roles: ["super_admin", "arena_admin", "staff", "cliente"] },
-  { title: "Clientes", url: "/clientes", icon: Users, roles: ["super_admin", "arena_admin", "staff"] },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["super_admin", "arena_admin", "funcionario"] },
+  { title: "Quadras", url: "/quadras", icon: SquareActivity, roles: ["super_admin", "arena_admin", "funcionario"] },
+  { title: "Agendamentos", url: "/agendamentos", icon: Calendar, roles: ["super_admin", "arena_admin", "funcionario", "aluno"] },
+  { title: "Clientes", url: "/clientes", icon: Users, roles: ["super_admin", "arena_admin", "funcionario"] },
   { title: "Financeiro", url: "/financeiro", icon: DollarSign, roles: ["super_admin", "arena_admin"] },
-  { title: "Meu Financeiro", url: "/meu-financeiro", icon: DollarSign, roles: ["cliente"] },
-  { title: "Aulas", url: "/aulas", icon: GraduationCap, roles: ["super_admin", "arena_admin", "staff", "professor"] },
-  { title: "Torneios", url: "/torneios", icon: Trophy, roles: ["super_admin", "arena_admin", "staff"] },
+  { title: "Meu Financeiro", url: "/meu-financeiro", icon: DollarSign, roles: ["aluno"] },
+  { title: "Aulas", url: "/aulas", icon: GraduationCap, roles: ["super_admin", "arena_admin", "funcionario", "professor"] },
+  { title: "Torneios", url: "/torneios", icon: Trophy, roles: ["super_admin", "arena_admin", "funcionario"] },
 ];
 
 const adminItems = [

@@ -3,7 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
-type AppRole = "super_admin" | "arena_admin" | "staff" | "professor" | "cliente";
+type AppRole = "super_admin" | "arena_admin" | "funcionario" | "professor" | "aluno";
 
 interface AuthContextType {
   user: User | null;
