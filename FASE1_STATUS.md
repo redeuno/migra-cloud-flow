@@ -1,7 +1,7 @@
 # STATUS DA FASE 1 - SISTEMA DE GESTÃO DE ARENAS
 
 **Data da Análise:** 2025-10-07  
-**Status Geral:** 90% Completo ✅
+**Status Geral:** 95% Completo ✅
 
 ---
 
@@ -56,33 +56,24 @@
 
 ---
 
-## ⚠️ PROBLEMAS IDENTIFICADOS E CORRIGIDOS
+## ✅ PROBLEMAS IDENTIFICADOS E CORRIGIDOS
 
 ### 1. ~~Dashboard Errado para Alunos~~ ✅ CORRIGIDO
 **Problema:** João da Silva via "Clientes Ativos: 2" (dashboard admin)  
 **Solução:** Criado `DashboardAluno.tsx` com dados personalizados  
 **Status:** ✅ Corrigido
 
-### 2. Dados Mockados no Financeiro
+### 2. ~~Dados Mockados no Financeiro~~ ✅ CORRIGIDO
 **Problema:** Mensalidades com `status_pagamento: 'pago'` mas `asaas_customer_id: NULL`  
 **Causa:** Dados de teste inseridos manualmente  
-**Impacto:** Confusão sobre pagamentos reais vs. mockados  
-**Status:** ⚠️ REQUER LIMPEZA
+**Solução:** Migration criada para deletar dados mockados + constraint para prevenir no futuro  
+**Status:** ✅ Corrigido
 
 ---
 
-## 🔧 CORREÇÕES PENDENTES (FASE 1.1)
+## 🔧 PRÓXIMO PASSO CRÍTICO (FASE 1.1)
 
-### 1. Limpar Dados de Teste Mockados
-**Ação Necessária:**
-```sql
--- Deletar mensalidades mockadas (sem asaas_customer_id)
-DELETE FROM mensalidades 
-WHERE status_pagamento = 'pago' 
-  AND asaas_customer_id IS NULL;
-```
-
-### 2. Testar Integração Asaas em AMBIENTE REAL
+### ⚠️ Testar Integração Asaas em AMBIENTE REAL
 **Checklist:**
 - [ ] Obter API Key do Asaas (Sandbox)
 - [ ] Configurar secret `ASAAS_API_KEY`
