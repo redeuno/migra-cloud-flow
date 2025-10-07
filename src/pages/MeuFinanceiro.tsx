@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Layout } from "@/components/Layout";
@@ -8,7 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CreditCard, FileText, History, Building2, ExternalLink, Copy } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CreditCard, FileText, History, Building2, ExternalLink, Copy, QrCode, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +18,11 @@ import { useToast } from "@/hooks/use-toast";
 export default function MeuFinanceiro() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedArena, setSelectedArena] = useState<string>("all");
+  const [formaPagamento, setFormaPagamento] = useState<"PIX" | "BOLETO" | "CREDIT_CARD">("PIX");
+  const [pixDialogOpen, setPixDialogOpen] = useState(false);
+  const [selectedPixData, setSelectedPixData] = useState<any>(null);
 
   // Buscar usuário e suas arenas
   const { data: usuario } = useQuery({
@@ -89,9 +95,59 @@ export default function MeuFinanceiro() {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
+  // Mutation para gerar cobrança
+  const gerarCobrancaMutation = useMutation({
+    mutationFn: async ({ mensalidade }: { mensalidade: any }) => {
+      const contrato = contratos?.find(c => c.id === mensalidade.contrato_id);
+      if (!contrato) throw new Error("Contrato não encontrado");
+
+      const { data, error } = await supabase.functions.invoke("asaas-cobranca", {
+        body: {
+          contratoId: mensalidade.contrato_id,
+          mensalidadeId: mensalidade.id,
+          valor: mensalidade.valor_final,
+          vencimento: mensalidade.data_vencimento,
+          clienteNome: usuario?.nome_completo,
+          clienteEmail: usuario?.email,
+          clienteCpf: usuario?.cpf,
+          formaPagamento,
+        },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Cobrança gerada!",
+        description: `Pagamento via ${formaPagamento} criado com sucesso`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["minhas-mensalidades"] });
+      
+      // Se for PIX, mostrar QR Code
+      if (formaPagamento === "PIX" && data.pixQrCode) {
+        setSelectedPixData(data);
+        setPixDialogOpen(true);
+      } else if (data.invoiceUrl) {
+        window.open(data.invoiceUrl, "_blank");
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao gerar cobrança",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: `${label} copiado!` });
+  };
+
+  const handleGerarCobranca = (mensalidade: any) => {
+    gerarCobrancaMutation.mutate({ mensalidade });
   };
 
   const mensalidadesPendentes = mensalidades?.filter(m => m.status_pagamento === "pendente") || [];
@@ -181,6 +237,20 @@ export default function MeuFinanceiro() {
           </TabsList>
 
           <TabsContent value="pendentes" className="space-y-4">
+            <div className="mb-4 flex items-center gap-4">
+              <label className="text-sm font-medium">Forma de pagamento:</label>
+              <Select value={formaPagamento} onValueChange={(value: any) => setFormaPagamento(value)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PIX">PIX (Instantâneo)</SelectItem>
+                  <SelectItem value="BOLETO">Boleto Bancário</SelectItem>
+                  <SelectItem value="CREDIT_CARD">Cartão de Crédito</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {loadingMensalidades ? (
               <div className="space-y-3">
                 <Skeleton className="h-24 w-full" />
@@ -224,40 +294,79 @@ export default function MeuFinanceiro() {
                       </div>
                     </div>
 
-                    {mens.asaas_invoice_url && (
-                      <div className="space-y-2 pt-4 border-t">
+                    <div className="space-y-2 pt-4 border-t">
+                      {!mens.asaas_invoice_url ? (
                         <Button
                           variant="default"
                           className="w-full"
-                          onClick={() => window.open(mens.asaas_invoice_url!, "_blank")}
+                          onClick={() => handleGerarCobranca(mens)}
+                          disabled={gerarCobrancaMutation.isPending}
                         >
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          Acessar Fatura Asaas
+                          {gerarCobrancaMutation.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Gerando...
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="mr-2 h-4 w-4" />
+                              Gerar Pagamento {formaPagamento}
+                            </>
+                          )}
                         </Button>
-
-                        {mens.pix_copy_paste && (
+                      ) : (
+                        <>
                           <Button
-                            variant="outline"
+                            variant="default"
                             className="w-full"
-                            onClick={() => copyToClipboard(mens.pix_copy_paste!, "PIX Copia e Cola")}
+                            onClick={() => window.open(mens.asaas_invoice_url!, "_blank")}
                           >
-                            <Copy className="mr-2 h-4 w-4" />
-                            Copiar PIX
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            Acessar Fatura Asaas
                           </Button>
-                        )}
 
-                        {mens.linha_digitavel && (
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => copyToClipboard(mens.linha_digitavel!, "Linha Digitável")}
-                          >
-                            <Copy className="mr-2 h-4 w-4" />
-                            Copiar Boleto
-                          </Button>
-                        )}
-                      </div>
-                    )}
+                          {mens.qr_code_pix && (
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => {
+                                setSelectedPixData({
+                                  pixQrCode: mens.qr_code_pix,
+                                  pixCopyPaste: mens.pix_copy_paste,
+                                  invoiceUrl: mens.asaas_invoice_url,
+                                });
+                                setPixDialogOpen(true);
+                              }}
+                            >
+                              <QrCode className="mr-2 h-4 w-4" />
+                              Ver QR Code PIX
+                            </Button>
+                          )}
+
+                          {mens.pix_copy_paste && (
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => copyToClipboard(mens.pix_copy_paste!, "PIX Copia e Cola")}
+                            >
+                              <Copy className="mr-2 h-4 w-4" />
+                              Copiar PIX
+                            </Button>
+                          )}
+
+                          {mens.linha_digitavel && (
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => copyToClipboard(mens.linha_digitavel!, "Linha Digitável")}
+                            >
+                              <Copy className="mr-2 h-4 w-4" />
+                              Copiar Boleto
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))
@@ -360,6 +469,59 @@ export default function MeuFinanceiro() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Dialog para mostrar QR Code PIX */}
+        <Dialog open={pixDialogOpen} onOpenChange={setPixDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Pagamento via PIX</DialogTitle>
+              <DialogDescription>
+                Escaneie o QR Code ou copie o código PIX abaixo
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {selectedPixData?.pixQrCode && (
+                <div className="flex justify-center p-4 bg-white rounded-lg">
+                  <img 
+                    src={selectedPixData.pixQrCode} 
+                    alt="QR Code PIX" 
+                    className="w-64 h-64"
+                  />
+                </div>
+              )}
+              
+              {selectedPixData?.pixCopyPaste && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Código PIX Copia e Cola:</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={selectedPixData.pixCopyPaste}
+                      readOnly
+                      className="flex-1 p-2 text-sm border rounded-md bg-muted"
+                    />
+                    <Button
+                      onClick={() => copyToClipboard(selectedPixData.pixCopyPaste, "Código PIX")}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {selectedPixData?.invoiceUrl && (
+                <Button
+                  className="w-full"
+                  onClick={() => window.open(selectedPixData.invoiceUrl, "_blank")}
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Abrir Página de Pagamento
+                </Button>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
