@@ -61,29 +61,21 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-              <Route 
-                path="/financeiro" 
-                element={
-                  <ProtectedRoute requiredRole="arena_admin">
-                    <Financeiro />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/meu-financeiro" 
-                element={
-                  <ProtectedRoute requiredRole="aluno">
-                    <MeuFinanceiro />
-                  </ProtectedRoute>
-                } 
-              />
-            <Route
-              path="/meu-financeiro"
+            <Route 
+              path="/financeiro" 
+              element={
+                <ProtectedRoute requiredRole="arena_admin">
+                  <Financeiro />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/meu-financeiro" 
               element={
                 <ProtectedRoute requiredRole="aluno">
                   <MeuFinanceiro />
                 </ProtectedRoute>
-              }
+              } 
             />
             <Route
               path="/aulas"
