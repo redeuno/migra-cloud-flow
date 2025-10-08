@@ -31,20 +31,28 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const navItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["super_admin", "arena_admin", "funcionario"] },
-  { title: "Quadras", url: "/quadras", icon: SquareActivity, roles: ["super_admin", "arena_admin", "funcionario"] },
-  { title: "Agendamentos", url: "/agendamentos", icon: Calendar, roles: ["super_admin", "arena_admin", "funcionario", "aluno"] },
-  { title: "Clientes", url: "/clientes", icon: Users, roles: ["super_admin", "arena_admin", "funcionario"] },
-  { title: "Financeiro", url: "/financeiro", icon: DollarSign, roles: ["super_admin", "arena_admin"] },
-  { title: "Meu Financeiro", url: "/meu-financeiro", icon: DollarSign, roles: ["aluno"] },
-  { title: "Aulas", url: "/aulas", icon: GraduationCap, roles: ["super_admin", "arena_admin", "funcionario", "professor"] },
-  { title: "Torneios", url: "/torneios", icon: Trophy, roles: ["super_admin", "arena_admin", "funcionario"] },
+// Menu para Super Admin (visão global do sistema)
+const superAdminItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["super_admin"] },
+  { title: "Arenas", url: "/arenas", icon: Building2, roles: ["super_admin"] },
+  { title: "Financeiro", url: "/financeiro", icon: DollarSign, roles: ["super_admin"] },
+  { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin"] },
 ];
 
-const adminItems = [
-  { title: "Arenas", url: "/arenas", icon: Building2, roles: ["super_admin"] },
-  { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin", "arena_admin"] },
+// Menu para Arena Admin e Staff (visão da arena)
+const arenaNavItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["arena_admin", "funcionario"] },
+  { title: "Quadras", url: "/quadras", icon: SquareActivity, roles: ["arena_admin", "funcionario"] },
+  { title: "Agendamentos", url: "/agendamentos", icon: Calendar, roles: ["arena_admin", "funcionario", "aluno"] },
+  { title: "Clientes", url: "/clientes", icon: Users, roles: ["arena_admin", "funcionario"] },
+  { title: "Financeiro", url: "/financeiro", icon: DollarSign, roles: ["arena_admin"] },
+  { title: "Meu Financeiro", url: "/meu-financeiro", icon: DollarSign, roles: ["aluno"] },
+  { title: "Aulas", url: "/aulas", icon: GraduationCap, roles: ["arena_admin", "funcionario", "professor"] },
+  { title: "Torneios", url: "/torneios", icon: Trophy, roles: ["arena_admin", "funcionario"] },
+];
+
+const arenaAdminItems = [
+  { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["arena_admin"] },
 ];
 
 export function AppSidebar() {
@@ -57,16 +65,14 @@ export function AppSidebar() {
     return userRoles.some(role => allowedRoles.includes(role));
   };
 
+  // Determinar qual menu exibir baseado na role
+  const isSuperAdmin = userRoles.includes("super_admin");
+  
+  const navItems = isSuperAdmin ? superAdminItems : arenaNavItems;
+  const adminItems = isSuperAdmin ? [] : arenaAdminItems;
+
   const filteredNavItems = navItems.filter(item => hasAccess(item.roles));
   const filteredAdminItems = adminItems.filter(item => hasAccess(item.roles));
-
-  // Verificar se a rota atual está no grupo principal ou admin
-  const isMainGroupActive = filteredNavItems.some(item => 
-    item.url === "/" ? location.pathname === "/" : location.pathname.startsWith(item.url)
-  );
-  const isAdminGroupActive = filteredAdminItems.some(item => 
-    location.pathname.startsWith(item.url)
-  );
 
   const getNavClass = (isActive: boolean) =>
     isActive
@@ -92,7 +98,7 @@ export function AppSidebar() {
       <SidebarContent>
         <TooltipProvider delayDuration={0}>
           <SidebarGroup>
-            <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+            <SidebarGroupLabel>{isSuperAdmin ? "Sistema" : "Menu Principal"}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {filteredNavItems.map((item) => (
