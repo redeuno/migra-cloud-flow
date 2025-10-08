@@ -9,9 +9,11 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export default function DashboardAluno() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Buscar dados do usuário
   const { data: usuario } = useQuery({

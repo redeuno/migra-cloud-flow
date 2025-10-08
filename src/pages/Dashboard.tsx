@@ -9,9 +9,11 @@ import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const { user, userRoles, arenaId } = useAuth();
+  const navigate = useNavigate();
 
   // Query para estatísticas
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -59,24 +61,28 @@ export default function Dashboard() {
           value: String(todayCount || 0),
           icon: Calendar,
           description: todayCount ? `${todayCount} agendamento${todayCount > 1 ? 's' : ''}` : "Nenhum agendamento",
+          onClick: () => navigate("/agendamentos"),
         },
         {
           title: "Receita do Mês",
           value: `R$ ${totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
           icon: DollarSign,
           description: "Pagamentos confirmados",
+          onClick: () => navigate("/financeiro"),
         },
         {
           title: "Clientes Ativos",
           value: String(clientsCount || 0),
           icon: Users,
           description: `${clientsCount || 0} cliente${(clientsCount || 0) !== 1 ? 's' : ''} cadastrado${(clientsCount || 0) !== 1 ? 's' : ''}`,
+          onClick: () => navigate("/clientes"),
         },
         {
           title: "Quadras Ativas",
           value: String(courtsCount || 0),
           icon: SquareActivity,
           description: `${courtsCount || 0} quadra${(courtsCount || 0) !== 1 ? 's' : ''} disponíve${(courtsCount || 0) !== 1 ? 'is' : 'l'}`,
+          onClick: () => navigate("/quadras"),
         },
       ];
     },
@@ -245,7 +251,11 @@ export default function Dashboard() {
           ))
         ) : (
           stats?.map((stat) => (
-            <Card key={stat.title}>
+            <Card 
+              key={stat.title}
+              className="cursor-pointer hover:bg-accent/50 transition-colors"
+              onClick={stat.onClick}
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {stat.title}

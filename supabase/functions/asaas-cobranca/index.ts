@@ -61,10 +61,24 @@ serve(async (req) => {
       formaPagamento,
     });
 
+    // Sanitizar e validar CPF/CNPJ
+    const cpfCnpj = clienteCpf.replace(/\D/g, '');
+    
+    if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
+      console.error("CPF/CNPJ inválido:", cpfCnpj);
+      return new Response(
+        JSON.stringify({ 
+          error: "CPF/CNPJ inválido. Deve conter 11 ou 14 dígitos numéricos.",
+          details: { cpf_cnpj: clienteCpf, sanitized: cpfCnpj }
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Verificar se cliente já existe no Asaas
     let customerId = null;
     const searchResponse = await fetch(
-      `${BASE_URL}/customers?cpfCnpj=${clienteCpf}`,
+      `${BASE_URL}/customers?cpfCnpj=${cpfCnpj}`,
       {
         method: "GET",
         headers: {
@@ -95,7 +109,7 @@ serve(async (req) => {
           body: JSON.stringify({
             name: clienteNome,
             email: clienteEmail,
-            cpfCnpj: clienteCpf,
+            cpfCnpj: cpfCnpj,
           }),
         }
       );

@@ -69,7 +69,7 @@
 **Solução:** Migration criada para deletar dados mockados + constraint para prevenir no futuro  
 **Status:** ✅ Corrigido
 
-### 3. ~~Interface de Pagamento para Aluno~~ ✅ CORRIGIDO
+### 3. ~~Interface de Pagamento para Aluno~~ ✅ CORRIGIDO E SIMPLIFICADO
 **Problema:** Aluno não tinha como gerar pagamento em `/meu-financeiro`  
 **Solução:** 
 - Adicionado botão "Gerar Pagamento" com seleção de método (PIX/Boleto/Cartão)
@@ -93,16 +93,18 @@
 - Redirecionamento funcionando em Index.tsx
 - DashboardAluno.tsx sendo usado corretamente
 
-### ✅ 2. Interface de Pagamento Completa
-- Botão "Gerar Pagamento" em /meu-financeiro
-- Seleção de método de pagamento
-- PIX QR Code e Copy/Paste
-- Link de boleto Asaas
-- Cartão de crédito (via link Asaas)
+### ✅ 2. Interface de Pagamento Simplificada
+- Links diretos para Checkout Asaas (sandbox)
+- Link direto para Assinatura Recorrente (sandbox)
+- Integração com WhatsApp Web para envio de links
+- Cards clicáveis em MeuFinanceiro, DashboardAluno e Dashboard
+- Navegação rápida entre seções financeiras
 
 ### ✅ 3. Integração Asaas Funcional
-- API Key configurada
-- Edge Function `asaas-cobranca` testada
+- API Key configurada (Sandbox)
+- ASAAS_ENV configurado como "sandbox"
+- Links diretos implementados (Checkout + Assinatura)
+- Edge Function `asaas-cobranca` com validação de CPF/CNPJ
 - Edge Function `asaas-webhook` pronta
 - Edge Function `enviar-link-pagamento` pronta
 
@@ -178,11 +180,10 @@
 ### Financeiro (Aluno)
 - [x] Visualizar contratos
 - [x] Visualizar mensalidades pendentes
-- [x] **Gerar pagamento (PIX/Boleto/Cartão)**
-- [x] **QR Code PIX funcional**
-- [x] **Copy/Paste código PIX**
-- [x] **Link direto para boleto Asaas**
-- [x] Copiar PIX/Boleto (quando disponível)
+- [x] **Acesso direto ao Checkout Asaas**
+- [x] **Link de Assinatura Recorrente**
+- [x] **Enviar link via WhatsApp Web**
+- [x] **Cards clicáveis para navegação rápida**
 - [x] Histórico de pagamentos
 
 ### Financeiro (Admin)
@@ -195,24 +196,25 @@
 ### Integrações
 - [x] Asaas: API Key configurada (Sandbox)
 - [x] Asaas: Ambiente configurado (ASAAS_ENV=sandbox)
-- [x] Asaas: Interface de geração de cobrança
-- [x] Asaas: Edge Function `asaas-cobranca` implementada
-- [x] Asaas: Suporte a PIX, Boleto e Cartão via links
+- [x] Asaas: Links diretos de Checkout e Assinatura
+- [x] Asaas: Edge Function `asaas-cobranca` com validação CPF
 - [x] Asaas: Verificação de cliente existente (evita duplicatas)
 - [x] Asaas: Tratamento de erros aprimorado
+- [x] WhatsApp: Integração com WhatsApp Web para envio de links
 - [ ] Asaas: Teste de pagamento real (aguardando transação)
 - [ ] Asaas: Webhook funcional (aguardando callback real)
-- [ ] Evolution: Enviar WhatsApp (aguardando teste real)
 
 ---
 
 ## 🎯 RECOMENDAÇÃO FINAL
 
-**✅ Fase 1 Completa:** Todas as funcionalidades implementadas e testáveis  
-**⚠️ Testes Pendentes:** Pagamento real + webhook Asaas + envio WhatsApp  
+**✅ Fase 1 Completa:** Sistema simplificado usando links diretos do Asaas  
+**✅ UX Aprimorada:** Cards clicáveis em todos os dashboards para navegação rápida  
+**✅ WhatsApp:** Integração via WhatsApp Web funcionando  
+**⚠️ Testes Pendentes:** Pagamento real via Asaas + webhook  
 **🚀 Próximo Passo:** Definir prioridade da Fase 2 (Professores, Agendamentos ou Relatórios)
 
 ---
 
-**Última Atualização:** 2025-10-07  
+**Última Atualização:** 2025-10-08  
 **Responsável:** Sistema de Gestão de Arenas
