@@ -1,0 +1,40 @@
+import { Layout } from "@/components/Layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RelatoriosFinanceiros } from "@/components/financeiro/RelatoriosFinanceiros";
+import { RelatorioAgendamentos } from "@/components/relatorios/RelatorioAgendamentos";
+import { RelatorioClientes } from "@/components/relatorios/RelatorioClientes";
+
+export default function Relatorios() {
+  return (
+    <Layout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Relatórios</h1>
+          <p className="text-muted-foreground">
+            Visualize estatísticas e indicadores do seu negócio
+          </p>
+        </div>
+
+        <Tabs defaultValue="financeiro" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+            <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>
+            <TabsTrigger value="clientes">Clientes</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="financeiro" className="space-y-4">
+            <RelatoriosFinanceiros />
+          </TabsContent>
+
+          <TabsContent value="agendamentos" className="space-y-4">
+            <RelatorioAgendamentos />
+          </TabsContent>
+
+          <TabsContent value="clientes" className="space-y-4">
+            <RelatorioClientes />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </Layout>
+  );
+}
