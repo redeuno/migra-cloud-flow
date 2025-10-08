@@ -284,14 +284,14 @@ export default function DashboardSuperAdmin() {
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Dashboard Super Admin</h2>
-            <p className="text-muted-foreground">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard Super Admin</h2>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Visão geral do sistema e métricas globais
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="outline" size="icon" onClick={() => {
@@ -328,8 +328,8 @@ export default function DashboardSuperAdmin() {
           </div>
         </div>
 
-      {/* Cards de Métricas */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Cards de Métricas - Mobile First */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {statsLoading ? (
           Array.from({ length: 6 }).map((_, i) => (
             <Card key={i}>
@@ -373,15 +373,15 @@ export default function DashboardSuperAdmin() {
         )}
       </div>
 
-      {/* Gráficos */}
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Gráficos - Mobile First com altura mínima */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Evolução de Arenas */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle>Evolução de Arenas</CardTitle>
             <CardDescription>Últimos 6 meses (acumulado)</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[350px]">
             {loadingEvolution ? (
               <Skeleton className="h-[300px] w-full" />
             ) : (
@@ -415,12 +415,12 @@ export default function DashboardSuperAdmin() {
         </Card>
 
         {/* Receita Mensal */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle>Receita Mensal</CardTitle>
             <CardDescription>Últimos 6 meses</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[350px]">
             {loadingRevenue ? (
               <Skeleton className="h-[300px] w-full" />
             ) : (
@@ -453,12 +453,12 @@ export default function DashboardSuperAdmin() {
         </Card>
 
         {/* Distribuição por Plano */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle>Distribuição por Plano</CardTitle>
             <CardDescription>Assinaturas ativas</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[350px]">
             {loadingPlans ? (
               <Skeleton className="h-[300px] w-full" />
             ) : plansDistribution && plansDistribution.length > 0 ? (
@@ -502,12 +502,12 @@ export default function DashboardSuperAdmin() {
         </Card>
 
         {/* Top 5 Arenas */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle>Top 5 Arenas</CardTitle>
             <CardDescription>Por valor de assinatura</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[350px]">
             {loadingTopArenas ? (
               <Skeleton className="h-[300px] w-full" />
             ) : topArenas && topArenas.length > 0 ? (

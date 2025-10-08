@@ -103,3 +103,19 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Garantir z-index alto para dropdowns */
+  [role="menu"],
+  [role="listbox"],
+  [data-radix-popper-content-wrapper] {
+    @apply z-50;
+  }
+  
+  /* Garantir background nos dropdowns */
+  .dropdown-content,
+  [data-radix-select-content],
+  [data-radix-dropdown-menu-content] {
+    @apply bg-popover border-border;
+  }
+}

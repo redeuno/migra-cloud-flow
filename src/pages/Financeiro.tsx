@@ -131,14 +131,14 @@ export default function Financeiro() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Financeiro</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Financeiro</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Gerencie as finanças {isSuperAdmin ? "do sistema" : "da sua arena"}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {isSuperAdmin && (
               <ArenaSelector 
                 value={selectedArenaFilter} 

@@ -17,8 +17,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Eye, DollarSign } from "lucide-react";
+import { MoreHorizontal, Pencil, Eye, DollarSign, Building2 } from "lucide-react";
 import { AssinaturaArenaDialog } from "./AssinaturaArenaDialog";
+import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -83,25 +84,33 @@ export function AssinaturasArenaTable() {
 
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Número</TableHead>
-              <TableHead>Arena</TableHead>
-              <TableHead>Plano</TableHead>
-              <TableHead>Valor Mensal</TableHead>
-              <TableHead>Dia Vencimento</TableHead>
-              <TableHead>Início</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="min-w-[100px]">Número</TableHead>
+              <TableHead className="min-w-[150px]">Arena</TableHead>
+              <TableHead className="min-w-[100px]">Plano</TableHead>
+              <TableHead className="min-w-[120px]">Valor Mensal</TableHead>
+              <TableHead className="min-w-[120px]">Dia Vencimento</TableHead>
+              <TableHead className="min-w-[100px]">Início</TableHead>
+              <TableHead className="min-w-[80px]">Status</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {assinaturas?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  Nenhuma assinatura encontrada
+                <TableCell colSpan={8}>
+                  <EmptyState
+                    icon={Building2}
+                    title="Nenhuma assinatura encontrada"
+                    description="As arenas ainda não possuem assinaturas ativas. Crie a primeira assinatura para começar."
+                    action={{
+                      label: "Criar Assinatura",
+                      onClick: () => setDialogOpen(true),
+                    }}
+                  />
                 </TableCell>
               </TableRow>
             ) : (

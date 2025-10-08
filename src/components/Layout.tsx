@@ -30,10 +30,12 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <SidebarInset className="flex-1">
-          <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background px-4 lg:px-6">
-            <div className="flex items-center gap-4">
+          <header className="sticky top-0 z-10 flex h-14 sm:h-16 items-center justify-between border-b bg-background px-4 lg:px-6">
+            <div className="flex items-center gap-2 sm:gap-4">
               <SidebarTrigger />
-              <AppBreadcrumb />
+              <div className="hidden sm:block">
+                <AppBreadcrumb />
+              </div>
             </div>
 
             <div className="flex items-center gap-4">

@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Copy, QrCode } from "lucide-react";
+import { ExternalLink, Copy, QrCode, FileText } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -55,25 +56,29 @@ export function FaturasSistemaTable() {
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Número</TableHead>
-            <TableHead>Arena</TableHead>
-            <TableHead>Competência</TableHead>
-            <TableHead>Vencimento</TableHead>
-            <TableHead>Valor</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Pagamento</TableHead>
+            <TableHead className="min-w-[120px]">Número</TableHead>
+            <TableHead className="min-w-[150px]">Arena</TableHead>
+            <TableHead className="min-w-[100px]">Competência</TableHead>
+            <TableHead className="min-w-[110px]">Vencimento</TableHead>
+            <TableHead className="min-w-[100px]">Valor</TableHead>
+            <TableHead className="min-w-[90px]">Status</TableHead>
+            <TableHead className="min-w-[120px]">Pagamento</TableHead>
             <TableHead className="w-[150px]">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {faturas?.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground">
-                Nenhuma fatura encontrada
+              <TableCell colSpan={8}>
+                <EmptyState
+                  icon={FileText}
+                  title="Nenhuma fatura encontrada"
+                  description="Ainda não há faturas geradas no sistema. As faturas serão criadas automaticamente com base nas assinaturas ativas."
+                />
               </TableCell>
             </TableRow>
           ) : (
