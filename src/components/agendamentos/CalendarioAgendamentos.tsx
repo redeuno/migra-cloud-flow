@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CalendarioAgendamentosProps {
   onSelectSlot: (quadraId: string, data: Date, hora: string) => void;
@@ -26,6 +27,7 @@ export function CalendarioAgendamentos({
 }: CalendarioAgendamentosProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedQuadra, setSelectedQuadra] = useState<string>("all");
+  const isMobile = useIsMobile();
 
   const weekStart = startOfWeek(currentDate, { locale: ptBR });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -91,6 +93,116 @@ export function CalendarioAgendamentos({
     ? quadras 
     : quadras?.filter(q => q.id === selectedQuadra);
 
+  // Vista mobile: lista de agendamentos
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {/* Controles Mobile */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentDate(addDays(currentDate, -7))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentDate(new Date())}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              Hoje
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentDate(addDays(currentDate, 7))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="text-center font-medium text-sm">
+            {format(weekStart, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+            {format(addDays(weekStart, 6), "dd/MM/yyyy", { locale: ptBR })}
+          </div>
+
+          <select
+            value={selectedQuadra}
+            onChange={(e) => setSelectedQuadra(e.target.value)}
+            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+          >
+            <option value="all">Todas as quadras</option>
+            {quadras?.map((q) => (
+              <option key={q.id} value={q.id}>
+                Quadra {q.numero} - {q.nome}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Lista de Agendamentos por Dia */}
+        <div className="space-y-4">
+          {weekDays.map((dia) => {
+            const agendamentosDia = agendamentos?.filter(
+              (ag) => isSameDay(new Date(ag.data_agendamento), dia)
+            );
+
+            return (
+              <Card key={dia.toISOString()} className="overflow-hidden">
+                <div className={cn(
+                  "p-3 border-b font-medium",
+                  isSameDay(dia, new Date()) && "bg-primary/10"
+                )}>
+                  <div className="text-sm">
+                    {format(dia, "EEEE", { locale: ptBR })}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {format(dia, "dd/MM/yyyy")}
+                  </div>
+                </div>
+                
+                <div className="p-3 space-y-2">
+                  {agendamentosDia && agendamentosDia.length > 0 ? (
+                    agendamentosDia.map((ag) => (
+                      <div
+                        key={ag.id}
+                        onClick={() => onSelectAgendamento(ag.id)}
+                        className={cn(
+                          "p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors",
+                          getStatusColor(ag.status)
+                        )}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium text-sm">
+                            {ag.hora_inicio.substring(0, 5)} - {ag.hora_fim.substring(0, 5)}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {ag.status}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Quadra {ag.quadras?.numero} • {ag.usuarios?.nome_completo || "Cliente"}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-sm text-muted-foreground">
+                      Nenhum agendamento
+                    </div>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Vista desktop: grid
   return (
     <div className="space-y-4">
       {/* Controles */}
