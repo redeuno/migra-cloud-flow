@@ -149,7 +149,7 @@ serve(async (req) => {
 
     console.log(`${tipoCobranca} ${registro.id} atualizada para: ${novoStatus}`);
 
-    // Se o pagamento foi confirmado, criar movimentação financeira
+    // Se o pagamento foi confirmado, criar movimentação financeira e reativar arena
     if (deveCriarMovimentacao && novoStatus === "pago") {
       if (tipoCobranca === "mensalidade") {
         // Para mensalidades: criar receita na arena
@@ -181,8 +181,24 @@ serve(async (req) => {
             console.log("Movimentação financeira criada com sucesso");
           }
         }
+      } else if (tipoCobranca === "fatura_sistema") {
+        // Para fatura_sistema: reativar arena
+        console.log("Reativando arena após pagamento da fatura do sistema");
+        
+        const { error: arenaUpdateError } = await supabaseClient
+          .from("arenas")
+          .update({ 
+            status: "ativo",
+            data_vencimento: payment.dueDate || new Date(new Date().getTime() + 30*24*60*60*1000).toISOString().split("T")[0]
+          })
+          .eq("id", registro.arena_id);
+
+        if (arenaUpdateError) {
+          console.error("Erro ao reativar arena:", arenaUpdateError);
+        } else {
+          console.log(`Arena ${registro.arena_id} reativada com sucesso`);
+        }
       }
-      // Para faturas_sistema: não criar movimentação (é pagamento da arena para o Super Admin)
     }
 
     // Enviar para webhook externo do usuário

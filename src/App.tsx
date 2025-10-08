@@ -17,6 +17,7 @@ import Aulas from "./pages/Aulas";
 import Torneios from "./pages/Torneios";
 import Arenas from "./pages/Arenas";
 import Configuracoes from "./pages/Configuracoes";
+import ArenaSuspensa from "./pages/ArenaSuspensa";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/arena-suspensa" element={<ArenaSuspensa />} />
             <Route
               path="/"
               element={

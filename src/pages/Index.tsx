@@ -3,9 +3,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import Dashboard from "./Dashboard";
 import DashboardAluno from "./DashboardAluno";
 import DashboardSuperAdmin from "./DashboardSuperAdmin";
+import { useArenaStatus } from "@/hooks/useArenaStatus";
 
 const Index = () => {
   const { hasRole } = useAuth();
+  
+  // Verificar status da arena (exceto para super_admin)
+  useArenaStatus();
 
   // Super admin vê dashboard global
   if (hasRole("super_admin")) {

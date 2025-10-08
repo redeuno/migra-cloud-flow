@@ -1,17 +1,39 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building2, DollarSign, Users, Calendar, AlertTriangle, TrendingUp } from "lucide-react";
+import { Building2, DollarSign, Users, Calendar, AlertTriangle, TrendingUp, Download, Filter, HelpCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from "recharts";
 import { useNavigate } from "react-router-dom";
-import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { format, subMonths, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useExportData } from "@/hooks/useExportData";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
 
 export default function DashboardSuperAdmin() {
   const navigate = useNavigate();
+  const { exportToCSV } = useExportData();
+  const [periodo, setPeriodo] = useState<"7d" | "30d" | "90d" | "1y">("30d");
+
+  // Atalhos de teclado
+  useKeyboardShortcuts({
+    new: () => navigate("/arenas"),
+    search: () => document.querySelector<HTMLInputElement>('input[type="search"]')?.focus(),
+    help: () => {
+      toast({
+        title: "Atalhos de Teclado",
+        description: "Ctrl+N: Nova Arena • Ctrl+H: Home • Ctrl+A: Arenas • Ctrl+F: Financeiro • ?: Ajuda",
+      });
+    },
+  });
 
   // Query para estatísticas globais
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -247,14 +269,64 @@ export default function DashboardSuperAdmin() {
     'hsl(var(--chart-5))',
   ];
 
+  // Calcular data inicial baseado no período
+  const getDataInicio = () => {
+    const hoje = new Date();
+    switch (periodo) {
+      case "7d": return subDays(hoje, 7);
+      case "30d": return subDays(hoje, 30);
+      case "90d": return subDays(hoje, 90);
+      case "1y": return subDays(hoje, 365);
+      default: return subDays(hoje, 30);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard Super Admin</h2>
-        <p className="text-muted-foreground">
-          Visão geral do sistema e métricas globais
-        </p>
-      </div>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Dashboard Super Admin</h2>
+            <p className="text-muted-foreground">
+              Visão geral do sistema e métricas globais
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={() => {
+                  toast({
+                    title: "Atalhos de Teclado",
+                    description: "Ctrl+N: Nova Arena • Ctrl+H: Home • Ctrl+A: Arenas • Ctrl+F: Financeiro",
+                  });
+                }}>
+                  <HelpCircle className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Atalhos de teclado (Ctrl+?)</TooltipContent>
+            </Tooltip>
+            <Select value={periodo} onValueChange={(v: any) => setPeriodo(v)}>
+              <SelectTrigger className="w-[130px]">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                <SelectItem value="90d">Últimos 90 dias</SelectItem>
+                <SelectItem value="1y">Último ano</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={() => {
+              if (stats) {
+                exportToCSV(stats, "metricas_dashboard");
+              }
+            }}>
+              <Download className="mr-2 h-4 w-4" />
+              Exportar
+            </Button>
+          </div>
+        </div>
 
       {/* Cards de Métricas */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -273,24 +345,30 @@ export default function DashboardSuperAdmin() {
           ))
         ) : (
           stats?.map((stat) => (
-            <Card 
-              key={stat.title}
-              className="cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={stat.onClick}
-            >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {stat.title}
-                </CardTitle>
-                <stat.icon className="h-4 w-4" style={{ color: stat.color }} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
-              </CardContent>
-            </Card>
+            <Tooltip key={stat.title}>
+              <TooltipTrigger asChild>
+                <Card 
+                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={stat.onClick}
+                >
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      {stat.title}
+                    </CardTitle>
+                    <stat.icon className="h-4 w-4" style={{ color: stat.color }} />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stat.value}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stat.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Clique para ver detalhes</p>
+              </TooltipContent>
+            </Tooltip>
           ))
         )}
       </div>
@@ -464,5 +542,6 @@ export default function DashboardSuperAdmin() {
         </Card>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
