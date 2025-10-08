@@ -9,6 +9,9 @@ import {
   Trophy,
   Settings,
   Building2,
+  BarChart3,
+  BookOpen,
+  Wallet,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -35,14 +38,16 @@ const superAdminItems = [
 
 // Menu para Arena Admin e Staff (visão da arena)
 const arenaNavItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["arena_admin", "funcionario"] },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["arena_admin", "funcionario", "aluno"] },
   { title: "Quadras", url: "/quadras", icon: SquareActivity, roles: ["arena_admin", "funcionario"] },
   { title: "Agendamentos", url: "/agendamentos", icon: Calendar, roles: ["arena_admin", "funcionario", "aluno"] },
   { title: "Clientes", url: "/clientes", icon: Users, roles: ["arena_admin", "funcionario"] },
   { title: "Financeiro", url: "/financeiro", icon: DollarSign, roles: ["arena_admin"] },
-  { title: "Meu Financeiro", url: "/meu-financeiro", icon: DollarSign, roles: ["aluno"] },
+  { title: "Meu Financeiro", url: "/meu-financeiro", icon: Wallet, roles: ["aluno"] },
   { title: "Aulas", url: "/aulas", icon: GraduationCap, roles: ["arena_admin", "funcionario", "professor"] },
-  { title: "Torneios", url: "/torneios", icon: Trophy, roles: ["arena_admin", "funcionario"] },
+  { title: "Minhas Aulas", url: "/minhas-aulas", icon: BookOpen, roles: ["aluno"] },
+  { title: "Torneios", url: "/torneios", icon: Trophy, roles: ["arena_admin", "funcionario", "aluno"] },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["arena_admin"] },
 ];
 
 const arenaAdminItems = [

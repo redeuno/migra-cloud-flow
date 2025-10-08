@@ -1,7 +1,9 @@
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfiguracoesEvolution } from "@/components/configuracoes/ConfiguracoesEvolution";
+import { ConfiguracoesGerais } from "@/components/configuracoes/ConfiguracoesGerais";
+import { ConfiguracoesHorarios } from "@/components/configuracoes/ConfiguracoesHorarios";
+import { ConfiguracoesPagamentos } from "@/components/configuracoes/ConfiguracoesPagamentos";
 
 export default function Configuracoes() {
   return (
@@ -23,19 +25,7 @@ export default function Configuracoes() {
           </TabsList>
 
           <TabsContent value="geral" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Em Construção</CardTitle>
-                <CardDescription>
-                  Esta seção está em desenvolvimento
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Em breve você poderá configurar informações gerais da arena aqui.
-                </p>
-              </CardContent>
-            </Card>
+            <ConfiguracoesGerais />
           </TabsContent>
 
           <TabsContent value="evolution" className="space-y-4">
@@ -43,35 +33,11 @@ export default function Configuracoes() {
           </TabsContent>
 
           <TabsContent value="horarios" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Em Construção</CardTitle>
-                <CardDescription>
-                  Esta seção está em desenvolvimento
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Em breve você poderá configurar horários de funcionamento aqui.
-                </p>
-              </CardContent>
-            </Card>
+            <ConfiguracoesHorarios />
           </TabsContent>
 
           <TabsContent value="pagamentos" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Em Construção</CardTitle>
-                <CardDescription>
-                  Esta seção está em desenvolvimento
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Em breve você poderá configurar formas de pagamento aqui.
-                </p>
-              </CardContent>
-            </Card>
+            <ConfiguracoesPagamentos />
           </TabsContent>
         </Tabs>
       </div>

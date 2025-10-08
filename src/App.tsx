@@ -19,6 +19,8 @@ import Arenas from "./pages/Arenas";
 import Configuracoes from "./pages/Configuracoes";
 import ConfiguracoesSistema from "./pages/ConfiguracoesSistema";
 import ArenaSuspensa from "./pages/ArenaSuspensa";
+import Relatorios from "./pages/Relatorios";
+import MinhasAulas from "./pages/MinhasAulas";
 
 const queryClient = new QueryClient();
 
@@ -117,6 +119,22 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="super_admin">
                   <ConfiguracoesSistema />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/relatorios"
+              element={
+                <ProtectedRoute>
+                  <Relatorios />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/minhas-aulas"
+              element={
+                <ProtectedRoute requiredRole="aluno">
+                  <MinhasAulas />
                 </ProtectedRoute>
               }
             />
