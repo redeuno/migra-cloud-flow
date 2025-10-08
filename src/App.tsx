@@ -17,6 +17,7 @@ import Aulas from "./pages/Aulas";
 import Torneios from "./pages/Torneios";
 import Arenas from "./pages/Arenas";
 import Configuracoes from "./pages/Configuracoes";
+import ConfiguracoesSistema from "./pages/ConfiguracoesSistema";
 import ArenaSuspensa from "./pages/ArenaSuspensa";
 
 const queryClient = new QueryClient();
@@ -108,6 +109,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Configuracoes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/configuracoes-sistema"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <ConfiguracoesSistema />
                 </ProtectedRoute>
               }
             />

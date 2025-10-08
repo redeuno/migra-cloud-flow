@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -36,22 +36,33 @@ export function AssinaturaArenaDialog({ open, onOpenChange, assinatura }: Assina
 
   const form = useForm<AssinaturaArenaFormData>({
     resolver: zodResolver(assinaturaArenaSchema),
-    defaultValues: assinatura
-      ? {
-          arena_id: assinatura.arena_id,
-          plano_sistema_id: assinatura.plano_sistema_id || "",
-          data_inicio: assinatura.data_inicio,
-          data_fim: assinatura.data_fim || "",
-          dia_vencimento: assinatura.dia_vencimento,
-          valor_mensal: assinatura.valor_mensal,
-          status: assinatura.status,
-        }
-      : {
-          dia_vencimento: 5,
-          valor_mensal: 0,
-          status: "ativo",
-        },
+    defaultValues: {
+      dia_vencimento: 5,
+      valor_mensal: 0,
+      status: "ativo",
+    },
   });
+
+  // Atualizar form quando assinatura mudar
+  useEffect(() => {
+    if (assinatura && open) {
+      form.reset({
+        arena_id: assinatura.arena_id,
+        plano_sistema_id: assinatura.plano_sistema_id || "",
+        data_inicio: assinatura.data_inicio,
+        data_fim: assinatura.data_fim || "",
+        dia_vencimento: assinatura.dia_vencimento,
+        valor_mensal: assinatura.valor_mensal,
+        status: assinatura.status,
+      });
+    } else if (!assinatura && open) {
+      form.reset({
+        dia_vencimento: 5,
+        valor_mensal: 0,
+        status: "ativo",
+      });
+    }
+  }, [assinatura, open, form]);
 
   // Buscar arenas
   const { data: arenas } = useQuery({
