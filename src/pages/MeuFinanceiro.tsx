@@ -133,9 +133,23 @@ export default function MeuFinanceiro() {
       }
     },
     onError: (error: any) => {
+      console.error("Erro ao gerar cobrança:", error);
+      
+      // Tentar extrair mensagem de erro detalhada
+      let errorMessage = "Não foi possível gerar o pagamento. Tente novamente.";
+      
+      if (error?.message) {
+        try {
+          const errorData = JSON.parse(error.message);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
-        title: "Erro ao gerar cobrança",
-        description: error.message,
+        title: "Erro ao gerar pagamento",
+        description: errorMessage,
         variant: "destructive",
       });
     },

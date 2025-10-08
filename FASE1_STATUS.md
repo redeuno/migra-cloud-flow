@@ -193,9 +193,13 @@
 - [x] Visualizar relatórios
 
 ### Integrações
-- [x] Asaas: API Key configurada
+- [x] Asaas: API Key configurada (Sandbox)
+- [x] Asaas: Ambiente configurado (ASAAS_ENV=sandbox)
 - [x] Asaas: Interface de geração de cobrança
 - [x] Asaas: Edge Function `asaas-cobranca` implementada
+- [x] Asaas: Suporte a PIX, Boleto e Cartão via links
+- [x] Asaas: Verificação de cliente existente (evita duplicatas)
+- [x] Asaas: Tratamento de erros aprimorado
 - [ ] Asaas: Teste de pagamento real (aguardando transação)
 - [ ] Asaas: Webhook funcional (aguardando callback real)
 - [ ] Evolution: Enviar WhatsApp (aguardando teste real)

@@ -25,9 +25,18 @@ serve(async (req) => {
 
   try {
     const ASAAS_API_KEY = Deno.env.get("ASAAS_API_KEY");
+    const ASAAS_ENV = Deno.env.get("ASAAS_ENV") || "production";
+    
     if (!ASAAS_API_KEY) {
       throw new Error("ASAAS_API_KEY não configurado");
     }
+
+    // Definir BASE_URL baseado no ambiente
+    const BASE_URL = ASAAS_ENV === "sandbox" 
+      ? "https://sandbox.asaas.com/api/v3"
+      : "https://api.asaas.com/v3";
+
+    console.log(`[ASAAS] Ambiente: ${ASAAS_ENV}, Base URL: ${BASE_URL}`);
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -49,37 +58,62 @@ serve(async (req) => {
       valor,
       vencimento,
       clienteEmail,
+      formaPagamento,
     });
 
-    // Criar ou obter cliente no Asaas
-    const customerResponse = await fetch(
-      "https://api.asaas.com/v3/customers",
+    // Verificar se cliente já existe no Asaas
+    let customerId = null;
+    const searchResponse = await fetch(
+      `${BASE_URL}/customers?cpfCnpj=${clienteCpf}`,
       {
-        method: "POST",
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
           access_token: ASAAS_API_KEY,
         },
-        body: JSON.stringify({
-          name: clienteNome,
-          email: clienteEmail,
-          cpfCnpj: clienteCpf,
-        }),
       }
     );
 
-    if (!customerResponse.ok) {
-      const errorText = await customerResponse.text();
-      console.error("Erro ao criar cliente Asaas:", errorText);
-      throw new Error(`Erro ao criar cliente: ${errorText}`);
+    if (searchResponse.ok) {
+      const searchData = await searchResponse.json();
+      if (searchData.data && searchData.data.length > 0) {
+        customerId = searchData.data[0].id;
+        console.log("Cliente existente encontrado:", customerId);
+      }
     }
 
-    const customer = await customerResponse.json();
-    console.log("Cliente Asaas criado/encontrado:", customer.id);
+    // Criar cliente se não existir
+    if (!customerId) {
+      const customerResponse = await fetch(
+        `${BASE_URL}/customers`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            access_token: ASAAS_API_KEY,
+          },
+          body: JSON.stringify({
+            name: clienteNome,
+            email: clienteEmail,
+            cpfCnpj: clienteCpf,
+          }),
+        }
+      );
+
+      if (!customerResponse.ok) {
+        const errorText = await customerResponse.text();
+        console.error("Erro ao criar cliente Asaas:", errorText);
+        throw new Error(`Erro ao criar cliente: ${errorText}`);
+      }
+
+      const customer = await customerResponse.json();
+      customerId = customer.id;
+      console.log("Cliente Asaas criado:", customerId);
+    }
 
     // Criar cobrança com suporte a PIX e outros métodos
     const paymentData: any = {
-      customer: customer.id,
+      customer: customerId,
       billingType: formaPagamento,
       dueDate: vencimento,
       value: valor,
@@ -93,7 +127,7 @@ serve(async (req) => {
     }
 
     const paymentResponse = await fetch(
-      "https://api.asaas.com/v3/payments",
+      `${BASE_URL}/payments`,
       {
         method: "POST",
         headers: {
@@ -117,7 +151,7 @@ serve(async (req) => {
     let pixQrCodeData: any = null;
     if (formaPagamento === "PIX" && payment.id) {
       const pixResponse = await fetch(
-        `https://api.asaas.com/v3/payments/${payment.id}/pixQrCode`,
+        `${BASE_URL}/payments/${payment.id}/pixQrCode`,
         {
           method: "GET",
           headers: {
@@ -136,7 +170,7 @@ serve(async (req) => {
     // Atualizar mensalidade no Supabase com TODOS os dados do Asaas
     const updateData: any = {
       asaas_payment_id: payment.id,
-      asaas_customer_id: customer.id,
+      asaas_customer_id: customerId,
       asaas_invoice_url: payment.invoiceUrl,
       linha_digitavel: payment.identificationField || null,
       qr_code_pix: pixQrCodeData?.encodedImage || null,
@@ -165,7 +199,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         asaasId: payment.id,
-        customerId: customer.id,
+        customerId: customerId,
         invoiceUrl: payment.invoiceUrl,
         bankSlipUrl: payment.bankSlipUrl,
         linhaDigitavel: payment.identificationField,
