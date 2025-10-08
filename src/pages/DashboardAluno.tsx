@@ -1,6 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, CreditCard, FileText, TrendingUp } from "lucide-react";
+import { Calendar, CreditCard, FileText, TrendingUp, MessageSquare } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,10 +10,30 @@ import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 export default function DashboardAluno() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Links diretos Asaas (sandbox)
+  const ASAAS_CHECKOUT_LINK = "https://sandbox.asaas.com/c/damx27mcxowumc0k";
+  const ASAAS_SUBSCRIPTION_LINK = "https://sandbox.asaas.com/c/24rc47o7jxuw17g9";
+
+  const handlePagarAgora = (link: string) => {
+    window.open(link, '_blank');
+  };
+
+  const handleEnviarWhatsApp = (mensalidade: any, tipo: 'avulso' | 'recorrente' = 'avulso') => {
+    const link = tipo === 'recorrente' ? ASAAS_SUBSCRIPTION_LINK : ASAAS_CHECKOUT_LINK;
+    const tipoTexto = tipo === 'recorrente' ? 'assinatura recorrente' : 'pagamento avulso';
+    const mensagem = `Olá! Aqui está o link para ${tipoTexto} da mensalidade de ${format(new Date(mensalidade.referencia), 'MMMM/yyyy', { locale: ptBR })}: ${link}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
+    toast({
+      title: "WhatsApp aberto",
+      description: "Compartilhe o link de pagamento",
+    });
+  };
 
   // Buscar dados do usuário
   const { data: usuario } = useQuery({
@@ -106,7 +126,10 @@ export default function DashboardAluno() {
 
       {/* Cards de Resumo */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card 
+          className="cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => navigate('/meu-financeiro?tab=contratos')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Contratos Ativos</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -118,14 +141,17 @@ export default function DashboardAluno() {
               <>
                 <div className="text-2xl font-bold">{contratos?.length || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  {contratos?.length === 1 ? "contrato ativo" : "contratos ativos"}
+                  Clique para ver detalhes
                 </p>
               </>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => navigate('/agendamentos')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Próximos Agendamentos</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -137,14 +163,17 @@ export default function DashboardAluno() {
               <>
                 <div className="text-2xl font-bold">{proximosAgendamentos?.length || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  agendamentos futuros
+                  Clique para ver agenda
                 </p>
               </>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => navigate('/meu-financeiro?tab=pendentes')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Mensalidades Pendentes</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -241,26 +270,53 @@ export default function DashboardAluno() {
                 className="py-8"
               />
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {mensalidadesPendentes.map((mens: any) => (
-                  <div key={mens.id} className="flex items-center justify-between border-b pb-3 last:border-0">
-                    <div>
-                      <p className="font-medium">
-                        {mens.contratos?.tipo_contrato?.replace("_", " ")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Vence em {format(new Date(mens.data_vencimento), "dd/MM/yyyy", { locale: ptBR })}
-                      </p>
+                  <div key={mens.id} className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div>
+                        <p className="font-medium">
+                          {mens.contratos?.tipo_contrato?.replace("_", " ")}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Vence em {format(new Date(mens.data_vencimento), "dd/MM/yyyy", { locale: ptBR })}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">R$ {Number(mens.valor_final).toFixed(2)}</p>
+                        <Badge variant="secondary">Pendente</Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold">R$ {Number(mens.valor_final).toFixed(2)}</p>
-                      <Badge variant="secondary">Pendente</Badge>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button 
+                        onClick={() => handlePagarAgora(ASAAS_CHECKOUT_LINK)}
+                        size="sm"
+                        className="w-full"
+                      >
+                        <CreditCard className="h-3 w-3 mr-1" />
+                        À vista
+                      </Button>
+                      <Button 
+                        onClick={() => handlePagarAgora(ASAAS_SUBSCRIPTION_LINK)}
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                      >
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Recorrente
+                      </Button>
+                      <Button 
+                        onClick={() => handleEnviarWhatsApp(mens, 'avulso')}
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                      >
+                        <MessageSquare className="h-3 w-3 mr-1" />
+                        WhatsApp
+                      </Button>
                     </div>
                   </div>
                 ))}
-                <Button className="w-full mt-4" asChild>
-                  <a href="/meu-financeiro">Ver Todas</a>
-                </Button>
               </div>
             )}
           </CardContent>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CreditCard, Receipt, Send } from "lucide-react";
+import { CreditCard, Receipt, Send, Calendar, MessageSquare } from "lucide-react";
 import { useState } from "react";
 
 export default function MeuFinanceiro() {
@@ -84,17 +84,18 @@ export default function MeuFinanceiro() {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const handlePagarAgora = () => {
-    window.open(ASAAS_CHECKOUT_LINK, "_blank");
+  const handlePagarAgora = (link: string) => {
+    window.open(link, "_blank");
   };
 
-  const handleEnviarWhatsApp = (link: string) => {
-    const mensagem = `Olá! Segue o link para pagamento da sua mensalidade: ${link}`;
-    const whatsappUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
-    window.open(whatsappUrl, "_blank");
+  const handleEnviarWhatsApp = (mensalidade: any, tipo: 'avulso' | 'recorrente' = 'avulso') => {
+    const link = tipo === 'recorrente' ? ASAAS_SUBSCRIPTION_LINK : ASAAS_CHECKOUT_LINK;
+    const tipoTexto = tipo === 'recorrente' ? 'assinatura recorrente' : 'pagamento avulso';
+    const mensagem = `Olá! Aqui está o link para ${tipoTexto} da mensalidade de ${format(new Date(mensalidade.referencia), 'MMMM/yyyy', { locale: ptBR })}: ${link}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
     toast({
       title: "WhatsApp aberto",
-      description: "O link foi preparado para envio",
+      description: "Compartilhe o link de pagamento",
     });
   };
 
@@ -215,18 +216,32 @@ export default function MeuFinanceiro() {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={handlePagarAgora}>
+                    <div className="flex flex-col gap-2">
+                      <Button 
+                        size="sm" 
+                        onClick={() => handlePagarAgora(ASAAS_CHECKOUT_LINK)}
+                        className="w-full"
+                      >
                         <CreditCard className="mr-2 h-4 w-4" />
-                        Pagar Agora
+                        Pagar à vista
                       </Button>
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => handleEnviarWhatsApp(ASAAS_CHECKOUT_LINK)}
+                        onClick={() => handlePagarAgora(ASAAS_SUBSCRIPTION_LINK)}
+                        className="w-full"
                       >
-                        <Send className="mr-2 h-4 w-4" />
-                        WhatsApp
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Assinar recorrente
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleEnviarWhatsApp(mens, 'avulso')}
+                        className="w-full"
+                      >
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Enviar por WhatsApp
                       </Button>
                     </div>
                   </CardContent>

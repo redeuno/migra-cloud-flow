@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,9 +20,24 @@ import { ArenaSelector } from "@/components/financeiro/ArenaSelector";
 
 export default function Financeiro() {
   const { arenaId, user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [movimentacaoDialogOpen, setMovimentacaoDialogOpen] = useState(false);
   const [assinaturaDialogOpen, setAssinaturaDialogOpen] = useState(false);
   const [selectedArenaFilter, setSelectedArenaFilter] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState("contratos");
+
+  // Ler query params na inicialização
+  useEffect(() => {
+    const arenaParam = searchParams.get("arena");
+    const tabParam = searchParams.get("tab");
+    
+    if (arenaParam) {
+      setSelectedArenaFilter(arenaParam);
+    }
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Verificar se é Super Admin
   const { data: userRoles } = useQuery({
@@ -129,119 +145,131 @@ export default function Financeiro() {
                 onChange={setSelectedArenaFilter} 
               />
             )}
-            <Button onClick={() => setMovimentacaoDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Movimentação
-            </Button>
+            {!isSuperAdmin && (
+              <Button onClick={() => setMovimentacaoDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Nova Movimentação
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Cards de Resumo */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Receitas do Mês</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                R$ {resumo?.receitas.toFixed(2) || "0.00"}
-              </div>
-            </CardContent>
-          </Card>
+        {!isSuperAdmin && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Receitas do Mês</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  R$ {resumo?.receitas.toFixed(2) || "0.00"}
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Despesas do Mês</CardTitle>
-              <TrendingDown className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                R$ {resumo?.despesas.toFixed(2) || "0.00"}
-              </div>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Despesas do Mês</CardTitle>
+                <TrendingDown className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  R$ {resumo?.despesas.toFixed(2) || "0.00"}
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Saldo</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${(resumo?.saldo || 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
-                R$ {resumo?.saldo.toFixed(2) || "0.00"}
-              </div>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Saldo</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${(resumo?.saldo || 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
+                  R$ {resumo?.saldo.toFixed(2) || "0.00"}
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Contratos Ativos</CardTitle>
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{resumo?.contratosAtivos || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                R$ {resumo?.valorPendente.toFixed(2) || "0.00"} pendente
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Contratos Ativos</CardTitle>
+                <AlertCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{resumo?.contratosAtivos || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  R$ {resumo?.valorPendente.toFixed(2) || "0.00"} pendente
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Tabs de Conteúdo */}
-        <Tabs defaultValue="contratos" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
-            <TabsTrigger value="contratos">Contratos</TabsTrigger>
-            <TabsTrigger value="mensalidades">Mensalidades</TabsTrigger>
-            <TabsTrigger value="movimentacoes">Movimentações</TabsTrigger>
-            <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
+            {!isSuperAdmin && (
+              <>
+                <TabsTrigger value="contratos">Contratos</TabsTrigger>
+                <TabsTrigger value="mensalidades">Mensalidades</TabsTrigger>
+                <TabsTrigger value="movimentacoes">Movimentações</TabsTrigger>
+                <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
+              </>
+            )}
             {isSuperAdmin && (
               <>
                 <TabsTrigger value="assinaturas">
                   <Building2 className="mr-2 h-4 w-4" />
                   Assinaturas Arena
                 </TabsTrigger>
-                <TabsTrigger value="faturas-sistema">Faturas Sistema</TabsTrigger>
+                <TabsTrigger value="faturas">Faturas Sistema</TabsTrigger>
               </>
             )}
           </TabsList>
 
-          <TabsContent value="contratos" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Contratos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ContratosTable />
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {!isSuperAdmin && (
+            <>
+              <TabsContent value="contratos" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Contratos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ContratosTable />
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          <TabsContent value="mensalidades" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Mensalidades</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <MensalidadesTable />
-              </CardContent>
-            </Card>
-          </TabsContent>
+              <TabsContent value="mensalidades" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Mensalidades</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MensalidadesTable />
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          <TabsContent value="movimentacoes" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Movimentações Financeiras</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <MovimentacoesTable />
-              </CardContent>
-            </Card>
-          </TabsContent>
+              <TabsContent value="movimentacoes" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Movimentações Financeiras</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MovimentacoesTable />
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-          <TabsContent value="relatorios" className="space-y-4">
-            <RelatoriosFinanceiros />
-          </TabsContent>
+              <TabsContent value="relatorios" className="space-y-4">
+                <RelatoriosFinanceiros />
+              </TabsContent>
+            </>
+          )}
 
           {isSuperAdmin && (
             <>
@@ -260,7 +288,7 @@ export default function Financeiro() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="faturas-sistema" className="space-y-4">
+              <TabsContent value="faturas" className="space-y-4">
                 <Card>
                   <CardHeader>
                     <CardTitle>Faturas do Sistema</CardTitle>
