@@ -144,7 +144,7 @@ serve(async (req) => {
       console.log('Role arena_admin set');
     }
 
-    // 4. Corrigir role do Bruno
+    // 4. Corrigir role do Bruno (remover arena_admin e limpar arena_id)
     const { data: brunoUsuario } = await supabaseAdmin
       .from('usuarios')
       .select('auth_id')
@@ -152,15 +152,22 @@ serve(async (req) => {
       .single();
 
     if (brunoUsuario?.auth_id) {
-      const { error: deleteRoleError } = await supabaseAdmin
+      // Remover role arena_admin
+      await supabaseAdmin
         .from('user_roles')
         .delete()
         .eq('user_id', brunoUsuario.auth_id)
         .eq('role', 'arena_admin');
 
-      if (!deleteRoleError) {
+      // Limpar arena_id (super_admin não deve ter arena_id)
+      const { error: updateError } = await supabaseAdmin
+        .from('usuarios')
+        .update({ arena_id: null })
+        .eq('email', BRUNO_EMAIL);
+
+      if (!updateError) {
         summary.brunoRoleFixed = true;
-        console.log('Bruno role fixed');
+        console.log('Bruno role fixed and arena_id cleared');
       }
     }
 
