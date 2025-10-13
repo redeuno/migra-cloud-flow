@@ -43,49 +43,53 @@ serve(async (req) => {
       aulasCreated: 0
     };
 
-    // 1. Obter ou criar usuário no Auth
+    // 1. Obter ou criar usuário no Auth (não falhar se já existir)
     let authUserId: string | null = null;
-    
-    const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password: 'Admin123!',
-      email_confirm: true,
-      user_metadata: { nome_completo: 'Admin Arena Verana' }
-    });
 
-    if (createError) {
-      if (createError.message.includes('already registered')) {
-        console.log('User already exists, finding by email...');
-        
-        // Procurar usuário existente
-        let found = false;
-        let page = 1;
-        
-        while (!found && page < 10) {
-          const { data: listData } = await supabaseAdmin.auth.admin.listUsers({
-            page,
-            perPage: 1000
-          });
-          
-          const existingUser = listData?.users?.find(u => u.email === email);
-          if (existingUser) {
-            authUserId = existingUser.id;
-            found = true;
-            console.log('Found existing user:', authUserId);
-          } else {
-            page++;
-          }
+    // Helper para buscar usuário por e-mail
+    const findUserByEmail = async (targetEmail: string): Promise<string | null> => {
+      let page = 1;
+      while (page <= 10) {
+        const { data: listData, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+        if (listErr) {
+          console.log('listUsers error (ignored):', listErr.message);
+          break;
         }
-        
-        if (!found) {
-          throw new Error('User exists in Auth but could not be located');
+        const match = listData?.users?.find((u) => u.email?.toLowerCase() === targetEmail.toLowerCase());
+        if (match) return match.id;
+        if (!listData || (listData.users?.length ?? 0) < 1000) break; // reached the end
+        page++;
+      }
+      return null;
+    };
+
+    // Primeiro tenta localizar
+    authUserId = await findUserByEmail(email);
+
+    if (!authUserId) {
+      const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: 'Admin123!',
+        email_confirm: true,
+        user_metadata: { nome_completo: 'Admin Arena Verana' }
+      });
+
+      if (createError) {
+        const msg = String(createError.message || '').toLowerCase();
+        const code = (createError as any)?.code;
+        const status = (createError as any)?.status;
+        if (status === 422 || code === 'email_exists' || (msg.includes('already') && msg.includes('registered'))) {
+          console.log('User already exists, searching by email...');
+          authUserId = await findUserByEmail(email);
+        } else {
+          throw createError;
         }
       } else {
-        throw createError;
+        authUserId = createData.user.id;
+        console.log('Created new auth user:', authUserId);
       }
     } else {
-      authUserId = createData.user.id;
-      console.log('Created new auth user:', authUserId);
+      console.log('Found existing auth user:', authUserId);
     }
 
     if (!authUserId) {
