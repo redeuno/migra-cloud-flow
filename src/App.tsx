@@ -21,6 +21,8 @@ import ConfiguracoesSistema from "./pages/ConfiguracoesSistema";
 import ArenaSuspensa from "./pages/ArenaSuspensa";
 import Relatorios from "./pages/Relatorios";
 import MinhasAulas from "./pages/MinhasAulas";
+import DashboardAluno from "./pages/DashboardAluno";
+import SetupArenaAdmin from "./pages/SetupArenaAdmin";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/arena-suspensa" element={<ArenaSuspensa />} />
+            <Route path="/setup-arena-admin" element={<SetupArenaAdmin />} />
             <Route
               path="/"
               element={
