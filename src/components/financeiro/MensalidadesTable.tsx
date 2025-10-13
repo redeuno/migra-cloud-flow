@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MoreHorizontal, ExternalLink, DollarSign, Copy, QrCode, CreditCard } from "lucide-react";
+import { MoreHorizontal, ExternalLink, DollarSign, Copy, QrCode, CreditCard, FileText, Eye, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format, parseISO } from "date-fns";
 import { MensalidadeDialog } from "./MensalidadeDialog";
@@ -21,6 +21,8 @@ export function MensalidadesTable() {
   const [selectedMensalidade, setSelectedMensalidade] = useState<any>(null);
   const [selectedPixData, setSelectedPixData] = useState<any>(null);
   const [formaPagamento, setFormaPagamento] = useState<"BOLETO" | "PIX" | "CREDIT_CARD">("PIX");
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedDetails, setSelectedDetails] = useState<any>(null);
 
   const { data: mensalidades, isLoading } = useQuery({
     queryKey: ["mensalidades", arenaId],
@@ -278,6 +280,19 @@ export function MensalidadesTable() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => {
+                      setSelectedDetails(mensalidade);
+                      setDetailsDialogOpen(true);
+                    }}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Ver Detalhes
+                    </DropdownMenuItem>
+                    {mensalidade.asaas_invoice_url && (
+                      <DropdownMenuItem onClick={() => window.open(mensalidade.asaas_invoice_url, "_blank")}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Baixar Boleto
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => handleEdit(mensalidade)}>
                       Editar
                     </DropdownMenuItem>
@@ -314,6 +329,84 @@ export function MensalidadesTable() {
         onOpenChange={setDialogOpen}
         mensalidade={selectedMensalidade}
       />
+
+      {/* Dialog de detalhes */}
+      <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Mensalidade</DialogTitle>
+            <DialogDescription>
+              Informações completas sobre o pagamento
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedDetails && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Cliente</label>
+                  <p className="text-sm">{selectedDetails.contratos?.usuarios?.nome_completo}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">CPF</label>
+                  <p className="text-sm">{selectedDetails.contratos?.usuarios?.cpf}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Contrato</label>
+                  <p className="text-sm">{selectedDetails.contratos?.numero_contrato}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Referência</label>
+                  <p className="text-sm">{formatDateSafe(selectedDetails.referencia, "MM/yyyy")}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Vencimento</label>
+                  <p className="text-sm">{formatDateSafe(selectedDetails.data_vencimento, "dd/MM/yyyy")}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Status</label>
+                  <div className="pt-1">{getStatusBadge(selectedDetails.status_pagamento, selectedDetails.data_vencimento)}</div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Valor Base</label>
+                  <p className="text-sm">R$ {selectedDetails.valor?.toFixed(2) || "0.00"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Desconto</label>
+                  <p className="text-sm">R$ {selectedDetails.desconto?.toFixed(2) || "0.00"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Acréscimo</label>
+                  <p className="text-sm">R$ {selectedDetails.acrescimo?.toFixed(2) || "0.00"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Valor Final</label>
+                  <p className="text-sm font-bold">R$ {selectedDetails.valor_final?.toFixed(2) || "0.00"}</p>
+                </div>
+                {selectedDetails.data_pagamento && (
+                  <>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Data Pagamento</label>
+                      <p className="text-sm">{formatDateSafe(selectedDetails.data_pagamento, "dd/MM/yyyy HH:mm")}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Forma Pagamento</label>
+                      <p className="text-sm uppercase">{selectedDetails.forma_pagamento || "—"}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              {selectedDetails.observacoes && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Observações</label>
+                  <p className="text-sm mt-1">{selectedDetails.observacoes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog para mostrar QR Code PIX */}
       <Dialog open={pixDialogOpen} onOpenChange={setPixDialogOpen}>

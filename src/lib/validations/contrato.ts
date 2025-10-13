@@ -19,6 +19,21 @@ export const contratoSchema = z.object({
   valor_taxa_adesao: z.coerce.number().min(0).optional(),
   desconto_percentual: z.coerce.number().min(0).max(100).optional(),
   beneficios: z.array(z.string()).optional(),
-});
+}).refine(
+  (data) => {
+    if (!data.data_fim) return true;
+    return new Date(data.data_fim) > new Date(data.data_inicio);
+  },
+  {
+    message: "Data de término deve ser posterior à data de início",
+    path: ["data_fim"],
+  }
+).refine(
+  (data) => data.valor_mensal > 0,
+  {
+    message: "Valor mensal deve ser maior que zero",
+    path: ["valor_mensal"],
+  }
+);
 
 export type ContratoFormData = z.infer<typeof contratoSchema>;

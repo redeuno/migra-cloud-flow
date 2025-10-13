@@ -29,6 +29,18 @@ export const agendamentoFormSchema = z.object({
     message: "Horário de término deve ser posterior ao de início",
     path: ["hora_fim"],
   }
+).refine(
+  (data) => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const dataAgendamento = new Date(data.data_agendamento);
+    dataAgendamento.setHours(0, 0, 0, 0);
+    return dataAgendamento >= hoje;
+  },
+  {
+    message: "Data do agendamento não pode ser no passado",
+    path: ["data_agendamento"],
+  }
 );
 
 export type AgendamentoFormData = z.infer<typeof agendamentoFormSchema>;

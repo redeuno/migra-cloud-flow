@@ -4,6 +4,24 @@
 
 Este documento descreve o sistema de permissões (roles) do Verana, um sistema multi-tenant para gestão de arenas de Beach Tennis.
 
+## 📖 Convenções de Nomenclatura
+
+### Cliente vs Aluno
+
+O sistema usa nomenclaturas diferentes dependendo do contexto para melhor experiência do usuário:
+
+- **"Cliente"**: Usado em contextos de agendamentos e serviços avulsos
+  - Exemplos: Agendamento de quadra, contratos, mensalidades
+  - Representa qualquer pessoa que contrata serviços da arena
+  - Labels: "Cliente", "Selecione um cliente"
+
+- **"Aluno"**: Usado em contextos educacionais (aulas)
+  - Exemplos: Aulas, presenças, turmas, avaliações
+  - Representa pessoas matriculadas em aulas regulares
+  - Labels: "Aluno", "Alunos inscritos", "Lista de alunos"
+
+**Importante**: Tecnicamente ambos são registrados como `tipo_usuario: "aluno"` na tabela `usuarios`, mas a interface usa labels diferentes conforme o contexto para melhor clareza e UX.
+
 ## 🎭 Roles Oficiais
 
 O sistema utiliza o enum `app_role` do PostgreSQL como fonte única da verdade:

@@ -5,6 +5,7 @@ import { Edit, Trash2, Users, Clock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,7 @@ interface AulasTableProps {
 export function AulasTable({ onEdit, onPresenca }: AulasTableProps) {
   const { arenaId } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [aulaToDelete, setAulaToDelete] = useState<string>();
 
@@ -179,7 +181,7 @@ export function AulasTable({ onEdit, onPresenca }: AulasTableProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => onPresenca(aula.id)}
+                        onClick={() => navigate(`/aulas/${aula.id}/presencas`)}
                         title="Gerenciar Presença"
                       >
                         <Users className="h-4 w-4" />

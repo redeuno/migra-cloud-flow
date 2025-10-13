@@ -23,6 +23,7 @@ import Relatorios from "./pages/Relatorios";
 import MinhasAulas from "./pages/MinhasAulas";
 import DashboardAluno from "./pages/DashboardAluno";
 import SetupArenaAdmin from "./pages/SetupArenaAdmin";
+import AulaPresencas from "./pages/AulaPresencas";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +91,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Aulas />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/aulas/:aulaId/presencas"
+              element={
+                <ProtectedRoute>
+                  <AulaPresencas />
                 </ProtectedRoute>
               }
             />
