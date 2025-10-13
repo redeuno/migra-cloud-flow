@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MoreHorizontal, ExternalLink, DollarSign, Copy, QrCode, CreditCard } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { MensalidadeDialog } from "./MensalidadeDialog";
 
 export function MensalidadesTable() {
@@ -167,6 +167,16 @@ export function MensalidadesTable() {
     setPixDialogOpen(true);
   };
 
+  const formatDateSafe = (dateStr: string, formatStr: string) => {
+    try {
+      const date = parseISO(dateStr);
+      if (isNaN(date.getTime())) return "—";
+      return format(date, formatStr);
+    } catch {
+      return "—";
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center p-8">Carregando...</div>;
   }
@@ -210,9 +220,9 @@ export function MensalidadesTable() {
                 </div>
               </TableCell>
               <TableCell>{mensalidade.contratos?.numero_contrato}</TableCell>
-              <TableCell>{format(new Date(mensalidade.referencia), "MM/yyyy")}</TableCell>
-              <TableCell>{format(new Date(mensalidade.data_vencimento), "dd/MM/yyyy")}</TableCell>
-              <TableCell>R$ {mensalidade.valor_final.toFixed(2)}</TableCell>
+              <TableCell>{formatDateSafe(mensalidade.referencia, "MM/yyyy")}</TableCell>
+              <TableCell>{formatDateSafe(mensalidade.data_vencimento, "dd/MM/yyyy")}</TableCell>
+              <TableCell>R$ {mensalidade.valor_final?.toFixed(2) || "0.00"}</TableCell>
               <TableCell>{getStatusBadge(mensalidade.status_pagamento, mensalidade.data_vencimento)}</TableCell>
               <TableCell>
                 <div className="flex flex-col gap-1">

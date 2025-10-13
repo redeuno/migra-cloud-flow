@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -54,6 +55,7 @@ export function AgendamentoDialog({
   defaultValues,
 }: AgendamentoDialogProps) {
   const queryClient = useQueryClient();
+  const { arenaId } = useAuth();
 
   const form = useForm<AgendamentoFormData>({
     resolver: zodResolver(agendamentoFormSchema),
@@ -80,15 +82,19 @@ export function AgendamentoDialog({
   });
 
   const { data: clientes } = useQuery({
-    queryKey: ["clientes-select"],
+    queryKey: ["clientes-select", arenaId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("usuarios")
         .select("id, nome_completo, email")
+        .eq("arena_id", arenaId)
+        .eq("status", "ativo")
+        .eq("tipo_usuario", "aluno")
         .order("nome_completo");
       if (error) throw error;
       return data;
     },
+    enabled: !!arenaId,
   });
 
   const { data: agendamento } = useQuery({
@@ -126,6 +132,7 @@ export function AgendamentoDialog({
   const saveMutation = useMutation({
     mutationFn: async (data: AgendamentoFormData) => {
       const payload = {
+        arena_id: arenaId,
         quadra_id: data.quadra_id,
         cliente_id: data.cliente_id || null,
         data_agendamento: format(data.data_agendamento, "yyyy-MM-dd"),
@@ -162,8 +169,8 @@ export function AgendamentoDialog({
       onOpenChange(false);
       form.reset();
     },
-    onError: (error) => {
-      toast.error("Erro ao salvar agendamento");
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao salvar agendamento");
       console.error(error);
     },
   });

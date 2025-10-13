@@ -23,6 +23,7 @@ export default function Clientes() {
         .from("usuarios")
         .select("*")
         .eq("arena_id", arenaId)
+        .eq("tipo_usuario", "aluno")
         .order("nome_completo", { ascending: true });
 
       if (error) throw error;
@@ -45,9 +46,9 @@ export default function Clientes() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Alunos / Clientes</h1>
             <p className="text-muted-foreground">
-              Gerencie os clientes cadastrados
+              Gerencie os alunos e clientes cadastrados
             </p>
           </div>
           <Button onClick={() => setDialogOpen(true)}>

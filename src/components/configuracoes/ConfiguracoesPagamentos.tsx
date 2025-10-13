@@ -78,6 +78,12 @@ export function ConfiguracoesPagamentos() {
           tipo_chave: formData.get("tipo_chave"),
         },
       },
+      contratos_padrao: {
+        valor_mensal_padrao: parseFloat(formData.get("valor_mensal_padrao") as string) || 150,
+        dia_vencimento_padrao: parseInt(formData.get("dia_vencimento_padrao") as string) || 10,
+        taxa_adesao_padrao: parseFloat(formData.get("taxa_adesao_padrao") as string) || 0,
+        desconto_percentual_padrao: parseFloat(formData.get("desconto_percentual_padrao") as string) || 0,
+      },
     };
 
     await updateMutation.mutateAsync(configuracoes);
@@ -236,6 +242,69 @@ export function ConfiguracoesPagamentos() {
                   name="chave_pix"
                   defaultValue={pixConfig?.chave_pix}
                   placeholder="Sua chave PIX"
+                />
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Padrões de Contratos */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Padrões de Contratos</h3>
+            <p className="text-sm text-muted-foreground">
+              Valores padrão para novos contratos
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="valor_mensal_padrao">Valor Mensal Padrão (R$)</Label>
+                <Input
+                  id="valor_mensal_padrao"
+                  name="valor_mensal_padrao"
+                  type="number"
+                  step="0.01"
+                  defaultValue={configData?.contratos_padrao?.valor_mensal_padrao || 150}
+                  placeholder="150.00"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dia_vencimento_padrao">Dia Vencimento Padrão</Label>
+                <Input
+                  id="dia_vencimento_padrao"
+                  name="dia_vencimento_padrao"
+                  type="number"
+                  min="1"
+                  max="28"
+                  defaultValue={configData?.contratos_padrao?.dia_vencimento_padrao || 10}
+                  placeholder="10"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="taxa_adesao_padrao">Taxa de Adesão Padrão (R$)</Label>
+                <Input
+                  id="taxa_adesao_padrao"
+                  name="taxa_adesao_padrao"
+                  type="number"
+                  step="0.01"
+                  defaultValue={configData?.contratos_padrao?.taxa_adesao_padrao || 0}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="desconto_percentual_padrao">Desconto Percentual Padrão (%)</Label>
+                <Input
+                  id="desconto_percentual_padrao"
+                  name="desconto_percentual_padrao"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  defaultValue={configData?.contratos_padrao?.desconto_percentual_padrao || 0}
+                  placeholder="0"
                 />
               </div>
             </div>

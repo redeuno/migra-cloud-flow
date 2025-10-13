@@ -59,12 +59,29 @@ export function ContratoDialog({ open, onOpenChange, contrato, preSelectedUsuari
         .select("id, nome_completo")
         .eq("arena_id", arenaId)
         .eq("status", "ativo")
+        .eq("tipo_usuario", "aluno")
         .order("nome_completo");
 
       if (error) throw error;
       return data;
     },
     enabled: !!arenaId && open,
+  });
+
+  // Buscar configurações da arena para defaults
+  const { data: arenaConfig } = useQuery({
+    queryKey: ["arena-config-contratos", arenaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("arenas")
+        .select("configuracoes")
+        .eq("id", arenaId)
+        .single();
+
+      if (error) throw error;
+      return data?.configuracoes || {};
+    },
+    enabled: !!arenaId && !contrato,
   });
 
   // Pre-select user if provided or from existing contract
@@ -75,6 +92,27 @@ export function ContratoDialog({ open, onOpenChange, contrato, preSelectedUsuari
       form.setValue("usuario_id", preSelectedUsuarioId);
     }
   }, [preSelectedUsuarioId, contrato, usuarios, form]);
+
+  // Pre-fill with arena defaults for new contracts
+  useEffect(() => {
+    if (!contrato && arenaConfig) {
+      const defaults = (arenaConfig as any)?.contratos_padrao;
+      if (defaults) {
+        if (defaults.valor_mensal_padrao) {
+          form.setValue("valor_mensal", defaults.valor_mensal_padrao);
+        }
+        if (defaults.dia_vencimento_padrao) {
+          form.setValue("dia_vencimento", defaults.dia_vencimento_padrao);
+        }
+        if (defaults.taxa_adesao_padrao !== undefined) {
+          form.setValue("valor_taxa_adesao", defaults.taxa_adesao_padrao);
+        }
+        if (defaults.desconto_percentual_padrao !== undefined) {
+          form.setValue("desconto_percentual", defaults.desconto_percentual_padrao);
+        }
+      }
+    }
+  }, [contrato, arenaConfig, form]);
 
   const mutation = useMutation({
     mutationFn: async (data: ContratoFormData) => {

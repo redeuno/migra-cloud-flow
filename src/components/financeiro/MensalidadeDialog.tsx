@@ -60,26 +60,31 @@ export function MensalidadeDialog({ open, onOpenChange, mensalidade }: Mensalida
     mutationFn: async (values: MensalidadeFormData) => {
       const valorFinal = values.valor - (values.desconto || 0) + (values.acrescimo || 0);
       
+      // Format referencia from YYYY-MM to YYYY-MM-01
+      const referenciaFormatted = values.referencia.includes('-01') 
+        ? values.referencia 
+        : `${values.referencia}-01`;
+
+      const payload = {
+        contrato_id: values.contrato_id!,
+        referencia: referenciaFormatted,
+        data_vencimento: values.data_vencimento,
+        valor: values.valor,
+        desconto: values.desconto || 0,
+        acrescimo: values.acrescimo || 0,
+        valor_final: valorFinal,
+        observacoes: values.observacoes,
+      };
+      
       if (mensalidade) {
         const { error } = await supabase
           .from("mensalidades")
-          .update(values)
+          .update(payload)
           .eq("id", mensalidade.id);
 
         if (error) throw error;
       } else {
-        const insertData = {
-          contrato_id: values.contrato_id!,
-          referencia: values.referencia,
-          data_vencimento: values.data_vencimento,
-          valor: values.valor,
-          desconto: values.desconto || 0,
-          acrescimo: values.acrescimo || 0,
-          valor_final: valorFinal,
-          observacoes: values.observacoes,
-        };
-        
-        const { error } = await supabase.from("mensalidades").insert([insertData]);
+        const { error } = await supabase.from("mensalidades").insert([payload]);
 
         if (error) throw error;
       }
@@ -98,9 +103,10 @@ export function MensalidadeDialog({ open, onOpenChange, mensalidade }: Mensalida
     onError: (error: any) => {
       toast({
         title: "Erro",
-        description: error.message,
+        description: error.message || "Erro ao salvar mensalidade",
         variant: "destructive",
       });
+      console.error("Erro ao salvar mensalidade:", error);
     },
   });
 

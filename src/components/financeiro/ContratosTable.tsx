@@ -23,10 +23,12 @@ import { ContratoDialog } from "./ContratoDialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 export function ContratosTable() {
   const { arenaId } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedContrato, setSelectedContrato] = useState<any>(null);
 
@@ -140,11 +142,11 @@ export function ContratosTable() {
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate("/financeiro?tab=mensalidades")}>
                           <Eye className="mr-2 h-4 w-4" />
                           Ver Mensalidades
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate("/financeiro?tab=mensalidades")}>
                           <DollarSign className="mr-2 h-4 w-4" />
                           Gerar Cobrança
                         </DropdownMenuItem>
