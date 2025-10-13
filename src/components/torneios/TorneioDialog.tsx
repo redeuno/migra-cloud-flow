@@ -15,14 +15,14 @@ import { toast } from "@/hooks/use-toast";
 const torneioSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
   descricao: z.string().optional(),
-  modalidade: z.enum(["beach_tennis", "futevolei", "volei"]),
-  tipo_chaveamento: z.enum(["eliminatoria_simples", "grupos_eliminatorias"]),
-  data_inicio: z.string(),
-  data_fim: z.string(),
-  data_inicio_inscricoes: z.string(),
-  data_fim_inscricoes: z.string(),
-  max_participantes: z.number().min(4),
-  valor_inscricao: z.number().min(0),
+  modalidade: z.enum(["beach_tennis", "futevolei", "padel", "tenis"]),
+  tipo_chaveamento: z.enum(["eliminacao_simples", "eliminacao_dupla", "round_robin", "suico"]),
+  data_inicio: z.string().min(1, "Data de início é obrigatória"),
+  data_fim: z.string().min(1, "Data de fim é obrigatória"),
+  data_inicio_inscricoes: z.string().min(1, "Data de início das inscrições é obrigatória"),
+  data_fim_inscricoes: z.string().min(1, "Data de fim das inscrições é obrigatória"),
+  max_participantes: z.number().min(4, "Mínimo de 4 participantes"),
+  valor_inscricao: z.number().min(0, "Valor não pode ser negativo"),
 });
 
 type TorneioFormData = z.infer<typeof torneioSchema>;
@@ -41,9 +41,13 @@ export function TorneioDialog({ open, onOpenChange, torneioId }: TorneioDialogPr
     resolver: zodResolver(torneioSchema),
     defaultValues: {
       modalidade: "beach_tennis",
-      tipo_chaveamento: "eliminatoria_simples",
+      tipo_chaveamento: "eliminacao_simples",
       max_participantes: 16,
       valor_inscricao: 0,
+      data_inicio: "",
+      data_fim: "",
+      data_inicio_inscricoes: "",
+      data_fim_inscricoes: "",
     },
   });
 
@@ -51,8 +55,17 @@ export function TorneioDialog({ open, onOpenChange, torneioId }: TorneioDialogPr
     mutationFn: async (data: TorneioFormData) => {
       const { error } = await supabase.from("torneios").insert([{
         arena_id: arenaId!,
-        ...data,
-        status: "planejamento",
+        nome: data.nome,
+        descricao: data.descricao,
+        modalidade: data.modalidade,
+        tipo_chaveamento: data.tipo_chaveamento,
+        data_inicio: data.data_inicio,
+        data_fim: data.data_fim,
+        data_inicio_inscricoes: data.data_inicio_inscricoes,
+        data_fim_inscricoes: data.data_fim_inscricoes,
+        max_participantes: data.max_participantes,
+        valor_inscricao: data.valor_inscricao,
+        status: "planejamento" as const,
       }]);
       if (error) throw error;
     },
@@ -89,7 +102,20 @@ export function TorneioDialog({ open, onOpenChange, torneioId }: TorneioDialogPr
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="descricao"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descrição</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} rows={3} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="modalidade"
@@ -105,7 +131,8 @@ export function TorneioDialog({ open, onOpenChange, torneioId }: TorneioDialogPr
                       <SelectContent>
                         <SelectItem value="beach_tennis">Beach Tennis</SelectItem>
                         <SelectItem value="futevolei">Futevôlei</SelectItem>
-                        <SelectItem value="volei">Vôlei</SelectItem>
+                        <SelectItem value="padel">Padel</SelectItem>
+                        <SelectItem value="tenis">Tênis</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -125,10 +152,105 @@ export function TorneioDialog({ open, onOpenChange, torneioId }: TorneioDialogPr
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="eliminatoria_simples">Eliminatória Simples</SelectItem>
-                        <SelectItem value="grupos_eliminatorias">Grupos + Eliminatórias</SelectItem>
+                        <SelectItem value="eliminacao_simples">Eliminação Simples</SelectItem>
+                        <SelectItem value="eliminacao_dupla">Eliminação Dupla</SelectItem>
+                        <SelectItem value="round_robin">Round Robin</SelectItem>
+                        <SelectItem value="suico">Sistema Suíço</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="data_inicio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data de Início *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="data_fim"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data de Fim *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="data_inicio_inscricoes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Início das Inscrições *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="data_fim_inscricoes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fim das Inscrições *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="max_participantes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Máx. Participantes *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field}
+                        onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="valor_inscricao"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor da Inscrição *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        step="0.01"
+                        {...field}
+                        onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
