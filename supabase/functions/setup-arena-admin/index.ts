@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,7 +44,7 @@ serve(async (req) => {
     };
 
     // 1. Obter ou criar usuário no Auth
-    let authUserId: string;
+    let authUserId: string | null = null;
     
     const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -86,6 +86,10 @@ serve(async (req) => {
     } else {
       authUserId = createData.user.id;
       console.log('Created new auth user:', authUserId);
+    }
+
+    if (!authUserId) {
+      throw new Error('Failed to get or create auth user');
     }
 
     // 2. Upsert em usuarios
