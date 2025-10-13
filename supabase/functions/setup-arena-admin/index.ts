@@ -186,7 +186,7 @@ serve(async (req) => {
         { nome: 'Quadra Central', numero: 1, tipo_esporte: 'beach_tennis', tipo_piso: 'areia', valor_hora_normal: 100, valor_hora_pico: 150, cobertura: true, iluminacao: true },
         { nome: 'Quadra Norte', numero: 2, tipo_esporte: 'beach_tennis', tipo_piso: 'areia', valor_hora_normal: 80, valor_hora_pico: 120, cobertura: false, iluminacao: true },
         { nome: 'Quadra Sul', numero: 3, tipo_esporte: 'beach_tennis', tipo_piso: 'areia', valor_hora_normal: 80, valor_hora_pico: 120, cobertura: false, iluminacao: false },
-        { nome: 'Quadra VIP', numero: 4, tipo_esporte: 'beach_tennis', tipo_piso: 'areia_premium', valor_hora_normal: 200, valor_hora_pico: 250, cobertura: true, iluminacao: true }
+        { nome: 'Quadra VIP', numero: 4, tipo_esporte: 'beach_tennis', tipo_piso: 'areia', valor_hora_normal: 200, valor_hora_pico: 250, cobertura: true, iluminacao: true }
       ];
 
       for (const quadra of quadras) {

@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Users, CheckCircle2, XCircle } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast as sonnerToast } from "sonner";
 
@@ -179,11 +179,18 @@ export function AulaPresencaDialog({ open, onOpenChange, aulaId }: AulaPresencaD
                       <div>
                         <p className="font-medium">{inscricao.usuarios?.nome_completo}</p>
                         <p className="text-xs text-muted-foreground">{inscricao.usuarios?.email}</p>
-                        {inscricao.data_checkin && (
-                          <p className="text-xs text-green-600">
-                            Check-in: {format(new Date(inscricao.data_checkin), "HH:mm", { locale: ptBR })}
-                          </p>
-                        )}
+                        {inscricao.data_checkin && (() => {
+                          try {
+                            const dt = parseISO(inscricao.data_checkin);
+                            return isValid(dt) ? (
+                              <p className="text-xs text-green-600">
+                                Check-in: {format(dt, "HH:mm", { locale: ptBR })}
+                              </p>
+                            ) : null;
+                          } catch {
+                            return null;
+                          }
+                        })()}
                       </div>
                     </div>
                     {presencas[inscricao.id] ? (
