@@ -101,7 +101,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {filteredNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
+                  <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
@@ -124,7 +124,7 @@ export function AppSidebar() {
               <SidebarMenu>
                 {filteredAdminItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
+                    <SidebarMenuButton asChild tooltip={item.title}>
                       <NavLink
                         to={item.url}
                         className={({ isActive }) => getNavClass(isActive)}

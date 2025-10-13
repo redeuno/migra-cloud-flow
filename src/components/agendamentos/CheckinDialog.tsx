@@ -77,7 +77,9 @@ export function CheckinDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agendamentos-calendario"] });
       queryClient.invalidateQueries({ queryKey: ["agendamentos-tabela"] });
-      toast.success("Check-in realizado com sucesso!");
+      toast.success("✅ Presença confirmada!", {
+        description: `${agendamento?.usuarios?.nome_completo} está registrado para este horário. O agendamento foi confirmado e está ativo.`,
+      });
       onOpenChange(false);
       setObservacoes("");
     },
@@ -122,8 +124,8 @@ export function CheckinDialog({
           </DialogTitle>
           <DialogDescription>
             {jaTemCheckin
-              ? "Este agendamento já teve check-in realizado"
-              : "Confirme a presença do cliente"}
+              ? "Este agendamento já teve check-in realizado. A presença do cliente foi registrada com sucesso."
+              : "Confirme a presença do cliente para registrar que ele compareceu neste horário"}
           </DialogDescription>
         </DialogHeader>
 

@@ -1,18 +1,23 @@
+import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar, Clock, User, CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 export default function MinhasAulas() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [checkinLoading, setCheckinLoading] = useState<string | null>(null);
 
   // Buscar ID do usuário
   const { data: usuario } = useQuery({
@@ -96,12 +101,48 @@ export default function MinhasAulas() {
     enabled: !!usuario?.id,
   });
 
+  const handleCheckin = async (inscricaoId: string) => {
+    setCheckinLoading(inscricaoId);
+    try {
+      const { error } = await supabase
+        .from("aulas_alunos")
+        .update({
+          presenca: true,
+          data_checkin: new Date().toISOString(),
+        })
+        .eq("id", inscricaoId);
+
+      if (error) throw error;
+
+      toast.success("Check-in realizado com sucesso!", {
+        description: "Sua presença foi registrada na aula.",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["minhas-aulas-proximas"] });
+    } catch (error: any) {
+      toast.error("Erro ao fazer check-in", {
+        description: error.message,
+      });
+    } finally {
+      setCheckinLoading(null);
+    }
+  };
+
   const renderAulaCard = (inscricao: any, showPresenca: boolean = false) => {
     const aula = inscricao?.aulas;
     if (!aula) return null;
 
     const professor = aula.professores?.usuarios?.nome_completo || "Professor não definido";
     const quadra = aula.quadras?.nome || "Quadra não definida";
+    
+    // Verificar se pode fazer check-in (30 min antes até hora da aula)
+    const agora = new Date();
+    const dataAula = new Date(aula.data_aula);
+    const [horaInicio, minInicio] = aula.hora_inicio.split(':');
+    const horarioAula = new Date(dataAula);
+    horarioAula.setHours(parseInt(horaInicio), parseInt(minInicio), 0);
+    const horarioCheckin = new Date(horarioAula.getTime() - 30 * 60000); // 30 min antes
+    const podeCheckin = !showPresenca && agora >= horarioCheckin && agora <= horarioAula && !inscricao.presenca;
 
     return (
       <Card key={inscricao.id} className="hover:bg-accent/50 transition-colors">
@@ -129,6 +170,11 @@ export default function MinhasAulas() {
                 )}
               </div>
             )}
+            {podeCheckin && (
+              <Badge className="bg-green-500/20 text-green-700 border-green-500/30">
+                Check-in disponível
+              </Badge>
+            )}
           </div>
 
           <div className="space-y-2 text-sm">
@@ -150,8 +196,8 @@ export default function MinhasAulas() {
             </div>
           </div>
 
-          {inscricao.status_pagamento && (
-            <div className="mt-4 pt-4 border-t">
+          <div className="mt-4 pt-4 border-t space-y-2">
+            {inscricao.status_pagamento && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Pagamento:</span>
                 <Badge 
@@ -164,8 +210,18 @@ export default function MinhasAulas() {
                   {inscricao.status_pagamento}
                 </Badge>
               </div>
-            </div>
-          )}
+            )}
+            
+            {podeCheckin && (
+              <Button
+                className="w-full"
+                onClick={() => handleCheckin(inscricao.id)}
+                disabled={checkinLoading === inscricao.id}
+              >
+                {checkinLoading === inscricao.id ? "Fazendo check-in..." : "Fazer Check-in"}
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     );

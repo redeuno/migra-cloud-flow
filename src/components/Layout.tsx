@@ -3,7 +3,8 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AppBreadcrumb } from "@/components/AppBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +21,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { user, signOut, userRoles } = useAuth();
+  const navigate = useNavigate();
 
   const getInitials = (email: string) => {
     return email.substring(0, 2).toUpperCase();
@@ -52,16 +54,20 @@ export function Layout({ children }: LayoutProps) {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{user?.email}</p>
+                      <p className="text-sm font-medium leading-none">{user?.email}</p>
                       <p className="text-xs text-muted-foreground">
-                        {userRoles.join(", ") || "Sem role"}
+                        {userRoles.join(", ") || "Sem permissão"}
                       </p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.location.href = "/configuracoes"}>
                     <User className="mr-2 h-4 w-4" />
                     Perfil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configurações
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut} className="text-destructive">

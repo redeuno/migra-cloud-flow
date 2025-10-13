@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Calendar, DollarSign, Users, SquareActivity } from "lucide-react";
+import { Calendar, DollarSign, Users, SquareActivity, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -301,7 +302,11 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-4">
                 {nextBookings.map((booking: any) => (
-                  <div key={booking.id} className="flex items-center justify-between border-b pb-3 last:border-0">
+                  <div 
+                    key={booking.id} 
+                    className="flex items-center justify-between border-b pb-3 last:border-0 cursor-pointer hover:bg-accent/50 -mx-2 px-2 py-2 rounded transition-colors"
+                    onClick={() => navigate("/agendamentos")}
+                  >
                     <div>
                       <p className="font-medium">
                         {booking.quadras?.nome || "Quadra"}
@@ -322,21 +327,42 @@ export default function Dashboard() {
 
         <Card className="col-span-3">
           <CardHeader>
-            <CardTitle>Informações do Sistema</CardTitle>
+            <CardTitle>Ações Rápidas</CardTitle>
+            <CardDescription>Acessos rápidos às principais funções</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Email</p>
-              <p className="font-medium">{user?.email}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Roles</p>
-              <p className="font-medium">{userRoles.join(", ") || "Nenhuma"}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Arena ID</p>
-              <p className="font-mono text-xs break-all">{arenaId || "N/A"}</p>
-            </div>
+          <CardContent className="grid gap-2">
+            <Button 
+              variant="outline" 
+              className="justify-start"
+              onClick={() => navigate("/agendamentos")}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Novo Agendamento
+            </Button>
+            <Button 
+              variant="outline" 
+              className="justify-start"
+              onClick={() => navigate("/financeiro")}
+            >
+              <DollarSign className="mr-2 h-4 w-4" />
+              Nova Movimentação
+            </Button>
+            <Button 
+              variant="outline" 
+              className="justify-start"
+              onClick={() => navigate("/clientes")}
+            >
+              <Users className="mr-2 h-4 w-4" />
+              Novo Cliente
+            </Button>
+            <Button 
+              variant="outline" 
+              className="justify-start"
+              onClick={() => navigate("/relatorios")}
+            >
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Ver Relatórios
+            </Button>
           </CardContent>
         </Card>
       </div>

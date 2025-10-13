@@ -67,12 +67,14 @@ export function ContratoDialog({ open, onOpenChange, contrato, preSelectedUsuari
     enabled: !!arenaId && open,
   });
 
-  // Pre-select user if provided
+  // Pre-select user if provided or from existing contract
   useEffect(() => {
-    if (preSelectedUsuarioId && !contrato) {
+    if (contrato?.usuario_id && usuarios) {
+      form.setValue("usuario_id", contrato.usuario_id);
+    } else if (preSelectedUsuarioId && !contrato) {
       form.setValue("usuario_id", preSelectedUsuarioId);
     }
-  }, [preSelectedUsuarioId, contrato, form]);
+  }, [preSelectedUsuarioId, contrato, usuarios, form]);
 
   const mutation = useMutation({
     mutationFn: async (data: ContratoFormData) => {

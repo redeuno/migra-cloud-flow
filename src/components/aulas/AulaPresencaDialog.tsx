@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast as sonnerToast } from "sonner";
 
 interface AulaPresencaDialogProps {
   open: boolean;
@@ -70,11 +71,13 @@ export function AulaPresencaDialog({ open, onOpenChange, aulaId }: AulaPresencaD
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["aula-presenca"] });
       queryClient.invalidateQueries({ queryKey: ["aulas"] });
-      toast({ title: "Presenças atualizadas com sucesso!" });
-      onOpenChange(false);
+      sonnerToast.success("Presenças atualizadas com sucesso!");
+      if (aula?.status !== "realizada") {
+        onOpenChange(false);
+      }
     },
     onError: () => {
-      toast({ title: "Erro ao atualizar presenças", variant: "destructive" });
+      sonnerToast.error("Erro ao atualizar presenças");
     },
   });
 
@@ -171,10 +174,16 @@ export function AulaPresencaDialog({ open, onOpenChange, aulaId }: AulaPresencaD
                       <Checkbox
                         checked={presencas[inscricao.id] || false}
                         onCheckedChange={() => handleTogglePresenca(inscricao.id)}
+                        disabled={aula?.status === "realizada"}
                       />
                       <div>
                         <p className="font-medium">{inscricao.usuarios?.nome_completo}</p>
                         <p className="text-xs text-muted-foreground">{inscricao.usuarios?.email}</p>
+                        {inscricao.data_checkin && (
+                          <p className="text-xs text-green-600">
+                            Check-in: {format(new Date(inscricao.data_checkin), "HH:mm", { locale: ptBR })}
+                          </p>
+                        )}
                       </div>
                     </div>
                     {presencas[inscricao.id] ? (
@@ -198,15 +207,22 @@ export function AulaPresencaDialog({ open, onOpenChange, aulaId }: AulaPresencaD
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancelar
-              </Button>
-              <Button type="button" onClick={handleSalvar}>
-                Salvar Presenças
+                {aula?.status === "realizada" ? "Fechar" : "Cancelar"}
               </Button>
               {aula?.status !== "realizada" && (
-                <Button type="button" variant="default" onClick={handleFinalizar}>
-                  Finalizar Aula
-                </Button>
+                <>
+                  <Button type="button" onClick={handleSalvar} disabled={updatePresencaMutation.isPending}>
+                    {updatePresencaMutation.isPending ? "Salvando..." : "Salvar Presenças"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="default" 
+                    onClick={handleFinalizar}
+                    disabled={finalizarAulaMutation.isPending}
+                  >
+                    {finalizarAulaMutation.isPending ? "Finalizando..." : "Finalizar Aula"}
+                  </Button>
+                </>
               )}
             </DialogFooter>
           </div>
