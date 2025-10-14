@@ -225,8 +225,8 @@ export default function Financeiro() {
           </div>
         )}
 
-        {/* Cards de Resumo para Arena Admin */}
-        {!isSuperAdmin && (
+        {/* Cards de Resumo */}
+        {(!isSuperAdmin) ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -272,12 +272,88 @@ export default function Financeiro() {
               <CardContent>
                 <div className="text-2xl font-bold">{resumo?.contratosAtivos || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  R$ {resumo?.valorPendente.toFixed(2) || "0.00"} pendente
+                  R$ {resumo?.valorPendente?.toFixed(2) || "0.00"} pendente
                 </p>
               </CardContent>
             </Card>
           </div>
+        ) : (
+          // Super Admin
+          selectedArenaFilter !== "all" && resumoSuperAdmin ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Assinaturas Ativas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{resumoSuperAdmin.assinaturasAtivas}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Faturas Pendentes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-500">
+                    R$ {resumoSuperAdmin.valorPendente.toFixed(2)}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Receita Mensal</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-500">
+                    R$ {resumoSuperAdmin.receitaMensal.toFixed(2)}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            // Resumo Global (todas as arenas) quando filtro = all
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Receitas (Global)</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">
+                    R$ {resumo?.receitas?.toFixed(2) || "0.00"}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Despesas (Global)</CardTitle>
+                  <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">
+                    R$ {resumo?.despesas?.toFixed(2) || "0.00"}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Saldo (Global)</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className={`text-2xl font-bold ${(resumo?.saldo || 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    R$ {resumo?.saldo?.toFixed(2) || "0.00"}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )
         )}
+
 
         {/* Tabs de Conteúdo */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

@@ -39,33 +39,43 @@ export default function DashboardSuperAdmin() {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["super-admin-stats"],
     queryFn: async () => {
-      // Total de arenas
-      const { count: totalArenas } = await supabase
+      // Total de arenas (dados reais em vez de HEAD)
+      const { data: arenasAll, error: arenasAllErr } = await supabase
         .from("arenas")
-        .select("*", { count: "exact", head: true });
+        .select("id");
+      if (arenasAllErr) throw arenasAllErr;
+      const totalArenas = arenasAll?.length || 0;
 
-      const { count: arenasAtivas } = await supabase
+      const { data: arenasAtivasData, error: arenasAtivasErr } = await supabase
         .from("arenas")
-        .select("*", { count: "exact", head: true })
+        .select("id")
         .eq("status", "ativo");
+      if (arenasAtivasErr) throw arenasAtivasErr;
+      const arenasAtivas = arenasAtivasData?.length || 0;
 
-      const { count: arenasSuspensas } = await supabase
+      const { data: arenasSuspensasData, error: arenasSuspensasErr } = await supabase
         .from("arenas")
-        .select("*", { count: "exact", head: true })
+        .select("id")
         .eq("status", "suspenso");
+      if (arenasSuspensasErr) throw arenasSuspensasErr;
+      const arenasSuspensas = arenasSuspensasData?.length || 0;
 
       // Total de usuários
-      const { count: totalUsuarios } = await supabase
+      const { data: usuariosAll, error: usuariosErr } = await supabase
         .from("usuarios")
-        .select("*", { count: "exact", head: true });
+        .select("id");
+      if (usuariosErr) throw usuariosErr;
+      const totalUsuarios = usuariosAll?.length || 0;
 
       // Total de agendamentos (últimos 30 dias)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const { count: totalAgendamentos } = await supabase
+      const { data: agds, error: agdsErr } = await supabase
         .from("agendamentos")
-        .select("*", { count: "exact", head: true })
+        .select("id")
         .gte("data_agendamento", thirtyDaysAgo.toISOString().split("T")[0]);
+      if (agdsErr) throw agdsErr;
+      const totalAgendamentos = agds?.length || 0;
 
       // Total de quadras ativas e em manutenção
       const { data: quadrasData } = await supabase
