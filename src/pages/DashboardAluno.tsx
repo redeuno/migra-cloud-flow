@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Progress } from "@/components/ui/progress";
 
 export default function DashboardAluno() {
@@ -312,18 +312,16 @@ export default function DashboardAluno() {
                     color: "hsl(var(--chart-2))",
                   },
                 }}
-                className="h-[180px] sm:h-[200px]"
+                className="h-[180px] sm:h-[200px] w-full"
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={atividadeSemanal}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="dia" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="agendamentos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="checkins" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart data={atividadeSemanal}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="dia" className="text-xs" />
+                  <YAxis className="text-xs" />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="agendamentos" fill="var(--color-agendamentos)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="checkins" fill="var(--color-checkins)" radius={[4, 4, 0, 0]} />
+                </BarChart>
               </ChartContainer>
             ) : (
               <EmptyState

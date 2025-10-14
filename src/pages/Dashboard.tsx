@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
@@ -386,17 +386,15 @@ export default function Dashboard() {
                     color: "hsl(var(--primary))",
                   },
                 }}
-                className="h-[250px] sm:h-[300px]"
+                className="h-[250px] sm:h-[300px] w-full"
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklyData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="dia" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="agendamentos" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart data={weeklyData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="dia" className="text-xs" />
+                  <YAxis className="text-xs" />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="agendamentos" fill="var(--color-agendamentos)" radius={[8, 8, 0, 0]} />
+                </BarChart>
               </ChartContainer>
             )}
           </CardContent>
@@ -423,18 +421,16 @@ export default function Dashboard() {
                     color: "hsl(var(--destructive))",
                   },
                 }}
-                className="h-[250px] sm:h-[300px]"
+                className="h-[250px] sm:h-[300px] w-full"
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyRevenue}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="dia" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line type="monotone" dataKey="receita" stroke="hsl(var(--primary))" strokeWidth={2} />
-                    <Line type="monotone" dataKey="despesa" stroke="hsl(var(--destructive))" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
+                <LineChart data={monthlyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="dia" className="text-xs" />
+                  <YAxis className="text-xs" />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Line type="monotone" dataKey="receita" stroke="var(--color-receita)" strokeWidth={2} />
+                  <Line type="monotone" dataKey="despesa" stroke="var(--color-despesa)" strokeWidth={2} />
+                </LineChart>
               </ChartContainer>
             )}
           </CardContent>
@@ -457,26 +453,24 @@ export default function Dashboard() {
                     color: "hsl(var(--primary))",
                   },
                 }}
-                className="h-[250px] sm:h-[300px]"
+                className="h-[250px] sm:h-[300px] w-full"
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Pie
-                      data={courtUsage}
-                      dataKey="total"
-                      nameKey="nome"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      label
-                    >
-                      {courtUsage.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
+                <PieChart>
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Pie
+                    data={courtUsage}
+                    dataKey="total"
+                    nameKey="nome"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label
+                  >
+                    {courtUsage.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                </PieChart>
               </ChartContainer>
             ) : (
               <EmptyState

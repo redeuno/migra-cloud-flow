@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, PieChart, Pie, Cell, Legend } from "recharts";
 import { useNavigate } from "react-router-dom";
 import { format, subMonths, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -395,7 +395,7 @@ export default function DashboardSuperAdmin() {
                     color: "hsl(var(--primary))",
                   },
                 }}
-                className="h-[240px] sm:h-[300px]"
+                className="h-[240px] sm:h-[300px] w-full"
               >
                 <LineChart data={arenasEvolution}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -444,7 +444,7 @@ export default function DashboardSuperAdmin() {
                     color: "hsl(var(--destructive))",
                   },
                 }}
-                className="h-[240px] sm:h-[300px]"
+                className="h-[240px] sm:h-[300px] w-full"
               >
                 <BarChart data={revenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -477,7 +477,7 @@ export default function DashboardSuperAdmin() {
                     color: "hsl(var(--primary))",
                   },
                 }}
-                className="h-[240px] sm:h-[300px]"
+                className="h-[240px] sm:h-[300px] w-full"
               >
                 <PieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -525,17 +525,15 @@ export default function DashboardSuperAdmin() {
                     color: "hsl(var(--chart-3))",
                   },
                 }}
-                className="h-[300px]"
+                className="h-[300px] w-full"
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={topArenas} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis type="number" className="text-xs" />
-                    <YAxis dataKey="nome" type="category" className="text-xs" width={100} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="valor" fill="hsl(var(--chart-3))" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart data={topArenas} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis type="number" className="text-xs" />
+                  <YAxis dataKey="nome" type="category" className="text-xs" width={100} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="valor" fill="var(--color-valor)" radius={[0, 4, 4, 0]} />
+                </BarChart>
               </ChartContainer>
             ) : (
               <EmptyState
