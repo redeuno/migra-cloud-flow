@@ -12,10 +12,11 @@ export function useNotifications() {
   const { data: usuario } = useQuery({
     queryKey: ["usuario-id", user?.id],
     queryFn: async () => {
+      if (!user?.id) return null;
       const { data, error } = await supabase
         .from("usuarios")
         .select("id")
-        .eq("auth_id", user?.id)
+        .eq("auth_id", user.id)
         .single();
       if (error) throw error;
       return data;
@@ -28,7 +29,7 @@ export function useNotifications() {
     if (!usuario?.id) return;
 
     const channel = supabase
-      .channel("notificacoes-toast")
+      .channel(`notificacoes-${usuario.id}`)
       .on(
         "postgres_changes",
         {
@@ -44,6 +45,10 @@ export function useNotifications() {
           toast.info(notificacao.titulo, {
             description: notificacao.mensagem,
             duration: 5000,
+            action: notificacao.link ? {
+              label: "Ver",
+              onClick: () => window.location.href = notificacao.link,
+            } : undefined,
           });
 
           // Invalidar queries para atualizar o badge

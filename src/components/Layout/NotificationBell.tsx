@@ -52,13 +52,14 @@ export function NotificationBell() {
   });
 
   // Buscar notificações
-  const { data: notificacoes = [] } = useQuery({
+  const { data: notificacoes = [], isLoading } = useQuery({
     queryKey: ["notificacoes", usuario?.id],
     queryFn: async () => {
+      if (!usuario?.id) return [];
       const { data, error } = await supabase
         .from("notificacoes")
         .select("*")
-        .eq("usuario_id", usuario?.id)
+        .eq("usuario_id", usuario.id)
         .order("created_at", { ascending: false })
         .limit(20);
 
@@ -66,23 +67,24 @@ export function NotificationBell() {
       return data as Notificacao[];
     },
     enabled: !!usuario?.id,
+    refetchOnWindowFocus: true,
   });
 
-  // Realtime subscription
+  // Realtime subscription para updates
   useEffect(() => {
     if (!usuario?.id) return;
 
     const channel = supabase
-      .channel("notificacoes-realtime")
+      .channel(`notificacoes-updates-${usuario.id}`)
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "UPDATE",
           schema: "public",
           table: "notificacoes",
           filter: `usuario_id=eq.${usuario.id}`,
         },
-        (payload) => {
+        () => {
           queryClient.invalidateQueries({ queryKey: ["notificacoes"] });
         }
       )
@@ -188,7 +190,12 @@ export function NotificationBell() {
         <DropdownMenuSeparator />
 
         <ScrollArea className="h-[400px]">
-          {notificacoes.length === 0 ? (
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              <p className="text-sm mt-2">Carregando...</p>
+            </div>
+          ) : notificacoes.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
               <Bell className="h-12 w-12 mb-2 opacity-50" />
               <p className="text-sm">Nenhuma notificação</p>
