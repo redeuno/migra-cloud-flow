@@ -397,7 +397,7 @@ export default function DashboardSuperAdmin() {
                 }}
                 className="h-[300px]"
               >
-                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={arenasEvolution}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
@@ -448,7 +448,7 @@ export default function DashboardSuperAdmin() {
                 }}
                 className="h-[300px]"
               >
-                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={revenueData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -483,7 +483,7 @@ export default function DashboardSuperAdmin() {
                 }}
                 className="h-[300px]"
               >
-                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Legend verticalAlign="bottom" height={36} />
