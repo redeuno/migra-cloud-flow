@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { arenaSchema, type ArenaFormData } from "@/lib/validations/arena";
+import { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -51,20 +52,7 @@ export function ArenaDialog({ open, onOpenChange, arena }: ArenaDialogProps) {
 
   const form = useForm<ArenaFormData>({
     resolver: zodResolver(arenaSchema),
-    defaultValues: arena ? {
-      nome: arena.nome,
-      razao_social: arena.razao_social,
-      cnpj: arena.cnpj,
-      email: arena.email,
-      telefone: arena.telefone,
-      whatsapp: arena.whatsapp,
-      endereco_completo: arena.endereco_completo,
-      horario_funcionamento: arena.horario_funcionamento,
-      plano_sistema_id: arena.plano_sistema_id,
-      data_vencimento: arena.data_vencimento,
-      status: arena.status,
-      cores_tema: arena.cores_tema,
-    } : {
+    defaultValues: {
       status: "ativo",
       horario_funcionamento: {
         segunda: defaultHorario,
@@ -81,6 +69,43 @@ export function ArenaDialog({ open, onOpenChange, arena }: ArenaDialogProps) {
       },
     },
   });
+
+  // Reset form when arena prop changes
+  useEffect(() => {
+    if (arena) {
+      form.reset({
+        nome: arena.nome,
+        razao_social: arena.razao_social,
+        cnpj: arena.cnpj,
+        email: arena.email,
+        telefone: arena.telefone,
+        whatsapp: arena.whatsapp,
+        endereco_completo: arena.endereco_completo,
+        horario_funcionamento: arena.horario_funcionamento,
+        plano_sistema_id: arena.plano_sistema_id,
+        data_vencimento: arena.data_vencimento,
+        status: arena.status,
+        cores_tema: arena.cores_tema,
+      });
+    } else {
+      form.reset({
+        status: "ativo",
+        horario_funcionamento: {
+          segunda: defaultHorario,
+          terca: defaultHorario,
+          quarta: defaultHorario,
+          quinta: defaultHorario,
+          sexta: defaultHorario,
+          sabado: defaultHorario,
+          domingo: defaultHorario,
+        },
+        cores_tema: {
+          primary: "#0066CC",
+          secondary: "#FF6B35",
+        },
+      });
+    }
+  }, [arena, form]);
 
   const mutation = useMutation({
     mutationFn: async (data: ArenaFormData) => {

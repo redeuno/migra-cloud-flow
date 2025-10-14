@@ -23,6 +23,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 interface AssinaturasArenaTableProps {
   arenaFilter?: string;
@@ -30,6 +31,7 @@ interface AssinaturasArenaTableProps {
 
 export function AssinaturasArenaTable({ arenaFilter }: AssinaturasArenaTableProps) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAssinatura, setSelectedAssinatura] = useState<any>(null);
 
@@ -154,7 +156,10 @@ export function AssinaturasArenaTable({ arenaFilter }: AssinaturasArenaTableProp
                             <Pencil className="mr-2 h-4 w-4" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            navigate(`/financeiro?tab=faturas&assinatura=${assinatura.id}`);
+                            toast.success("Filtrando faturas da assinatura");
+                          }}>
                             <Eye className="mr-2 h-4 w-4" />
                             Ver Faturas
                           </DropdownMenuItem>

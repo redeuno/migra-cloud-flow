@@ -24,18 +24,24 @@ export default function Financeiro() {
   const [movimentacaoDialogOpen, setMovimentacaoDialogOpen] = useState(false);
   const [assinaturaDialogOpen, setAssinaturaDialogOpen] = useState(false);
   const [selectedArenaFilter, setSelectedArenaFilter] = useState<string>("all");
+  const [selectedAssinaturaFilter, setSelectedAssinaturaFilter] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("contratos");
 
   // Ler query params na inicialização
   useEffect(() => {
     const arenaParam = searchParams.get("arena");
     const tabParam = searchParams.get("tab");
+    const assinaturaParam = searchParams.get("assinatura");
     
     if (arenaParam) {
       setSelectedArenaFilter(arenaParam);
     }
     if (tabParam) {
       setActiveTab(tabParam);
+    }
+    if (assinaturaParam) {
+      setSelectedAssinaturaFilter(assinaturaParam);
+      setActiveTab("faturas");
     }
   }, [searchParams]);
 
@@ -362,7 +368,10 @@ export default function Financeiro() {
                     </p>
                   </CardHeader>
                   <CardContent>
-                    <FaturasSistemaTable arenaFilter={selectedArenaFilter} />
+                    <FaturasSistemaTable 
+                      arenaFilter={selectedArenaFilter} 
+                      assinaturaFilter={selectedAssinaturaFilter || undefined}
+                    />
                   </CardContent>
                 </Card>
               </TabsContent>

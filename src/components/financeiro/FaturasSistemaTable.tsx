@@ -19,11 +19,12 @@ import { ptBR } from "date-fns/locale";
 
 interface FaturasSistemaTableProps {
   arenaFilter?: string;
+  assinaturaFilter?: string;
 }
 
-export function FaturasSistemaTable({ arenaFilter }: FaturasSistemaTableProps) {
+export function FaturasSistemaTable({ arenaFilter, assinaturaFilter }: FaturasSistemaTableProps) {
   const { data: faturas, isLoading } = useQuery({
-    queryKey: ["faturas-sistema", arenaFilter],
+    queryKey: ["faturas-sistema", arenaFilter, assinaturaFilter],
     queryFn: async () => {
       let query = supabase
         .from("faturas_sistema")
@@ -35,7 +36,9 @@ export function FaturasSistemaTable({ arenaFilter }: FaturasSistemaTableProps) {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (arenaFilter && arenaFilter !== "all") {
+      if (assinaturaFilter) {
+        query = query.eq("assinatura_arena_id", assinaturaFilter);
+      } else if (arenaFilter && arenaFilter !== "all") {
         query = query.eq("arena_id", arenaFilter);
       }
 
