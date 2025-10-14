@@ -122,33 +122,49 @@ export default function Financeiro() {
       const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
 
       // Visão Consolidada (Todas) para Super Admin
-      // Mostra uma visão útil baseada na receita recorrente das assinaturas ativas (MRR)
-      // e eventuais despesas globais do mês em movimentações do sistema
+      // Métricas úteis: MRR, Arenas Ativas, Faturas Pendentes
       if (isSuperAdmin && selectedArenaFilter === "all") {
-        const { data: assinaturasAtivas, error: assinErr } = await supabase
+        // MRR - Receita Recorrente Mensal de todas as assinaturas ativas
+        const { data: assinaturasAtivas } = await supabase
           .from("assinaturas_arena")
           .select("valor_mensal")
           .eq("status", "ativo");
-        if (assinErr) throw assinErr;
 
-        const receitasAssinaturas =
-          assinaturasAtivas?.reduce((acc: number, a: any) => acc + Number(a.valor_mensal), 0) || 0;
+        const mrr = assinaturasAtivas?.reduce((acc: number, a: any) => acc + Number(a.valor_mensal), 0) || 0;
 
-        const { data: movsGlobais } = await supabase
-          .from("movimentacoes_financeiras")
-          .select("tipo, valor")
-          .gte("data_movimentacao", inicioMes.toISOString().split("T")[0])
-          .lte("data_movimentacao", fimMes.toISOString().split("T")[0]);
+        // Arenas Ativas (com assinatura ativa)
+        const { data: arenasComAssinatura } = await supabase
+          .from("assinaturas_arena")
+          .select("arena_id")
+          .eq("status", "ativo");
 
-        const despesasGlobais =
-          movsGlobais?.filter((m: any) => m.tipo === "despesa").reduce((sum: number, m: any) => sum + Number(m.valor), 0) || 0;
+        const arenasAtivasCount = new Set(arenasComAssinatura?.map((a: any) => a.arena_id)).size;
+
+        // Faturas Pendentes - total de valor pendente
+        const { data: faturasPendentes } = await supabase
+          .from("faturas_sistema")
+          .select("valor")
+          .eq("status_pagamento", "pendente");
+
+        const valorFaturasPendentes = faturasPendentes?.reduce((acc: number, f: any) => acc + Number(f.valor), 0) || 0;
+        const quantidadeFaturasPendentes = faturasPendentes?.length || 0;
+
+        // Receita do mês (faturas pagas neste mês)
+        const { data: faturasPagas } = await supabase
+          .from("faturas_sistema")
+          .select("valor, data_pagamento")
+          .eq("status_pagamento", "pago")
+          .gte("data_pagamento", inicioMes.toISOString())
+          .lte("data_pagamento", fimMes.toISOString());
+
+        const receitaMes = faturasPagas?.reduce((acc: number, f: any) => acc + Number(f.valor), 0) || 0;
 
         return {
-          receitas: receitasAssinaturas,
-          despesas: despesasGlobais,
-          saldo: receitasAssinaturas - despesasGlobais,
-          contratosAtivos: 0,
-          valorPendente: 0,
+          receitas: mrr, // MRR
+          despesas: valorFaturasPendentes, // Faturas pendentes (reutilizando campo)
+          saldo: receitaMes, // Receita do mês
+          contratosAtivos: arenasAtivasCount, // Arenas ativas
+          valorPendente: quantidadeFaturasPendentes, // Quantidade de faturas pendentes
         };
       }
 
@@ -360,41 +376,57 @@ export default function Financeiro() {
               </Card>
             </div>
           ) : (
-            // Resumo Global (todas as arenas) quando filtro = all
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            // Resumo Global (todas as arenas) - Métricas SaaS úteis
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Receitas (Global)</CardTitle>
+                  <CardTitle className="text-sm font-medium">MRR Total</CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">
                     R$ {resumo?.receitas?.toFixed(2) || "0.00"}
                   </div>
+                  <p className="text-xs text-muted-foreground">Receita Recorrente Mensal</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Despesas (Global)</CardTitle>
-                  <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Arenas Ativas</CardTitle>
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-red-600">
-                    R$ {resumo?.despesas?.toFixed(2) || "0.00"}
+                  <div className="text-2xl font-bold">
+                    {resumo?.contratosAtivos || 0}
                   </div>
+                  <p className="text-xs text-muted-foreground">Com assinatura ativa</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Saldo (Global)</CardTitle>
+                  <CardTitle className="text-sm font-medium">Receita do Mês</CardTitle>
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className={`text-2xl font-bold ${(resumo?.saldo || 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
+                  <div className="text-2xl font-bold text-blue-600">
                     R$ {resumo?.saldo?.toFixed(2) || "0.00"}
                   </div>
+                  <p className="text-xs text-muted-foreground">Faturas pagas este mês</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pendências</CardTitle>
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-yellow-600">
+                    R$ {resumo?.despesas?.toFixed(2) || "0.00"}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{resumo?.valorPendente || 0} fatura{(resumo?.valorPendente || 0) !== 1 ? 's' : ''} pendente{(resumo?.valorPendente || 0) !== 1 ? 's' : ''}</p>
                 </CardContent>
               </Card>
             </div>
