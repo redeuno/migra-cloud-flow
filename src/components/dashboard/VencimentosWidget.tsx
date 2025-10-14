@@ -23,7 +23,7 @@ export function VencimentosWidget({ arenaId, className }: VencimentosWidgetProps
   const { data: vencimentos, isLoading } = useQuery({
     queryKey: ["vencimentos-proximos", arenaId],
     queryFn: async () => {
-      // Buscar mensalidades pendentes dos próximos 7 dias
+      // Buscar apenas mensalidades de clientes/alunos pendentes dos próximos 7 dias
       const { data: mensalidades, error: mensalidadesError } = await supabase
         .from("mensalidades")
         .select(`
@@ -32,8 +32,9 @@ export function VencimentosWidget({ arenaId, className }: VencimentosWidgetProps
           data_vencimento,
           status_pagamento,
           contratos(
+            arena_id,
             usuario_id,
-            usuarios:usuario_id(nome_completo)
+            usuarios:usuario_id(nome_completo, cpf)
           )
         `)
         .eq("status_pagamento", "pendente")
@@ -42,42 +43,18 @@ export function VencimentosWidget({ arenaId, className }: VencimentosWidgetProps
 
       if (mensalidadesError) throw mensalidadesError;
 
-      // Buscar faturas do sistema (se for super admin)
-      const { data: faturas, error: faturasError } = await supabase
-        .from("faturas_sistema")
-        .select(`
-          id,
-          valor,
-          data_vencimento,
-          status_pagamento,
-          arenas(nome)
-        `)
-        .eq("arena_id", arenaId)
-        .eq("status_pagamento", "pendente")
-        .lte("data_vencimento", proximosDias)
-        .order("data_vencimento", { ascending: true });
-
-      if (faturasError) throw faturasError;
-
-      // Combinar e formatar
-      const combined = [
-        ...(mensalidades || []).map((m: any) => ({
+      // Filtrar apenas mensalidades da arena atual e formatar
+      const combined = (mensalidades || [])
+        .filter((m: any) => m.contratos?.arena_id === arenaId)
+        .map((m: any) => ({
           id: m.id,
           tipo: "Mensalidade",
           descricao: m.contratos?.usuarios?.nome_completo || "Cliente",
           valor: Number(m.valor_final),
           dataVencimento: m.data_vencimento,
           link: "/financeiro?tab=mensalidades",
-        })),
-        ...(faturas || []).map((f: any) => ({
-          id: f.id,
-          tipo: "Fatura Sistema",
-          descricao: f.arenas?.nome || "Arena",
-          valor: Number(f.valor),
-          dataVencimento: f.data_vencimento,
-          link: "/financeiro?tab=faturas",
-        })),
-      ].sort((a, b) => new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime());
+        }))
+        .sort((a, b) => new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime());
 
       return combined;
     },

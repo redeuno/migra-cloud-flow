@@ -6,6 +6,7 @@ import { ConfiguracoesGerais } from "@/components/configuracoes/ConfiguracoesGer
 import { ConfiguracoesHorarios } from "@/components/configuracoes/ConfiguracoesHorarios";
 import { ConfiguracoesPagamentos } from "@/components/configuracoes/ConfiguracoesPagamentos";
 import { ModulosArenaManager } from "@/components/configuracoes/ModulosArenaManager";
+import { MinhaAssinatura } from "@/components/configuracoes/MinhaAssinatura";
 
 export default function Configuracoes() {
   return (
@@ -19,8 +20,9 @@ export default function Configuracoes() {
         </div>
 
         <Tabs defaultValue="geral" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto">
             <TabsTrigger value="geral">Geral</TabsTrigger>
+            <TabsTrigger value="assinatura">Minha Assinatura</TabsTrigger>
             <TabsTrigger value="modulos">Módulos</TabsTrigger>
             <TabsTrigger value="evolution">Evolution</TabsTrigger>
             <TabsTrigger value="horarios">Horários</TabsTrigger>
@@ -29,6 +31,10 @@ export default function Configuracoes() {
 
           <TabsContent value="geral" className="space-y-4">
             <ConfiguracoesGerais />
+          </TabsContent>
+
+          <TabsContent value="assinatura" className="space-y-4">
+            <MinhaAssinatura />
           </TabsContent>
 
           <TabsContent value="modulos" className="space-y-4">
