@@ -17,3 +17,9 @@ verify_jwt = true
 
 [functions.setup-arena-admin]
 verify_jwt = false
+
+[functions.notificar-agendamentos-proximos]
+verify_jwt = false
+
+[functions.enviar-whatsapp-evolution]
+verify_jwt = true
