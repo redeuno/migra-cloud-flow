@@ -14,6 +14,8 @@ import {
   Wallet,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -57,7 +59,7 @@ const arenaAdminItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const { userRoles } = useAuth();
+  const { userRoles, arenaId } = useAuth();
   const collapsed = state === "collapsed";
 
   const hasAccess = (allowedRoles: string[]) => {
@@ -66,12 +68,68 @@ export function AppSidebar() {
 
   // Determinar qual menu exibir baseado na role
   const isSuperAdmin = userRoles.includes("super_admin");
-  
-  const navItems = isSuperAdmin ? superAdminItems : arenaNavItems;
-  const adminItems = isSuperAdmin ? [] : arenaAdminItems;
 
-  const filteredNavItems = navItems.filter(item => hasAccess(item.roles));
-  const filteredAdminItems = adminItems.filter(item => hasAccess(item.roles));
+  // Buscar módulos ativos da arena (apenas para não super admins)
+  const { data: modulosAtivos } = useQuery({
+    queryKey: ["arena-modulos-ativos", arenaId],
+    queryFn: async () => {
+      if (!arenaId || isSuperAdmin) return null;
+      
+      const { data } = await supabase
+        .from("arena_modulos")
+        .select(`
+          modulo_id,
+          modulos_sistema (
+            slug,
+            nome,
+            icone
+          )
+        `)
+        .eq("arena_id", arenaId)
+        .eq("ativo", true)
+        .order("modulos_sistema(ordem)");
+      
+      return data;
+    },
+    enabled: !!arenaId && !isSuperAdmin,
+  });
+
+  // Mapear slugs dos módulos ativos
+  const modulosAtivosMap = new Set(
+    modulosAtivos?.map((m: any) => m.modulos_sistema?.slug) || []
+  );
+
+  // Filtrar itens de navegação baseado em módulos ativos (apenas para não super admins)
+  let filteredNavItems = isSuperAdmin 
+    ? superAdminItems.filter(item => hasAccess(item.roles))
+    : arenaNavItems.filter(item => {
+        // Verificar role
+        if (!hasAccess(item.roles)) return false;
+        
+        // Se não há módulos carregados ainda, não mostrar nada (evitar flicker)
+        if (!isSuperAdmin && arenaId && !modulosAtivos) return false;
+        
+        // Mapear URLs para slugs de módulos
+        const urlToModuleMap: Record<string, string> = {
+          "/quadras": "quadras",
+          "/agendamentos": "agendamentos",
+          "/clientes": "clientes",
+          "/financeiro": "financeiro",
+          "/aulas": "aulas",
+          "/torneios": "torneios",
+          "/relatorios": "relatorios",
+        };
+        
+        const moduleSlug = urlToModuleMap[item.url];
+        
+        // Se não tem mapeamento de módulo, sempre mostrar (Dashboard, etc)
+        if (!moduleSlug) return true;
+        
+        // Verificar se o módulo está ativo
+        return modulosAtivosMap.has(moduleSlug);
+      });
+
+  const filteredAdminItems = isSuperAdmin ? [] : arenaAdminItems.filter(item => hasAccess(item.roles));
 
   const getNavClass = (isActive: boolean) =>
     isActive

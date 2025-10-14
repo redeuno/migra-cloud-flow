@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, DollarSign, TrendingUp, TrendingDown, AlertCircle, Building2 } from "lucide-react";
@@ -62,6 +62,35 @@ export default function Financeiro() {
   const effectiveArenaId = isSuperAdmin && selectedArenaFilter !== "all" 
     ? selectedArenaFilter 
     : (arenaId || null);
+
+  // Query para resumo do Super Admin
+  const { data: resumoSuperAdmin } = useQuery({
+    queryKey: ["resumo-super-admin", selectedArenaFilter],
+    queryFn: async () => {
+      if (!isSuperAdmin || selectedArenaFilter === "all") return null;
+
+      // Buscar assinaturas ativas
+      const { data: assinaturas } = await supabase
+        .from("assinaturas_arena")
+        .select("valor_mensal")
+        .eq("arena_id", selectedArenaFilter)
+        .eq("status", "ativo");
+
+      // Buscar faturas pendentes
+      const { data: faturasPendentes } = await supabase
+        .from("faturas_sistema")
+        .select("valor")
+        .eq("arena_id", selectedArenaFilter)
+        .eq("status_pagamento", "pendente");
+
+      const assinaturasAtivas = assinaturas?.length || 0;
+      const valorPendente = faturasPendentes?.reduce((acc, f) => acc + Number(f.valor), 0) || 0;
+      const receitaMensal = assinaturas?.reduce((acc, a) => acc + Number(a.valor_mensal), 0) || 0;
+
+      return { assinaturasAtivas, valorPendente, receitaMensal };
+    },
+    enabled: isSuperAdmin && selectedArenaFilter !== "all",
+  });
 
   const { data: resumo } = useQuery({
     queryKey: ["resumo-financeiro", effectiveArenaId, selectedArenaFilter],
@@ -154,7 +183,43 @@ export default function Financeiro() {
           </div>
         </div>
 
-        {/* Cards de Resumo */}
+        {/* Cards de Resumo para Super Admin */}
+        {isSuperAdmin && selectedArenaFilter !== "all" && resumoSuperAdmin && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Assinaturas Ativas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{resumoSuperAdmin.assinaturasAtivas}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Faturas Pendentes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-500">
+                  R$ {resumoSuperAdmin.valorPendente.toFixed(2)}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Receita Mensal</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-500">
+                  R$ {resumoSuperAdmin.receitaMensal.toFixed(2)}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Cards de Resumo para Arena Admin */}
         {!isSuperAdmin && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
@@ -210,7 +275,7 @@ export default function Financeiro() {
 
         {/* Tabs de Conteúdo */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1">
             {!isSuperAdmin && (
               <>
                 <TabsTrigger value="contratos">Contratos</TabsTrigger>

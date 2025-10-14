@@ -79,11 +79,33 @@ serve(async (req) => {
     const dataVencimento = new Date(mensalidade.data_vencimento).toLocaleDateString("pt-BR");
     const linkPagamento = mensalidade.asaas_invoice_url || "#";
 
-    const mensagem = mensagem_personalizada || config.template_lembrete_pagamento
-      ?.replace("{{nome}}", cliente.nome_completo)
-      ?.replace("{{valor}}", valorFormatado)
-      ?.replace("{{data_vencimento}}", dataVencimento)
-      ?.replace("{{link_pagamento}}", linkPagamento);
+    // Buscar template do banco de dados
+    let mensagem: string = mensagem_personalizada || "";
+    
+    if (!mensagem) {
+      const { data: template } = await supabaseClient
+        .from("templates_notificacao")
+        .select("mensagem")
+        .eq("categoria", "cobranca")
+        .eq("tipo", "whatsapp")
+        .eq("ativo", true)
+        .single();
+      
+      if (template?.mensagem) {
+        mensagem = template.mensagem;
+      } else {
+        // Fallback para template padrão se não encontrar no banco
+        mensagem = config.template_lembrete_pagamento || 
+          "Olá {{nome}}, seu pagamento de {{valor}} vence em {{data_vencimento}}. Link: {{link_pagamento}}";
+      }
+    }
+
+    // Substituir variáveis
+    const mensagemFinal = mensagem
+      .replace("{{nome}}", cliente.nome_completo)
+      .replace("{{valor}}", valorFormatado)
+      .replace("{{data_vencimento}}", dataVencimento)
+      .replace("{{link_pagamento}}", linkPagamento);
 
     const results = [];
 
@@ -106,7 +128,7 @@ serve(async (req) => {
             body: JSON.stringify({
               number: telefone.replace(/\D/g, ""),
               textMessage: {
-                text: mensagem,
+                text: mensagemFinal,
               },
             }),
           }
