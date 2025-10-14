@@ -121,7 +121,38 @@ export default function Financeiro() {
       const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
       const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
 
-      // Buscar movimentações do mês
+      // Visão Consolidada (Todas) para Super Admin
+      // Mostra uma visão útil baseada na receita recorrente das assinaturas ativas (MRR)
+      // e eventuais despesas globais do mês em movimentações do sistema
+      if (isSuperAdmin && selectedArenaFilter === "all") {
+        const { data: assinaturasAtivas, error: assinErr } = await supabase
+          .from("assinaturas_arena")
+          .select("valor_mensal")
+          .eq("status", "ativo");
+        if (assinErr) throw assinErr;
+
+        const receitasAssinaturas =
+          assinaturasAtivas?.reduce((acc: number, a: any) => acc + Number(a.valor_mensal), 0) || 0;
+
+        const { data: movsGlobais } = await supabase
+          .from("movimentacoes_financeiras")
+          .select("tipo, valor")
+          .gte("data_movimentacao", inicioMes.toISOString().split("T")[0])
+          .lte("data_movimentacao", fimMes.toISOString().split("T")[0]);
+
+        const despesasGlobais =
+          movsGlobais?.filter((m: any) => m.tipo === "despesa").reduce((sum: number, m: any) => sum + Number(m.valor), 0) || 0;
+
+        return {
+          receitas: receitasAssinaturas,
+          despesas: despesasGlobais,
+          saldo: receitasAssinaturas - despesasGlobais,
+          contratosAtivos: 0,
+          valorPendente: 0,
+        };
+      }
+
+      // Buscar movimentações do mês (arena específica ou arena selecionada)
       let movimentacoesQuery = supabase
         .from("movimentacoes_financeiras")
         .select("tipo, valor");
@@ -134,8 +165,8 @@ export default function Financeiro() {
         .gte("data_movimentacao", inicioMes.toISOString().split("T")[0])
         .lte("data_movimentacao", fimMes.toISOString().split("T")[0]);
 
-      const receitas = movimentacoes?.filter((m) => m.tipo === "receita").reduce((sum, m) => sum + m.valor, 0) || 0;
-      const despesas = movimentacoes?.filter((m) => m.tipo === "despesa").reduce((sum, m) => sum + m.valor, 0) || 0;
+      const receitas = movimentacoes?.filter((m) => m.tipo === "receita").reduce((sum, m) => sum + Number(m.valor), 0) || 0;
+      const despesas = movimentacoes?.filter((m) => m.tipo === "despesa").reduce((sum, m) => sum + Number(m.valor), 0) || 0;
 
       // Buscar contratos ativos
       let contratosQuery = supabase
@@ -166,7 +197,7 @@ export default function Financeiro() {
       
       const { data: mensalidadesPendentes } = await mensalidadesQuery;
 
-      const valorPendente = mensalidadesPendentes?.reduce((sum, m) => sum + m.valor_final, 0) || 0;
+      const valorPendente = mensalidadesPendentes?.reduce((sum, m) => sum + Number(m.valor_final), 0) || 0;
 
       return {
         receitas,
