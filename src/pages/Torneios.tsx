@@ -27,7 +27,10 @@ export default function Torneios() {
         <TorneiosTable />
       </div>
 
-      <TorneioDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <TorneioDialog 
+        open={dialogOpen} 
+        onOpenChange={setDialogOpen}
+      />
     </Layout>
   );
 }

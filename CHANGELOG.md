@@ -59,6 +59,16 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ### 📋 FASE 2 - PADRONIZAÇÃO
 
+#### Adicionado - Torneios (Edição/Exclusão)
+- **Handlers Completos**: Implementados em `TorneiosTable.tsx`:
+  - "Editar" → Abre `TorneioDialog` com dados pré-carregados
+  - "Excluir" → AlertDialog com confirmação e loading state
+- **TorneioDialog Aprimorado**:
+  - Suporte completo a edição de torneios existentes
+  - Carregamento automático de dados via `useQuery`
+  - Loading states nos botões de salvamento
+  - Títulos dinâmicos ("Novo Torneio" vs "Editar Torneio")
+
 #### Documentado
 - **Nomenclatura Cliente vs Aluno**: Adicionado em `ROLES.md`:
   - "Cliente": Usado em agendamentos, contratos, mensalidades

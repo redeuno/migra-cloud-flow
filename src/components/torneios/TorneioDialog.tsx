@@ -7,10 +7,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 const torneioSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -51,41 +52,103 @@ export function TorneioDialog({ open, onOpenChange, torneioId }: TorneioDialogPr
     },
   });
 
-  const createMutation = useMutation({
-    mutationFn: async (data: TorneioFormData) => {
-      const { error } = await supabase.from("torneios").insert([{
-        arena_id: arenaId!,
-        nome: data.nome,
-        descricao: data.descricao,
-        modalidade: data.modalidade,
-        tipo_chaveamento: data.tipo_chaveamento,
-        data_inicio: data.data_inicio,
-        data_fim: data.data_fim,
-        data_inicio_inscricoes: data.data_inicio_inscricoes,
-        data_fim_inscricoes: data.data_fim_inscricoes,
-        max_participantes: data.max_participantes,
-        valor_inscricao: data.valor_inscricao,
-        status: "planejamento" as const,
-      }]);
+  const { data: torneio } = useQuery({
+    queryKey: ["torneio", torneioId],
+    queryFn: async () => {
+      if (!torneioId) return null;
+      const { data, error } = await supabase
+        .from("torneios")
+        .select("*")
+        .eq("id", torneioId)
+        .single();
       if (error) throw error;
+      return data;
+    },
+    enabled: !!torneioId && open,
+  });
+
+  useEffect(() => {
+    if (torneio) {
+      form.reset({
+        nome: torneio.nome,
+        descricao: torneio.descricao || "",
+        modalidade: torneio.modalidade,
+        tipo_chaveamento: torneio.tipo_chaveamento,
+        data_inicio: torneio.data_inicio,
+        data_fim: torneio.data_fim,
+        data_inicio_inscricoes: torneio.data_inicio_inscricoes,
+        data_fim_inscricoes: torneio.data_fim_inscricoes,
+        max_participantes: torneio.max_participantes || 16,
+        valor_inscricao: Number(torneio.valor_inscricao) || 0,
+      });
+    } else if (!torneioId) {
+      form.reset({
+        modalidade: "beach_tennis",
+        tipo_chaveamento: "eliminacao_simples",
+        max_participantes: 16,
+        valor_inscricao: 0,
+        data_inicio: "",
+        data_fim: "",
+        data_inicio_inscricoes: "",
+        data_fim_inscricoes: "",
+      });
+    }
+  }, [torneio, torneioId, form]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: TorneioFormData) => {
+      if (torneioId) {
+        const { error } = await supabase
+          .from("torneios")
+          .update({
+            nome: data.nome,
+            descricao: data.descricao,
+            modalidade: data.modalidade,
+            tipo_chaveamento: data.tipo_chaveamento,
+            data_inicio: data.data_inicio,
+            data_fim: data.data_fim,
+            data_inicio_inscricoes: data.data_inicio_inscricoes,
+            data_fim_inscricoes: data.data_fim_inscricoes,
+            max_participantes: data.max_participantes,
+            valor_inscricao: data.valor_inscricao,
+          })
+          .eq("id", torneioId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("torneios").insert([{
+          arena_id: arenaId!,
+          nome: data.nome,
+          descricao: data.descricao,
+          modalidade: data.modalidade,
+          tipo_chaveamento: data.tipo_chaveamento,
+          data_inicio: data.data_inicio,
+          data_fim: data.data_fim,
+          data_inicio_inscricoes: data.data_inicio_inscricoes,
+          data_fim_inscricoes: data.data_fim_inscricoes,
+          max_participantes: data.max_participantes,
+          valor_inscricao: data.valor_inscricao,
+          status: "planejamento" as const,
+        }]);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["torneios"] });
-      toast({ title: "Torneio criado com sucesso!" });
+      toast({ title: torneioId ? "Torneio atualizado!" : "Torneio criado!" });
       onOpenChange(false);
       form.reset();
     },
   });
 
   const onSubmit = (data: TorneioFormData) => {
-    createMutation.mutate(data);
+    saveMutation.mutate(data);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Novo Torneio</DialogTitle>
+          <DialogTitle>{torneioId ? "Editar Torneio" : "Novo Torneio"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -257,7 +320,9 @@ export function TorneioDialog({ open, onOpenChange, torneioId }: TorneioDialogPr
               />
             </div>
             <DialogFooter>
-              <Button type="submit">Criar Torneio</Button>
+              <Button type="submit" disabled={saveMutation.isPending}>
+                {saveMutation.isPending ? "Salvando..." : torneioId ? "Salvar" : "Criar Torneio"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

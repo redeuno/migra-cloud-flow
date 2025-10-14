@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,14 +8,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { MoreHorizontal, Users, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "@/hooks/use-toast";
+import { TorneioDialog } from "./TorneioDialog";
 
 export function TorneiosTable() {
   const { arenaId } = useAuth();
+  const queryClient = useQueryClient();
   const [inscricoesDialogOpen, setInscricoesDialogOpen] = useState(false);
   const [selectedTorneio, setSelectedTorneio] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [torneioToEdit, setTorneioToEdit] = useState<string | null>(null);
+  const [torneioToDelete, setTorneioToDelete] = useState<{ id: string; nome: string } | null>(null);
 
   const { data: torneios, isLoading } = useQuery({
     queryKey: ["torneios", arenaId],
@@ -50,6 +58,29 @@ export function TorneiosTable() {
       return data;
     },
     enabled: !!selectedTorneio?.id,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (torneioId: string) => {
+      const { error } = await supabase
+        .from("torneios")
+        .delete()
+        .eq("id", torneioId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["torneios"] });
+      toast({ title: "Torneio excluído com sucesso!" });
+      setDeleteDialogOpen(false);
+      setTorneioToDelete(null);
+    },
+    onError: () => {
+      toast({ 
+        title: "Erro ao excluir torneio",
+        description: "Verifique se não há inscrições vinculadas",
+        variant: "destructive" 
+      });
+    },
   });
 
   const handleVerInscricoes = (torneio: any) => {
@@ -109,11 +140,22 @@ export function TorneiosTable() {
                       <Users className="mr-2 h-4 w-4" />
                       Ver Inscrições
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setTorneioToEdit(torneio.id);
+                        setEditDialogOpen(true);
+                      }}
+                    >
                       <Edit className="mr-2 h-4 w-4" />
                       Editar
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">
+                    <DropdownMenuItem 
+                      className="text-destructive"
+                      onClick={() => {
+                        setTorneioToDelete({ id: torneio.id, nome: torneio.nome });
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Excluir
                     </DropdownMenuItem>
@@ -176,6 +218,41 @@ export function TorneiosTable() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de Edição */}
+      <TorneioDialog
+        open={editDialogOpen}
+        onOpenChange={(open) => {
+          setEditDialogOpen(open);
+          if (!open) setTorneioToEdit(null);
+        }}
+        torneioId={torneioToEdit || undefined}
+      />
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o torneio <strong>"{torneioToDelete?.nome}"</strong>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setTorneioToDelete(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => torneioToDelete && deleteMutation.mutate(torneioToDelete.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
