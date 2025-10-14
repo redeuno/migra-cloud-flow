@@ -265,11 +265,11 @@ export default function DashboardSuperAdmin() {
   });
 
   const COLORS = [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))',
+    'hsl(var(--primary))',
+    'hsl(var(--destructive))',
+    'hsl(var(--accent-foreground))',
+    'hsl(var(--muted-foreground))',
+    'hsl(var(--secondary-foreground))',
   ];
 
   // Calcular data inicial baseado no período
@@ -397,29 +397,27 @@ export default function DashboardSuperAdmin() {
                 }}
                 className="h-[300px]"
               >
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={arenasEvolution}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="mes" 
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                    />
-                    <YAxis 
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                    />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="total" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={2}
-                      dot={{ fill: "hsl(var(--primary))", r: 4 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <LineChart data={arenasEvolution}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="mes" 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="total" 
+                    stroke="var(--color-total)"
+                    strokeWidth={2}
+                    dot={{ fill: "var(--color-total)", r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
               </ChartContainer>
             )}
           </CardContent>
@@ -439,26 +437,24 @@ export default function DashboardSuperAdmin() {
                 config={{
                   pago: {
                     label: "Receita Paga",
-                    color: "hsl(var(--chart-2))",
+                    color: "hsl(var(--primary))",
                   },
                   pendente: {
                     label: "Receita Pendente",
-                    color: "hsl(var(--chart-3))",
+                    color: "hsl(var(--destructive))",
                   },
                 }}
                 className="h-[300px]"
               >
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={revenueData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend wrapperStyle={{ paddingTop: "20px" }} />
-                    <Bar dataKey="pago" fill="hsl(var(--chart-2))" name="Receita Paga" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="pendente" fill="hsl(var(--chart-3))" name="Receita Pendente" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart data={revenueData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Legend wrapperStyle={{ paddingTop: "20px" }} />
+                  <Bar dataKey="pago" fill="var(--color-pago)" name="Receita Paga" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="pendente" fill="var(--color-pendente)" name="Receita Pendente" radius={[4, 4, 0, 0]} />
+                </BarChart>
               </ChartContainer>
             )}
           </CardContent>
@@ -483,25 +479,23 @@ export default function DashboardSuperAdmin() {
                 }}
                 className="h-[300px]"
               >
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend verticalAlign="bottom" height={36} />
-                    <Pie
-                      data={plansDistribution}
-                      dataKey="total"
-                      nameKey="nome"
-                      cx="50%"
-                      cy="45%"
-                      outerRadius={90}
-                      label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                    >
-                      {plansDistribution.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
+                <PieChart>
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Legend verticalAlign="bottom" height={36} />
+                  <Pie
+                    data={plansDistribution}
+                    dataKey="total"
+                    nameKey="nome"
+                    cx="50%"
+                    cy="45%"
+                    outerRadius={90}
+                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                  >
+                    {plansDistribution.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                </PieChart>
               </ChartContainer>
             ) : (
               <EmptyState
