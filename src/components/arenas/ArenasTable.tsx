@@ -114,118 +114,122 @@ export function ArenasTable({ arenas }: ArenasTableProps) {
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>CNPJ</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Telefone</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Vencimento</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {arenas.map((arena) => (
-            <TableRow key={arena.id}>
-              <TableCell className="font-medium">{arena.nome}</TableCell>
-              <TableCell>{arena.cnpj}</TableCell>
-              <TableCell>{arena.email}</TableCell>
-              <TableCell>{arena.telefone}</TableCell>
-              <TableCell>
-                <Badge variant={statusMap[arena.status as keyof typeof statusMap].variant}>
-                  {statusMap[arena.status as keyof typeof statusMap].label}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                {new Date(arena.data_vencimento).toLocaleDateString("pt-BR")}
-              </TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuItem onClick={() => navigate(`/financeiro?arena=${arena.id}&tab=assinaturas`)}>
-                        <DollarSign className="mr-2 h-4 w-4" />
-                        Financeiro da Arena
-                      </DropdownMenuItem>
-                      
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>
-                          <DollarSign className="mr-2 h-4 w-4" />
-                          Cobrar plano
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent>
-                          <DropdownMenuItem onClick={() => window.open(PLANO_99_LINK, '_blank')}>
-                            Plano R$ 99
+      <div className="rounded-md border">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[120px]">Nome</TableHead>
+                <TableHead className="min-w-[100px]">CNPJ</TableHead>
+                <TableHead className="hidden md:table-cell min-w-[140px]">Email</TableHead>
+                <TableHead className="hidden sm:table-cell min-w-[100px]">Telefone</TableHead>
+                <TableHead className="min-w-[80px]">Status</TableHead>
+                <TableHead className="hidden sm:table-cell min-w-[90px]">Vencimento</TableHead>
+                <TableHead className="text-right min-w-[60px]">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {arenas.map((arena) => (
+                <TableRow key={arena.id}>
+                  <TableCell className="font-medium">{arena.nome}</TableCell>
+                  <TableCell>{arena.cnpj}</TableCell>
+                  <TableCell className="hidden md:table-cell">{arena.email}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{arena.telefone}</TableCell>
+                  <TableCell>
+                    <Badge variant={statusMap[arena.status as keyof typeof statusMap].variant}>
+                      {statusMap[arena.status as keyof typeof statusMap].label}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    {new Date(arena.data_vencimento).toLocaleDateString("pt-BR")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem onClick={() => navigate(`/financeiro?arena=${arena.id}&tab=assinaturas`)}>
+                            <DollarSign className="mr-2 h-4 w-4" />
+                            Financeiro da Arena
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEnviarPlanoWhatsApp(arena, "R$ 99", PLANO_99_LINK)}>
-                            <MessageSquare className="mr-2 h-3 w-3" />
-                            Enviar R$ 99 (WhatsApp)
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => window.open(PLANO_199_LINK, '_blank')}>
-                            Plano R$ 199
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEnviarPlanoWhatsApp(arena, "R$ 199", PLANO_199_LINK)}>
-                            <MessageSquare className="mr-2 h-3 w-3" />
-                            Enviar R$ 199 (WhatsApp)
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => window.open(PLANO_299_LINK, '_blank')}>
-                            Plano R$ 299
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEnviarPlanoWhatsApp(arena, "R$ 299", PLANO_299_LINK)}>
-                            <MessageSquare className="mr-2 h-3 w-3" />
-                            Enviar R$ 299 (WhatsApp)
-                          </DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
+                          
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>
+                              <DollarSign className="mr-2 h-4 w-4" />
+                              Cobrar plano
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                              <DropdownMenuItem onClick={() => window.open(PLANO_99_LINK, '_blank')}>
+                                Plano R$ 99
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEnviarPlanoWhatsApp(arena, "R$ 99", PLANO_99_LINK)}>
+                                <MessageSquare className="mr-2 h-3 w-3" />
+                                Enviar R$ 99 (WhatsApp)
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => window.open(PLANO_199_LINK, '_blank')}>
+                                Plano R$ 199
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEnviarPlanoWhatsApp(arena, "R$ 199", PLANO_199_LINK)}>
+                                <MessageSquare className="mr-2 h-3 w-3" />
+                                Enviar R$ 199 (WhatsApp)
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => window.open(PLANO_299_LINK, '_blank')}>
+                                Plano R$ 299
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEnviarPlanoWhatsApp(arena, "R$ 299", PLANO_299_LINK)}>
+                                <MessageSquare className="mr-2 h-3 w-3" />
+                                Enviar R$ 299 (WhatsApp)
+                              </DropdownMenuItem>
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
 
-                      <DropdownMenuSeparator />
-                      
-                      {arena.status === 'ativo' ? (
-                        <DropdownMenuItem 
-                          onClick={() => toggleStatusMutation.mutate({ id: arena.id, newStatus: 'suspenso' })}
-                          className="text-orange-600"
-                        >
-                          <Ban className="mr-2 h-4 w-4" />
-                          Suspender acesso
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem 
-                          onClick={() => toggleStatusMutation.mutate({ id: arena.id, newStatus: 'ativo' })}
-                          className="text-green-600"
-                        >
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          Reativar acesso
-                        </DropdownMenuItem>
-                      )}
+                          <DropdownMenuSeparator />
+                          
+                          {arena.status === 'ativo' ? (
+                            <DropdownMenuItem 
+                              onClick={() => toggleStatusMutation.mutate({ id: arena.id, newStatus: 'suspenso' })}
+                              className="text-orange-600"
+                            >
+                              <Ban className="mr-2 h-4 w-4" />
+                              Suspender acesso
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem 
+                              onClick={() => toggleStatusMutation.mutate({ id: arena.id, newStatus: 'ativo' })}
+                              className="text-green-600"
+                            >
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Reativar acesso
+                            </DropdownMenuItem>
+                          )}
 
-                      <DropdownMenuSeparator />
-                      
-                      <DropdownMenuItem onClick={() => setEditingArena(arena)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setDeletingArena(arena)}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                          <DropdownMenuSeparator />
+                          
+                          <DropdownMenuItem onClick={() => setEditingArena(arena)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDeletingArena(arena)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
 
       <ArenaDialog
         open={!!editingArena}

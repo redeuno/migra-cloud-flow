@@ -56,101 +56,103 @@ export function FaturasSistemaTable() {
   }
 
   return (
-    <div className="rounded-md border overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="min-w-[120px]">Número</TableHead>
-            <TableHead className="min-w-[150px]">Arena</TableHead>
-            <TableHead className="min-w-[100px]">Competência</TableHead>
-            <TableHead className="min-w-[110px]">Vencimento</TableHead>
-            <TableHead className="min-w-[100px]">Valor</TableHead>
-            <TableHead className="min-w-[90px]">Status</TableHead>
-            <TableHead className="min-w-[120px]">Pagamento</TableHead>
-            <TableHead className="w-[150px]">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {faturas?.length === 0 ? (
+    <div className="rounded-md border">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={8}>
-                <EmptyState
-                  icon={FileText}
-                  title="Nenhuma fatura encontrada"
-                  description="Ainda não há faturas geradas no sistema. As faturas serão criadas automaticamente com base nas assinaturas ativas."
-                />
-              </TableCell>
+              <TableHead className="min-w-[100px]">Número</TableHead>
+              <TableHead className="min-w-[120px]">Arena</TableHead>
+              <TableHead className="hidden md:table-cell min-w-[90px]">Comp.</TableHead>
+              <TableHead className="hidden sm:table-cell min-w-[90px]">Venc.</TableHead>
+              <TableHead className="min-w-[90px]">Valor</TableHead>
+              <TableHead className="min-w-[80px]">Status</TableHead>
+              <TableHead className="hidden lg:table-cell min-w-[100px]">Pagamento</TableHead>
+              <TableHead className="w-[100px]">Ações</TableHead>
             </TableRow>
-          ) : (
-            faturas?.map((fatura) => (
-              <TableRow key={fatura.id}>
-                <TableCell className="font-mono text-sm">
-                  {fatura.numero_fatura}
-                </TableCell>
-                <TableCell>
-                  <div>
-                    <p className="font-medium">{fatura.arenas?.nome || "Arena não encontrada"}</p>
-                    <p className="text-sm text-muted-foreground">{fatura.arenas?.email || "-"}</p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {format(new Date(fatura.competencia), "MM/yyyy", { locale: ptBR })}
-                </TableCell>
-                <TableCell>
-                  {format(new Date(fatura.data_vencimento), "dd/MM/yyyy", { locale: ptBR })}
-                </TableCell>
-                <TableCell className="font-semibold">
-                  R$ {Number(fatura.valor).toFixed(2)}
-                </TableCell>
-                <TableCell>{getStatusBadge(fatura.status_pagamento)}</TableCell>
-                <TableCell>
-                  {fatura.data_pagamento ? (
-                    <div className="text-sm">
-                      <p>{format(new Date(fatura.data_pagamento), "dd/MM/yyyy", { locale: ptBR })}</p>
-                      <p className="text-muted-foreground capitalize">{fatura.forma_pagamento}</p>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground text-sm">-</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    {fatura.asaas_invoice_url && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => window.open(fatura.asaas_invoice_url, "_blank")}
-                        title="Abrir fatura"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {fatura.linha_digitavel && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => copiarLinha(fatura.linha_digitavel)}
-                        title="Copiar linha digitável"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {fatura.qr_code_pix && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        title="Ver QR Code PIX"
-                      >
-                        <QrCode className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+          </TableHeader>
+          <TableBody>
+            {faturas?.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8}>
+                  <EmptyState
+                    icon={FileText}
+                    title="Nenhuma fatura encontrada"
+                    description="Ainda não há faturas geradas no sistema. As faturas serão criadas automaticamente com base nas assinaturas ativas."
+                  />
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              faturas?.map((fatura) => (
+                <TableRow key={fatura.id}>
+                  <TableCell className="font-mono text-sm">
+                    {fatura.numero_fatura}
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{fatura.arenas?.nome || "Arena não encontrada"}</p>
+                      <p className="text-sm text-muted-foreground">{fatura.arenas?.email || "-"}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {format(new Date(fatura.competencia), "MM/yyyy", { locale: ptBR })}
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    {format(new Date(fatura.data_vencimento), "dd/MM/yyyy", { locale: ptBR })}
+                  </TableCell>
+                  <TableCell className="font-semibold">
+                    R$ {Number(fatura.valor).toFixed(2)}
+                  </TableCell>
+                  <TableCell>{getStatusBadge(fatura.status_pagamento)}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {fatura.data_pagamento ? (
+                      <div className="text-sm">
+                        <p>{format(new Date(fatura.data_pagamento), "dd/MM/yyyy", { locale: ptBR })}</p>
+                        <p className="text-muted-foreground capitalize">{fatura.forma_pagamento}</p>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      {fatura.asaas_invoice_url && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => window.open(fatura.asaas_invoice_url, "_blank")}
+                          title="Abrir fatura"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {fatura.linha_digitavel && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copiarLinha(fatura.linha_digitavel)}
+                          title="Copiar linha digitável"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {fatura.qr_code_pix && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          title="Ver QR Code PIX"
+                        >
+                          <QrCode className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

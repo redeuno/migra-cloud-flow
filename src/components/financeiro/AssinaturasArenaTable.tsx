@@ -84,84 +84,86 @@ export function AssinaturasArenaTable() {
 
   return (
     <>
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="min-w-[100px]">Número</TableHead>
-              <TableHead className="min-w-[150px]">Arena</TableHead>
-              <TableHead className="min-w-[100px]">Plano</TableHead>
-              <TableHead className="min-w-[120px]">Valor Mensal</TableHead>
-              <TableHead className="min-w-[120px]">Dia Vencimento</TableHead>
-              <TableHead className="min-w-[100px]">Início</TableHead>
-              <TableHead className="min-w-[80px]">Status</TableHead>
-              <TableHead className="w-[70px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {assinaturas?.length === 0 ? (
+      <div className="rounded-md border">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={8}>
-                  <EmptyState
-                    icon={Building2}
-                    title="Nenhuma assinatura encontrada"
-                    description="As arenas ainda não possuem assinaturas ativas. Crie a primeira assinatura para começar."
-                    action={{
-                      label: "Criar Assinatura",
-                      onClick: () => setDialogOpen(true),
-                    }}
-                  />
-                </TableCell>
+                <TableHead className="min-w-[100px]">Número</TableHead>
+                <TableHead className="min-w-[140px]">Arena</TableHead>
+                <TableHead className="hidden md:table-cell min-w-[100px]">Plano</TableHead>
+                <TableHead className="min-w-[100px]">Valor</TableHead>
+                <TableHead className="hidden sm:table-cell min-w-[90px]">Venc.</TableHead>
+                <TableHead className="hidden sm:table-cell min-w-[90px]">Início</TableHead>
+                <TableHead className="min-w-[80px]">Status</TableHead>
+                <TableHead className="w-[60px]"></TableHead>
               </TableRow>
-            ) : (
-              assinaturas?.map((assinatura) => (
-                <TableRow key={assinatura.id}>
-                  <TableCell className="font-mono text-sm">
-                    {assinatura.numero_assinatura || "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{assinatura.arenas?.nome || "Arena não encontrada"}</p>
-                      <p className="text-sm text-muted-foreground">{assinatura.arenas?.email || "-"}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{assinatura.planos_sistema?.nome || "N/A"}</TableCell>
-                  <TableCell>R$ {Number(assinatura.valor_mensal).toFixed(2)}</TableCell>
-                  <TableCell>Dia {assinatura.dia_vencimento}</TableCell>
-                  <TableCell>
-                    {format(new Date(assinatura.data_inicio), "dd/MM/yyyy", { locale: ptBR })}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(assinatura.status)}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(assinatura)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" />
-                          Ver Faturas
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => gerarFaturaMutation.mutate(assinatura)}
-                        >
-                          <DollarSign className="mr-2 h-4 w-4" />
-                          Gerar Fatura Manualmente
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+            </TableHeader>
+            <TableBody>
+              {assinaturas?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8}>
+                    <EmptyState
+                      icon={Building2}
+                      title="Nenhuma assinatura encontrada"
+                      description="As arenas ainda não possuem assinaturas ativas. Crie a primeira assinatura para começar."
+                      action={{
+                        label: "Criar Assinatura",
+                        onClick: () => setDialogOpen(true),
+                      }}
+                    />
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                assinaturas?.map((assinatura) => (
+                  <TableRow key={assinatura.id}>
+                    <TableCell className="font-mono text-sm">
+                      {assinatura.numero_assinatura || "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{assinatura.arenas?.nome || "Arena não encontrada"}</p>
+                        <p className="text-sm text-muted-foreground">{assinatura.arenas?.email || "-"}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{assinatura.planos_sistema?.nome || "N/A"}</TableCell>
+                    <TableCell>R$ {Number(assinatura.valor_mensal).toFixed(2)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">Dia {assinatura.dia_vencimento}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {format(new Date(assinatura.data_inicio), "dd/MM/yyyy", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(assinatura.status)}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(assinatura)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Ver Faturas
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => gerarFaturaMutation.mutate(assinatura)}
+                          >
+                            <DollarSign className="mr-2 h-4 w-4" />
+                            Gerar Fatura Manualmente
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <AssinaturaArenaDialog

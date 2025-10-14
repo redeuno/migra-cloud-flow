@@ -67,10 +67,13 @@ export default function DashboardSuperAdmin() {
         .select("*", { count: "exact", head: true })
         .gte("data_agendamento", thirtyDaysAgo.toISOString().split("T")[0]);
 
-      // Total de quadras
-      const { count: totalQuadras } = await supabase
+      // Total de quadras ativas e em manutenção
+      const { data: quadrasData } = await supabase
         .from("quadras")
-        .select("*", { count: "exact", head: true });
+        .select("id, status")
+        .in("status", ["ativa", "manutencao"]);
+      
+      const totalQuadras = quadrasData?.length || 0;
 
       // Receita recorrente mensal (assinaturas ativas)
       const { data: assinaturasAtivas } = await supabase
@@ -329,7 +332,7 @@ export default function DashboardSuperAdmin() {
         </div>
 
       {/* Cards de Métricas - Mobile First */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         {statsLoading ? (
           Array.from({ length: 6 }).map((_, i) => (
             <Card key={i}>

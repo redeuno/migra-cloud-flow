@@ -35,11 +35,11 @@ export default function ConfiguracoesSistema() {
         </div>
 
         <Tabs defaultValue="planos" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-            <TabsTrigger value="planos">Planos</TabsTrigger>
-            <TabsTrigger value="modulos">Módulos</TabsTrigger>
-            <TabsTrigger value="categorias">Categorias</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1">
+            <TabsTrigger value="planos" className="text-xs sm:text-sm">Planos</TabsTrigger>
+            <TabsTrigger value="modulos" className="text-xs sm:text-sm">Módulos</TabsTrigger>
+            <TabsTrigger value="categorias" className="text-xs sm:text-sm">Categorias</TabsTrigger>
+            <TabsTrigger value="templates" className="text-xs sm:text-sm">Templates</TabsTrigger>
           </TabsList>
 
           {/* Tab Planos do Sistema */}
