@@ -67,11 +67,11 @@ export function Layout({ children }: LayoutProps) {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => window.location.href = "/configuracoes"}>
+                  <DropdownMenuItem onClick={() => navigate("/configuracoes")}>
                     <User className="mr-2 h-4 w-4" />
                     Perfil
                   </DropdownMenuItem>
-                  <DropdownMenuItem disabled>
+                  <DropdownMenuItem onClick={() => navigate("/configuracoes")}>
                     <Settings className="mr-2 h-4 w-4" />
                     Configurações
                   </DropdownMenuItem>

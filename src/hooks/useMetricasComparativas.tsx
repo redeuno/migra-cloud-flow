@@ -72,26 +72,39 @@ export function useMetricasComparativas({ arenaId, diasPeriodo = 30 }: MetricasC
     },
   });
 
-  // Novos clientes
+  // Novos clientes (apenas alunos)
   const { data: clientes } = useQuery({
     queryKey: ["metricas-clientes", arenaId, diasPeriodo],
     queryFn: async () => {
-      let query = supabase
+      if (!arenaId) return { atual: 0, anterior: 0 };
+
+      // Buscar IDs de usuários com role 'aluno' na arena
+      const { data: alunosRoles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("arena_id", arenaId)
+        .eq("role", "aluno");
+
+      if (rolesError) throw rolesError;
+      if (!alunosRoles || alunosRoles.length === 0) return { atual: 0, anterior: 0 };
+
+      const alunosIds = alunosRoles.map(r => r.user_id);
+
+      // Buscar usuários (profiles) desses alunos
+      const { data: usuarios, error: usuariosError } = await supabase
         .from("usuarios")
-        .select("created_at, arena_id");
+        .select("id, created_at, auth_id")
+        .eq("arena_id", arenaId)
+        .in("auth_id", alunosIds);
 
-      if (arenaId) {
-        query = query.eq("arena_id", arenaId);
-      }
+      if (usuariosError) throw usuariosError;
+      if (!usuarios) return { atual: 0, anterior: 0 };
 
-      const { data } = await query;
-      if (!data) return { atual: 0, anterior: 0 };
-
-      const atual = data.filter(
+      const atual = usuarios.filter(
         (u) => new Date(u.created_at) >= inicioAtual
       ).length;
 
-      const anterior = data.filter(
+      const anterior = usuarios.filter(
         (u) =>
           new Date(u.created_at) >= inicioAnterior &&
           new Date(u.created_at) < inicioAtual
@@ -99,6 +112,7 @@ export function useMetricasComparativas({ arenaId, diasPeriodo = 30 }: MetricasC
 
       return { atual, anterior };
     },
+    enabled: !!arenaId,
   });
 
   const calcularVariacao = (atual: number, anterior: number) => {

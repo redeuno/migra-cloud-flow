@@ -3,10 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export function useNotifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Buscar ID do usuário
   const { data: usuario } = useQuery({
@@ -47,7 +49,7 @@ export function useNotifications() {
             duration: 5000,
             action: notificacao.link ? {
               label: "Ver",
-              onClick: () => window.location.href = notificacao.link,
+              onClick: () => navigate(notificacao.link),
             } : undefined,
           });
 
@@ -60,7 +62,7 @@ export function useNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [usuario?.id, queryClient]);
+  }, [usuario?.id, queryClient, navigate]);
 
   return { usuario };
 }
