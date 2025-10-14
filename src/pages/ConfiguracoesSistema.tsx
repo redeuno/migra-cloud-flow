@@ -8,10 +8,16 @@ import { PlanosSistemaTable } from "@/components/configuracoes/PlanosSistemaTabl
 import { PlanoDialog } from "@/components/configuracoes/PlanoDialog";
 import { ModulosSistemaTable } from "@/components/configuracoes/ModulosSistemaTable";
 import { ModuloDialog } from "@/components/configuracoes/ModuloDialog";
+import { CategoriasSistemaTable } from "@/components/configuracoes/CategoriasSistemaTable";
+import { CategoriaDialog } from "@/components/configuracoes/CategoriaDialog";
+import { TemplatesSistemaTable } from "@/components/configuracoes/TemplatesSistemaTable";
+import { TemplateDialog } from "@/components/configuracoes/TemplateDialog";
 
 export default function ConfiguracoesSistema() {
   const [planoDialogOpen, setPlanoDialogOpen] = useState(false);
   const [moduloDialogOpen, setModuloDialogOpen] = useState(false);
+  const [categoriaDialogOpen, setCategoriaDialogOpen] = useState(false);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
 
   return (
     <Layout>
@@ -86,13 +92,21 @@ export default function ConfiguracoesSistema() {
           <TabsContent value="categorias" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Categorias Financeiras</CardTitle>
-                <CardDescription>
-                  Em desenvolvimento - Configure as categorias para movimentações financeiras
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Categorias Financeiras</CardTitle>
+                    <CardDescription>
+                      Configure as categorias para movimentações financeiras
+                    </CardDescription>
+                  </div>
+                  <Button onClick={() => setCategoriaDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Categoria
+                  </Button>
+                </div>
               </CardHeader>
-              <CardContent className="text-center py-12 text-muted-foreground">
-                🚧 Esta funcionalidade será implementada em breve
+              <CardContent>
+                <CategoriasSistemaTable />
               </CardContent>
             </Card>
           </TabsContent>
@@ -101,13 +115,21 @@ export default function ConfiguracoesSistema() {
           <TabsContent value="templates" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Templates de Notificações</CardTitle>
-                <CardDescription>
-                  Em desenvolvimento - Configure templates para mensagens e notificações
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Templates de Notificações</CardTitle>
+                    <CardDescription>
+                      Configure templates para mensagens e notificações
+                    </CardDescription>
+                  </div>
+                  <Button onClick={() => setTemplateDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Novo Template
+                  </Button>
+                </div>
               </CardHeader>
-              <CardContent className="text-center py-12 text-muted-foreground">
-                🚧 Esta funcionalidade será implementada em breve
+              <CardContent>
+                <TemplatesSistemaTable />
               </CardContent>
             </Card>
           </TabsContent>
@@ -116,6 +138,8 @@ export default function ConfiguracoesSistema() {
         {/* Dialogs */}
         <PlanoDialog open={planoDialogOpen} onOpenChange={setPlanoDialogOpen} />
         <ModuloDialog open={moduloDialogOpen} onOpenChange={setModuloDialogOpen} />
+        <CategoriaDialog open={categoriaDialogOpen} onOpenChange={setCategoriaDialogOpen} />
+        <TemplateDialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen} />
       </div>
     </Layout>
   );

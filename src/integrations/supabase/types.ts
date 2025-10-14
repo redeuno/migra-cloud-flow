@@ -634,6 +634,42 @@ export type Database = {
           },
         ]
       }
+      categorias_financeiras: {
+        Row: {
+          ativo: boolean | null
+          cor: string | null
+          created_at: string | null
+          icone: string | null
+          id: string
+          nome: string
+          ordem: number
+          tipo: Database["public"]["Enums"]["tipo_movimentacao"]
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cor?: string | null
+          created_at?: string | null
+          icone?: string | null
+          id?: string
+          nome: string
+          ordem: number
+          tipo: Database["public"]["Enums"]["tipo_movimentacao"]
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cor?: string | null
+          created_at?: string | null
+          icone?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          tipo?: Database["public"]["Enums"]["tipo_movimentacao"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       checkins: {
         Row: {
           agendamento_id: string | null
@@ -1360,6 +1396,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      templates_notificacao: {
+        Row: {
+          assunto: string | null
+          ativo: boolean | null
+          categoria: string | null
+          created_at: string | null
+          id: string
+          mensagem: string
+          nome: string
+          tipo: string
+          updated_at: string | null
+          variaveis: Json | null
+        }
+        Insert: {
+          assunto?: string | null
+          ativo?: boolean | null
+          categoria?: string | null
+          created_at?: string | null
+          id?: string
+          mensagem: string
+          nome: string
+          tipo: string
+          updated_at?: string | null
+          variaveis?: Json | null
+        }
+        Update: {
+          assunto?: string | null
+          ativo?: boolean | null
+          categoria?: string | null
+          created_at?: string | null
+          id?: string
+          mensagem?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string | null
+          variaveis?: Json | null
+        }
+        Relationships: []
       }
       torneios: {
         Row: {
