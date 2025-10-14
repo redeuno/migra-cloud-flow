@@ -1028,6 +1028,57 @@ export type Database = {
           },
         ]
       }
+      historico_atividades: {
+        Row: {
+          arena_id: string | null
+          created_at: string | null
+          descricao: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          tipo_acao: string
+          user_agent: string | null
+          usuario_id: string
+        }
+        Insert: {
+          arena_id?: string | null
+          created_at?: string | null
+          descricao: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          tipo_acao: string
+          user_agent?: string | null
+          usuario_id: string
+        }
+        Update: {
+          arena_id?: string | null
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          tipo_acao?: string
+          user_agent?: string | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_atividades_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historico_atividades_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mensalidades: {
         Row: {
           acrescimo: number | null

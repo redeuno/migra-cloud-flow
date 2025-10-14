@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -36,6 +36,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { agendamentoFormSchema, type AgendamentoFormData } from "@/lib/validations/agendamento";
+import { AgendamentoRecorrenteConfig } from "./AgendamentoRecorrenteConfig";
+import { addDays, addWeeks, addMonths } from "date-fns";
 
 interface AgendamentoDialogProps {
   open: boolean;
@@ -56,6 +58,14 @@ export function AgendamentoDialog({
 }: AgendamentoDialogProps) {
   const queryClient = useQueryClient();
   const { arenaId } = useAuth();
+
+  const [recorrenciaConfig, setRecorrenciaConfig] = useState({
+    ativo: false,
+    frequencia: "semanal" as "semanal" | "quinzenal" | "mensal",
+    dias_semana: [] as number[],
+    total_ocorrencias: 4,
+    data_fim: undefined as Date | undefined,
+  });
 
   const form = useForm<AgendamentoFormData>({
     resolver: zodResolver(agendamentoFormSchema),
@@ -131,11 +141,10 @@ export function AgendamentoDialog({
 
   const saveMutation = useMutation({
     mutationFn: async (data: AgendamentoFormData) => {
-      const payload = {
+      const basePayload = {
         arena_id: arenaId,
         quadra_id: data.quadra_id,
         cliente_id: data.cliente_id || null,
-        data_agendamento: format(data.data_agendamento, "yyyy-MM-dd"),
         hora_inicio: data.hora_inicio,
         hora_fim: data.hora_fim,
         modalidade: data.modalidade,
@@ -148,26 +157,70 @@ export function AgendamentoDialog({
       };
 
       if (agendamentoId) {
+        // Edição - não permite recorrência
         const { error } = await supabase
           .from("agendamentos")
-          .update(payload)
+          .update({
+            ...basePayload,
+            data_agendamento: format(data.data_agendamento, "yyyy-MM-dd"),
+          })
           .eq("id", agendamentoId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("agendamentos").insert(payload);
-        if (error) throw error;
+        // Criação - suporta recorrência
+        if (recorrenciaConfig.ativo && recorrenciaConfig.total_ocorrencias > 1) {
+          // Criar múltiplos agendamentos
+          const agendamentos = [];
+          let dataAtual = data.data_agendamento;
+
+          for (let i = 0; i < recorrenciaConfig.total_ocorrencias; i++) {
+            agendamentos.push({
+              ...basePayload,
+              data_agendamento: format(dataAtual, "yyyy-MM-dd"),
+              e_recorrente: true,
+              recorrencia_config: recorrenciaConfig,
+            });
+
+            // Calcular próxima data baseado na frequência
+            if (recorrenciaConfig.frequencia === "semanal") {
+              dataAtual = addWeeks(dataAtual, 1);
+            } else if (recorrenciaConfig.frequencia === "quinzenal") {
+              dataAtual = addWeeks(dataAtual, 2);
+            } else if (recorrenciaConfig.frequencia === "mensal") {
+              dataAtual = addMonths(dataAtual, 1);
+            }
+          }
+
+          const { error } = await supabase.from("agendamentos").insert(agendamentos);
+          if (error) throw error;
+        } else {
+          // Agendamento único
+          const { error } = await supabase.from("agendamentos").insert({
+            ...basePayload,
+            data_agendamento: format(data.data_agendamento, "yyyy-MM-dd"),
+          });
+          if (error) throw error;
+        }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agendamentos-calendario"] });
       queryClient.invalidateQueries({ queryKey: ["agendamentos-tabela"] });
-      toast.success(
-        agendamentoId
-          ? "Agendamento atualizado com sucesso!"
-          : "Agendamento criado com sucesso!"
-      );
+      const mensagem = recorrenciaConfig.ativo && recorrenciaConfig.total_ocorrencias > 1
+        ? `${recorrenciaConfig.total_ocorrencias} agendamentos criados com sucesso!`
+        : agendamentoId
+        ? "Agendamento atualizado com sucesso!"
+        : "Agendamento criado com sucesso!";
+      toast.success(mensagem);
       onOpenChange(false);
       form.reset();
+      setRecorrenciaConfig({
+        ativo: false,
+        frequencia: "semanal",
+        dias_semana: [],
+        total_ocorrencias: 4,
+        data_fim: undefined,
+      });
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao salvar agendamento");
@@ -414,6 +467,20 @@ export function AgendamentoDialog({
                 </FormItem>
               )}
             />
+
+            {/* Agendamento Recorrente - só aparece ao criar novo */}
+            {!agendamentoId && (
+              <AgendamentoRecorrenteConfig
+                value={recorrenciaConfig}
+                onChange={(config) => setRecorrenciaConfig({
+                  ativo: config.ativo,
+                  frequencia: config.frequencia,
+                  dias_semana: config.dias_semana || [],
+                  total_ocorrencias: config.total_ocorrencias || 4,
+                  data_fim: config.data_fim
+                })}
+              />
+            )}
 
             <div className="flex justify-end gap-2">
               <Button
