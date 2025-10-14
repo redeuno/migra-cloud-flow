@@ -9,16 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { MoreHorizontal, Users, Edit, Trash2 } from "lucide-react";
+import { MoreHorizontal, Users, Edit, Trash2, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
 import { TorneioDialog } from "./TorneioDialog";
+import { ChaveamentoDialog } from "./ChaveamentoDialog";
 
 export function TorneiosTable() {
   const { arenaId } = useAuth();
   const queryClient = useQueryClient();
   const [inscricoesDialogOpen, setInscricoesDialogOpen] = useState(false);
+  const [chaveamentoDialogOpen, setChaveamentoDialogOpen] = useState(false);
   const [selectedTorneio, setSelectedTorneio] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -142,6 +144,15 @@ export function TorneiosTable() {
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => {
+                        setSelectedTorneio(torneio);
+                        setChaveamentoDialogOpen(true);
+                      }}
+                    >
+                      <Trophy className="mr-2 h-4 w-4" />
+                      Chaveamento
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
                         setTorneioToEdit(torneio.id);
                         setEditDialogOpen(true);
                       }}
@@ -227,6 +238,13 @@ export function TorneiosTable() {
           if (!open) setTorneioToEdit(null);
         }}
         torneioId={torneioToEdit || undefined}
+      />
+
+      {/* Dialog de Chaveamento */}
+      <ChaveamentoDialog
+        open={chaveamentoDialogOpen}
+        onOpenChange={setChaveamentoDialogOpen}
+        torneioId={selectedTorneio?.id || ""}
       />
 
       {/* Dialog de Confirmação de Exclusão */}

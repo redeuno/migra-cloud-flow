@@ -1,98 +1,129 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { subDays, startOfDay } from "date-fns";
+import { startOfDay, subDays } from "date-fns";
 
 interface MetricasComparativasParams {
   arenaId?: string;
-  diasPeriodo?: number; // Dias do período atual (padrão: 30)
+  diasPeriodo?: number;
 }
 
 export function useMetricasComparativas({ arenaId, diasPeriodo = 30 }: MetricasComparativasParams = {}) {
-  return useQuery({
-    queryKey: ["metricas-comparativas", arenaId, diasPeriodo],
+  const hoje = startOfDay(new Date());
+  const inicioAtual = subDays(hoje, diasPeriodo);
+  const inicioAnterior = subDays(inicioAtual, diasPeriodo);
+
+  // Agendamentos
+  const { data: agendamentos } = useQuery({
+    queryKey: ["metricas-agendamentos", arenaId, diasPeriodo],
     queryFn: async () => {
-      const hoje = new Date();
-      const inicioAtual = startOfDay(subDays(hoje, diasPeriodo));
-      const inicioAnterior = startOfDay(subDays(hoje, diasPeriodo * 2));
-      const fimAnterior = startOfDay(subDays(hoje, diasPeriodo));
-
-      // Agendamentos - período atual
-      const { count: agendamentosAtual } = await supabase
+      let query = supabase
         .from("agendamentos")
-        .select("*", { count: "exact", head: true })
-        .eq(arenaId ? "arena_id" : "id", arenaId || "")
-        .gte("data_agendamento", inicioAtual.toISOString().split("T")[0])
-        .lte("data_agendamento", hoje.toISOString().split("T")[0]);
+        .select("data_agendamento, created_at");
 
-      // Agendamentos - período anterior
-      const { count: agendamentosAnterior } = await supabase
-        .from("agendamentos")
-        .select("*", { count: "exact", head: true })
-        .eq(arenaId ? "arena_id" : "id", arenaId || "")
-        .gte("data_agendamento", inicioAnterior.toISOString().split("T")[0])
-        .lt("data_agendamento", fimAnterior.toISOString().split("T")[0]);
+      if (arenaId) {
+        query = query.eq("arena_id", arenaId);
+      }
 
-      // Receita - período atual
-      const { data: receitaAtualData } = await supabase
-        .from("agendamentos")
-        .select("valor_total")
-        .eq(arenaId ? "arena_id" : "id", arenaId || "")
-        .eq("status_pagamento", "pago")
-        .gte("data_agendamento", inicioAtual.toISOString().split("T")[0])
-        .lte("data_agendamento", hoje.toISOString().split("T")[0]);
+      const { data } = await query;
+      if (!data) return { atual: 0, anterior: 0 };
 
-      const receitaAtual = receitaAtualData?.reduce((sum, a) => sum + Number(a.valor_total), 0) || 0;
+      const atual = data.filter(
+        (a) => new Date(a.created_at) >= inicioAtual
+      ).length;
 
-      // Receita - período anterior
-      const { data: receitaAnteriorData } = await supabase
-        .from("agendamentos")
-        .select("valor_total")
-        .eq(arenaId ? "arena_id" : "id", arenaId || "")
-        .eq("status_pagamento", "pago")
-        .gte("data_agendamento", inicioAnterior.toISOString().split("T")[0])
-        .lt("data_agendamento", fimAnterior.toISOString().split("T")[0]);
+      const anterior = data.filter(
+        (a) =>
+          new Date(a.created_at) >= inicioAnterior &&
+          new Date(a.created_at) < inicioAtual
+      ).length;
 
-      const receitaAnterior = receitaAnteriorData?.reduce((sum, a) => sum + Number(a.valor_total), 0) || 0;
-
-      // Clientes novos - período atual
-      const { count: clientesAtual } = await supabase
-        .from("usuarios")
-        .select("*", { count: "exact", head: true })
-        .eq(arenaId ? "arena_id" : "id", arenaId || "")
-        .gte("created_at", inicioAtual.toISOString());
-
-      // Clientes novos - período anterior
-      const { count: clientesAnterior } = await supabase
-        .from("usuarios")
-        .select("*", { count: "exact", head: true })
-        .eq(arenaId ? "arena_id" : "id", arenaId || "")
-        .gte("created_at", inicioAnterior.toISOString())
-        .lt("created_at", fimAnterior.toISOString());
-
-      // Calcular percentuais
-      const calcularPercentual = (atual: number, anterior: number) => {
-        if (anterior === 0) return atual > 0 ? 100 : 0;
-        return ((atual - anterior) / anterior) * 100;
-      };
-
-      return {
-        agendamentos: {
-          atual: agendamentosAtual || 0,
-          anterior: agendamentosAnterior || 0,
-          percentual: calcularPercentual(agendamentosAtual || 0, agendamentosAnterior || 0),
-        },
-        receita: {
-          atual: receitaAtual,
-          anterior: receitaAnterior,
-          percentual: calcularPercentual(receitaAtual, receitaAnterior),
-        },
-        clientes: {
-          atual: clientesAtual || 0,
-          anterior: clientesAnterior || 0,
-          percentual: calcularPercentual(clientesAtual || 0, clientesAnterior || 0),
-        },
-      };
+      return { atual, anterior };
     },
-    enabled: true,
   });
+
+  // Receita
+  const { data: receita } = useQuery({
+    queryKey: ["metricas-receita", arenaId, diasPeriodo],
+    queryFn: async () => {
+      let query = supabase
+        .from("movimentacoes_financeiras")
+        .select("valor, data_movimentacao, tipo");
+
+      if (arenaId) {
+        query = query.eq("arena_id", arenaId);
+      }
+
+      const { data } = await query.eq("tipo", "receita");
+      if (!data) return { atual: 0, anterior: 0 };
+
+      const atual = data
+        .filter((m) => new Date(m.data_movimentacao) >= inicioAtual)
+        .reduce((sum, m) => sum + Number(m.valor), 0);
+
+      const anterior = data
+        .filter(
+          (m) =>
+            new Date(m.data_movimentacao) >= inicioAnterior &&
+            new Date(m.data_movimentacao) < inicioAtual
+        )
+        .reduce((sum, m) => sum + Number(m.valor), 0);
+
+      return { atual, anterior };
+    },
+  });
+
+  // Novos clientes
+  const { data: clientes } = useQuery({
+    queryKey: ["metricas-clientes", arenaId, diasPeriodo],
+    queryFn: async () => {
+      let query = supabase
+        .from("usuarios")
+        .select("created_at, arena_id");
+
+      if (arenaId) {
+        query = query.eq("arena_id", arenaId);
+      }
+
+      const { data } = await query;
+      if (!data) return { atual: 0, anterior: 0 };
+
+      const atual = data.filter(
+        (u) => new Date(u.created_at) >= inicioAtual
+      ).length;
+
+      const anterior = data.filter(
+        (u) =>
+          new Date(u.created_at) >= inicioAnterior &&
+          new Date(u.created_at) < inicioAtual
+      ).length;
+
+      return { atual, anterior };
+    },
+  });
+
+  const calcularVariacao = (atual: number, anterior: number) => {
+    if (anterior === 0) return atual > 0 ? 100 : 0;
+    return ((atual - anterior) / anterior) * 100;
+  };
+
+  return {
+    agendamentos: {
+      atual: agendamentos?.atual || 0,
+      anterior: agendamentos?.anterior || 0,
+      variacao: calcularVariacao(
+        agendamentos?.atual || 0,
+        agendamentos?.anterior || 0
+      ),
+    },
+    receita: {
+      atual: receita?.atual || 0,
+      anterior: receita?.anterior || 0,
+      variacao: calcularVariacao(receita?.atual || 0, receita?.anterior || 0),
+    },
+    clientes: {
+      atual: clientes?.atual || 0,
+      anterior: clientes?.anterior || 0,
+      variacao: calcularVariacao(clientes?.atual || 0, clientes?.anterior || 0),
+    },
+  };
 }

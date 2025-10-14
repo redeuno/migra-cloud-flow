@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { TorneioDialog } from "@/components/torneios/TorneioDialog";
 import { TorneiosTable } from "@/components/torneios/TorneiosTable";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 export default function Torneios() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -31,6 +32,8 @@ export default function Torneios() {
         open={dialogOpen} 
         onOpenChange={setDialogOpen}
       />
+
+      <PWAInstallPrompt />
     </Layout>
   );
 }
