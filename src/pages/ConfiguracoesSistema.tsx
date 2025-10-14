@@ -35,7 +35,7 @@ export default function ConfiguracoesSistema() {
         </div>
 
         <Tabs defaultValue="planos" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1 h-auto">
             <TabsTrigger value="planos" className="text-xs sm:text-sm">Planos</TabsTrigger>
             <TabsTrigger value="modulos" className="text-xs sm:text-sm">Módulos</TabsTrigger>
             <TabsTrigger value="categorias" className="text-xs sm:text-sm">Categorias</TabsTrigger>

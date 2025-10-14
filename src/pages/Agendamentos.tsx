@@ -65,7 +65,7 @@ export default function Agendamentos() {
         </div>
 
         <Tabs defaultValue="calendario" className="space-y-4">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-2 h-auto">
             <TabsTrigger value="calendario">Calendário</TabsTrigger>
             <TabsTrigger value="lista">Lista</TabsTrigger>
           </TabsList>

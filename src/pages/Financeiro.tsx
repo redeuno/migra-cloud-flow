@@ -281,22 +281,28 @@ export default function Financeiro() {
 
         {/* Tabs de Conteúdo */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 gap-1 h-auto">
+          <TabsList className="grid w-full h-auto gap-1" style={{ gridTemplateColumns: isSuperAdmin ? 'repeat(2, 1fr)' : 'repeat(2, 1fr) repeat(2, 1fr)' }}>
             {!isSuperAdmin && (
               <>
                 <TabsTrigger value="contratos">Contratos</TabsTrigger>
                 <TabsTrigger value="mensalidades">Mensalidades</TabsTrigger>
-                <TabsTrigger value="movimentacoes">Movimentações</TabsTrigger>
-                <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
+                <TabsTrigger value="movimentacoes" className="hidden sm:flex">Movimentações</TabsTrigger>
+                <TabsTrigger value="relatorios" className="hidden sm:flex">Relatórios</TabsTrigger>
+                <TabsTrigger value="movimentacoes" className="sm:hidden">Movim.</TabsTrigger>
+                <TabsTrigger value="relatorios" className="sm:hidden">Relat.</TabsTrigger>
               </>
             )}
             {isSuperAdmin && (
               <>
                 <TabsTrigger value="assinaturas">
                   <Building2 className="mr-2 h-4 w-4" />
-                  Assinaturas Arena
+                  <span className="hidden sm:inline">Assinaturas Arena</span>
+                  <span className="sm:hidden">Assinaturas</span>
                 </TabsTrigger>
-                <TabsTrigger value="faturas">Faturas Sistema</TabsTrigger>
+                <TabsTrigger value="faturas">
+                  <span className="hidden sm:inline">Faturas Sistema</span>
+                  <span className="sm:hidden">Faturas</span>
+                </TabsTrigger>
               </>
             )}
           </TabsList>

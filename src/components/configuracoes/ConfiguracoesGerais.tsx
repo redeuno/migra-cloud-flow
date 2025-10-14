@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export function ConfiguracoesGerais() {
   const { arenaId } = useAuth();
@@ -75,6 +76,12 @@ export function ConfiguracoesGerais() {
         estado: formData.get("estado"),
         cep: formData.get("cep"),
       },
+      // Configurações de check-in
+      janela_checkin_minutos_antes: parseInt(formData.get("janela_checkin_minutos_antes") as string) || 30,
+      janela_checkin_minutos_depois: parseInt(formData.get("janela_checkin_minutos_depois") as string) || 15,
+      coordenadas_latitude: formData.get("coordenadas_latitude") ? parseFloat(formData.get("coordenadas_latitude") as string) : null,
+      coordenadas_longitude: formData.get("coordenadas_longitude") ? parseFloat(formData.get("coordenadas_longitude") as string) : null,
+      raio_checkin_metros: parseInt(formData.get("raio_checkin_metros") as string) || 100,
     };
 
     await updateMutation.mutateAsync(data);
@@ -92,7 +99,7 @@ export function ConfiguracoesGerais() {
       <CardHeader>
         <CardTitle>Informações Gerais</CardTitle>
         <CardDescription>
-          Configure as informações básicas da sua arena
+          Configure as informações básicas da sua arena e regras de check-in
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -166,9 +173,11 @@ export function ConfiguracoesGerais() {
             </div>
           </div>
 
-          <div className="pt-4 border-t">
+          <Separator />
+
+          <div>
             <h3 className="text-lg font-semibold mb-4">Endereço</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="logradouro">Logradouro</Label>
                 <Input
@@ -242,7 +251,106 @@ export function ConfiguracoesGerais() {
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <Separator />
+
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Configurações de Check-in</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="janela_checkin_minutos_antes">
+                  Check-in disponível (minutos antes)
+                </Label>
+                <Input
+                  id="janela_checkin_minutos_antes"
+                  name="janela_checkin_minutos_antes"
+                  type="number"
+                  min="0"
+                  max="120"
+                  defaultValue={arena?.janela_checkin_minutos_antes || 30}
+                  placeholder="30"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Quantos minutos antes do horário o check-in pode ser feito
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="janela_checkin_minutos_depois">
+                  Check-in disponível (minutos depois)
+                </Label>
+                <Input
+                  id="janela_checkin_minutos_depois"
+                  name="janela_checkin_minutos_depois"
+                  type="number"
+                  min="0"
+                  max="60"
+                  defaultValue={arena?.janela_checkin_minutos_depois || 15}
+                  placeholder="15"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Quantos minutos depois do horário o check-in ainda é permitido
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="coordenadas_latitude">
+                  Latitude da Arena (opcional)
+                </Label>
+                <Input
+                  id="coordenadas_latitude"
+                  name="coordenadas_latitude"
+                  type="number"
+                  step="0.000001"
+                  defaultValue={arena?.coordenadas_latitude || ""}
+                  placeholder="-23.550520"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Para validação de check-in por geolocalização
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="coordenadas_longitude">
+                  Longitude da Arena (opcional)
+                </Label>
+                <Input
+                  id="coordenadas_longitude"
+                  name="coordenadas_longitude"
+                  type="number"
+                  step="0.000001"
+                  defaultValue={arena?.coordenadas_longitude || ""}
+                  placeholder="-46.633308"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Para validação de check-in por geolocalização
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="raio_checkin_metros">
+                  Raio de Check-in (metros)
+                </Label>
+                <Input
+                  id="raio_checkin_metros"
+                  name="raio_checkin_metros"
+                  type="number"
+                  min="50"
+                  max="1000"
+                  defaultValue={arena?.raio_checkin_metros || 100}
+                  placeholder="100"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Distância máxima permitida da arena para check-in
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-4">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Salvar Configurações
