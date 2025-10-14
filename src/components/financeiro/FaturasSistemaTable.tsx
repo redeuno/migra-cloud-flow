@@ -89,8 +89,8 @@ export function FaturasSistemaTable() {
                 </TableCell>
                 <TableCell>
                   <div>
-                    <p className="font-medium">{fatura.arenas.nome}</p>
-                    <p className="text-sm text-muted-foreground">{fatura.arenas.email}</p>
+                    <p className="font-medium">{fatura.arenas?.nome || "Arena não encontrada"}</p>
+                    <p className="text-sm text-muted-foreground">{fatura.arenas?.email || "-"}</p>
                   </div>
                 </TableCell>
                 <TableCell>

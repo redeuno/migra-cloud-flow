@@ -121,8 +121,8 @@ export function AssinaturasArenaTable() {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-medium">{assinatura.arenas.nome}</p>
-                      <p className="text-sm text-muted-foreground">{assinatura.arenas.email}</p>
+                      <p className="font-medium">{assinatura.arenas?.nome || "Arena não encontrada"}</p>
+                      <p className="text-sm text-muted-foreground">{assinatura.arenas?.email || "-"}</p>
                     </div>
                   </TableCell>
                   <TableCell>{assinatura.planos_sistema?.nome || "N/A"}</TableCell>
