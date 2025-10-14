@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { CheckinStatusBadge } from "./CheckinStatusBadge";
 
 interface CalendarioAgendamentosProps {
   onSelectSlot: (quadraId: string, data: Date, hora: string) => void;
@@ -183,9 +184,14 @@ export function CalendarioAgendamentos({
                             {ag.status}
                           </Badge>
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-muted-foreground mb-1">
                           Quadra {ag.quadras?.numero} • {ag.usuarios?.nome_completo || "Cliente"}
                         </div>
+                        <CheckinStatusBadge
+                          checkinRealizado={ag.checkin_realizado}
+                          dataCheckin={ag.data_checkin}
+                          className="text-xs"
+                        />
                       </div>
                     ))
                   ) : (
@@ -308,18 +314,26 @@ export function CalendarioAgendamentos({
                         {temAgendamento ? (
                           <div className="space-y-1">
                             {agendamentosSlot.map((ag) => (
-                              <Badge
-                                key={ag.id}
-                                variant="outline"
-                                className={cn(
-                                  "w-full justify-start text-xs",
-                                  getStatusColor(ag.status)
+                              <div key={ag.id} className="space-y-1">
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full justify-start text-xs",
+                                    getStatusColor(ag.status)
+                                  )}
+                                >
+                                  <span className="truncate">
+                                    {ag.usuarios?.nome_completo || "Cliente"}
+                                  </span>
+                                </Badge>
+                                {ag.checkin_realizado && (
+                                  <CheckinStatusBadge
+                                    checkinRealizado={ag.checkin_realizado}
+                                    dataCheckin={ag.data_checkin}
+                                    className="text-[10px] w-full"
+                                  />
                                 )}
-                              >
-                                <span className="truncate">
-                                  {ag.usuarios?.nome_completo || "Cliente"}
-                                </span>
-                              </Badge>
+                              </div>
                             ))}
                           </div>
                         ) : (

@@ -5,6 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { Edit, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { CheckinStatusBadge } from "./CheckinStatusBadge";
 import {
   Table,
   TableBody,
@@ -152,6 +153,7 @@ export function AgendamentosTable({ onEdit, onCheckin }: AgendamentosTableProps)
               <TableHead>Cliente</TableHead>
               <TableHead>Modalidade</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Check-in</TableHead>
               <TableHead>Pagamento</TableHead>
               <TableHead>Valor</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -160,7 +162,7 @@ export function AgendamentosTable({ onEdit, onCheckin }: AgendamentosTableProps)
           <TableBody>
             {agendamentosFiltrados?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   Nenhum agendamento encontrado
                 </TableCell>
               </TableRow>
@@ -186,6 +188,12 @@ export function AgendamentosTable({ onEdit, onCheckin }: AgendamentosTableProps)
                     {agendamento.modalidade.replace("_", " ")}
                   </TableCell>
                   <TableCell>{getStatusBadge(agendamento.status)}</TableCell>
+                  <TableCell>
+                    <CheckinStatusBadge
+                      checkinRealizado={agendamento.checkin_realizado}
+                      dataCheckin={agendamento.data_checkin}
+                    />
+                  </TableCell>
                   <TableCell>
                     {getStatusPagamentoBadge(agendamento.status_pagamento)}
                   </TableCell>

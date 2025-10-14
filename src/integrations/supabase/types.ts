@@ -204,6 +204,8 @@ export type Database = {
         Row: {
           cnpj: string
           configuracoes: Json | null
+          coordenadas_latitude: number | null
+          coordenadas_longitude: number | null
           cores_tema: Json | null
           created_at: string | null
           data_vencimento: string
@@ -211,9 +213,12 @@ export type Database = {
           endereco_completo: Json
           horario_funcionamento: Json
           id: string
+          janela_checkin_minutos_antes: number | null
+          janela_checkin_minutos_depois: number | null
           logo_url: string | null
           nome: string
           plano_sistema_id: string | null
+          raio_checkin_metros: number | null
           razao_social: string
           status: Database["public"]["Enums"]["status_geral"]
           telefone: string
@@ -224,6 +229,8 @@ export type Database = {
         Insert: {
           cnpj: string
           configuracoes?: Json | null
+          coordenadas_latitude?: number | null
+          coordenadas_longitude?: number | null
           cores_tema?: Json | null
           created_at?: string | null
           data_vencimento: string
@@ -231,9 +238,12 @@ export type Database = {
           endereco_completo: Json
           horario_funcionamento: Json
           id?: string
+          janela_checkin_minutos_antes?: number | null
+          janela_checkin_minutos_depois?: number | null
           logo_url?: string | null
           nome: string
           plano_sistema_id?: string | null
+          raio_checkin_metros?: number | null
           razao_social: string
           status?: Database["public"]["Enums"]["status_geral"]
           telefone: string
@@ -244,6 +254,8 @@ export type Database = {
         Update: {
           cnpj?: string
           configuracoes?: Json | null
+          coordenadas_latitude?: number | null
+          coordenadas_longitude?: number | null
           cores_tema?: Json | null
           created_at?: string | null
           data_vencimento?: string
@@ -251,9 +263,12 @@ export type Database = {
           endereco_completo?: Json
           horario_funcionamento?: Json
           id?: string
+          janela_checkin_minutos_antes?: number | null
+          janela_checkin_minutos_depois?: number | null
           logo_url?: string | null
           nome?: string
           plano_sistema_id?: string | null
+          raio_checkin_metros?: number | null
           razao_social?: string
           status?: Database["public"]["Enums"]["status_geral"]
           telefone?: string
