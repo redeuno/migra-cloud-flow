@@ -64,6 +64,22 @@ export default function Financeiro() {
 
   const isSuperAdmin = userRoles?.some((r) => r.role === "super_admin") ?? false;
   
+  // Garantir aba inicial correta conforme o perfil
+  useEffect(() => {
+    // Quando o papel carregar, ajuste a aba padrão
+    if (isSuperAdmin) {
+      // Para super admin, evitar abas que não existem (ex.: "contratos")
+      if (["contratos", "mensalidades", "movimentacoes", "relatorios"].includes(activeTab)) {
+        setActiveTab("assinaturas");
+      }
+    } else {
+      // Para usuários comuns, evitar abas exclusivas do super admin
+      if (["assinaturas", "faturas"].includes(activeTab)) {
+        setActiveTab("contratos");
+      }
+    }
+  }, [isSuperAdmin]);
+  
   // Use filtered arena or user's arena - default to arenaId if loading
   const effectiveArenaId = isSuperAdmin && selectedArenaFilter !== "all" 
     ? selectedArenaFilter 
