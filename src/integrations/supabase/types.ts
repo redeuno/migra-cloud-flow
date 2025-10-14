@@ -1234,6 +1234,63 @@ export type Database = {
           },
         ]
       }
+      notificacoes: {
+        Row: {
+          arena_id: string | null
+          created_at: string | null
+          id: string
+          lida: boolean | null
+          lida_em: string | null
+          link: string | null
+          mensagem: string
+          metadata: Json | null
+          tipo: Database["public"]["Enums"]["tipo_notificacao"]
+          titulo: string
+          usuario_id: string
+        }
+        Insert: {
+          arena_id?: string | null
+          created_at?: string | null
+          id?: string
+          lida?: boolean | null
+          lida_em?: string | null
+          link?: string | null
+          mensagem: string
+          metadata?: Json | null
+          tipo: Database["public"]["Enums"]["tipo_notificacao"]
+          titulo: string
+          usuario_id: string
+        }
+        Update: {
+          arena_id?: string | null
+          created_at?: string | null
+          id?: string
+          lida?: boolean | null
+          lida_em?: string | null
+          link?: string | null
+          mensagem?: string
+          metadata?: Json | null
+          tipo?: Database["public"]["Enums"]["tipo_notificacao"]
+          titulo?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacoes_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificacoes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planos_sistema: {
         Row: {
           created_at: string | null
@@ -1880,6 +1937,18 @@ export type Database = {
       tipo_contrato: "mensal" | "trimestral" | "semestral" | "anual"
       tipo_esporte: "beach_tennis" | "padel" | "tenis" | "futevolei"
       tipo_movimentacao: "receita" | "despesa" | "transferencia"
+      tipo_notificacao:
+        | "agendamento_novo"
+        | "agendamento_cancelado"
+        | "checkin_realizado"
+        | "pagamento_recebido"
+        | "pagamento_vencido"
+        | "mensalidade_proxima"
+        | "contrato_expirando"
+        | "aula_confirmada"
+        | "torneio_inscricao"
+        | "sistema_alerta"
+        | "financeiro_alerta"
       tipo_piso: "areia" | "saibro" | "sintetico" | "concreto" | "grama"
       user_role:
         | "super_admin"
@@ -2082,6 +2151,19 @@ export const Constants = {
       tipo_contrato: ["mensal", "trimestral", "semestral", "anual"],
       tipo_esporte: ["beach_tennis", "padel", "tenis", "futevolei"],
       tipo_movimentacao: ["receita", "despesa", "transferencia"],
+      tipo_notificacao: [
+        "agendamento_novo",
+        "agendamento_cancelado",
+        "checkin_realizado",
+        "pagamento_recebido",
+        "pagamento_vencido",
+        "mensalidade_proxima",
+        "contrato_expirando",
+        "aula_confirmada",
+        "torneio_inscricao",
+        "sistema_alerta",
+        "financeiro_alerta",
+      ],
       tipo_piso: ["areia", "saibro", "sintetico", "concreto", "grama"],
       user_role: [
         "super_admin",

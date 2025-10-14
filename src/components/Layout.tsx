@@ -1,6 +1,8 @@
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AppBreadcrumb } from "@/components/AppBreadcrumb";
+import { NotificationBell } from "@/components/Layout/NotificationBell";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogOut, User, Settings } from "lucide-react";
@@ -22,6 +24,9 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const { user, signOut, userRoles } = useAuth();
   const navigate = useNavigate();
+  
+  // Hook para notificações em tempo real
+  useNotifications();
 
   const getInitials = (email: string) => {
     return email.substring(0, 2).toUpperCase();
@@ -40,7 +45,8 @@ export function Layout({ children }: LayoutProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <NotificationBell />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
