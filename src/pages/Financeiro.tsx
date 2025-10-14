@@ -99,7 +99,7 @@ export default function Financeiro() {
   });
 
   const { data: resumo } = useQuery({
-    queryKey: ["resumo-financeiro", effectiveArenaId, selectedArenaFilter],
+    queryKey: ["resumo-financeiro", effectiveArenaId, selectedArenaFilter, isSuperAdmin],
     queryFn: async () => {
       const hoje = new Date();
       const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -160,7 +160,7 @@ export default function Financeiro() {
         valorPendente,
       };
     },
-    enabled: !!(effectiveArenaId || (isSuperAdmin && selectedArenaFilter === "all")),
+    enabled: !!(effectiveArenaId || isSuperAdmin),
   });
 
   return (
