@@ -41,7 +41,7 @@ export function RelatoriosFinanceiros() {
 
       const { data: movimentacoes, error } = await supabase
         .from("movimentacoes_financeiras")
-        .select("*")
+        .select("*, categorias_financeiras(nome)")
         .eq("arena_id", arenaId!)
         .gte("data_movimentacao", dataInicio.toISOString().split("T")[0])
         .lte("data_movimentacao", dataFim.toISOString().split("T")[0]);
@@ -56,13 +56,15 @@ export function RelatoriosFinanceiros() {
 
       // Receitas por categoria
       const receitasPorCategoria = receitas.reduce((acc: any, m) => {
-        acc[m.categoria] = (acc[m.categoria] || 0) + m.valor;
+        const catNome = (m as any).categorias_financeiras?.nome || "Sem categoria";
+        acc[catNome] = (acc[catNome] || 0) + m.valor;
         return acc;
       }, {});
 
       // Despesas por categoria
       const despesasPorCategoria = despesas.reduce((acc: any, m) => {
-        acc[m.categoria] = (acc[m.categoria] || 0) + m.valor;
+        const catNome = (m as any).categorias_financeiras?.nome || "Sem categoria";
+        acc[catNome] = (acc[catNome] || 0) + m.valor;
         return acc;
       }, {});
 

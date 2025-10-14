@@ -10,17 +10,22 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Copy, QrCode, FileText } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, ExternalLink, Copy, QrCode, FileText, MessageSquare } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export function FaturasSistemaTable() {
+interface FaturasSistemaTableProps {
+  arenaFilter?: string;
+}
+
+export function FaturasSistemaTable({ arenaFilter }: FaturasSistemaTableProps) {
   const { data: faturas, isLoading } = useQuery({
-    queryKey: ["faturas-sistema"],
+    queryKey: ["faturas-sistema", arenaFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("faturas_sistema")
         .select(`
           *,
@@ -30,10 +35,25 @@ export function FaturasSistemaTable() {
         .order("created_at", { ascending: false })
         .limit(50);
 
+      if (arenaFilter && arenaFilter !== "all") {
+        query = query.eq("arena_id", arenaFilter);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
   });
+
+  const copiarLinhaDigitavel = (linha: string) => {
+    navigator.clipboard.writeText(linha);
+    toast.success("Linha digitável copiada!");
+  };
+
+  const copiarPixCopyPaste = (pix: string) => {
+    navigator.clipboard.writeText(pix);
+    toast.success("Código PIX copiado!");
+  };
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive", label: string }> = {
@@ -115,37 +135,37 @@ export function FaturasSistemaTable() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      {fatura.asaas_invoice_url && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => window.open(fatura.asaas_invoice_url, "_blank")}
-                          title="Abrir fatura"
-                        >
-                          <ExternalLink className="h-4 w-4" />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
-                      )}
-                      {fatura.linha_digitavel && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => copiarLinha(fatura.linha_digitavel)}
-                          title="Copiar linha digitável"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {fatura.qr_code_pix && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          title="Ver QR Code PIX"
-                        >
-                          <QrCode className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {fatura.asaas_invoice_url && (
+                          <DropdownMenuItem onClick={() => window.open(fatura.asaas_invoice_url!, "_blank")}>
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            Abrir Fatura Asaas
+                          </DropdownMenuItem>
+                        )}
+                        {fatura.linha_digitavel && (
+                          <DropdownMenuItem onClick={() => copiarLinhaDigitavel(fatura.linha_digitavel!)}>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copiar Linha Digitável
+                          </DropdownMenuItem>
+                        )}
+                        {fatura.pix_copy_paste && (
+                          <DropdownMenuItem onClick={() => copiarPixCopyPaste(fatura.pix_copy_paste!)}>
+                            <QrCode className="mr-2 h-4 w-4" />
+                            Copiar Código PIX
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem>
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          Enviar via WhatsApp
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))

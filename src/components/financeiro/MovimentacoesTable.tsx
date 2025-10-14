@@ -132,7 +132,9 @@ export function MovimentacoesTable() {
                 )}
               </TableCell>
               <TableCell>
-                <Badge variant="outline">{getCategoriaLabel(movimentacao.categoria)}</Badge>
+                <Badge variant="outline">
+                  {movimentacao.categoria_id ? "Categoria vinculada" : "N/A"}
+                </Badge>
               </TableCell>
               <TableCell>{movimentacao.descricao}</TableCell>
               <TableCell>

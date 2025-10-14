@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { movimentacaoSchema, type MovimentacaoFormData } from "@/lib/validations/movimentacao";
@@ -25,6 +25,20 @@ export function MovimentacaoDialog({ open, onOpenChange, movimentacao }: Movimen
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Buscar categorias ativas
+  const { data: categorias } = useQuery({
+    queryKey: ["categorias-financeiras-ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categorias_financeiras")
+        .select("*")
+        .eq("ativo", true)
+        .order("ordem");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const form = useForm<MovimentacaoFormData>({
     resolver: zodResolver(movimentacaoSchema),
     defaultValues: movimentacao || {
@@ -33,11 +47,16 @@ export function MovimentacaoDialog({ open, onOpenChange, movimentacao }: Movimen
     },
   });
 
+  // Filtrar categorias por tipo
+  const categoriasFiltradas = categorias?.filter(
+    (c) => c.tipo === form.watch("tipo")
+  );
+
   const mutation = useMutation({
     mutationFn: async (data: MovimentacaoFormData) => {
       const payload = {
         tipo: data.tipo as "receita" | "despesa",
-        categoria: data.categoria,
+        categoria_id: data.categoria,
         descricao: data.descricao,
         valor: data.valor,
         data_movimentacao: data.data_movimentacao,
@@ -122,15 +141,14 @@ export function MovimentacaoDialog({ open, onOpenChange, movimentacao }: Movimen
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="agendamento">Agendamento/Quadra</SelectItem>
-                        <SelectItem value="aula">Aula</SelectItem>
-                        <SelectItem value="mensalidade">Mensalidade</SelectItem>
-                        <SelectItem value="torneio">Torneio</SelectItem>
-                        <SelectItem value="evento">Evento</SelectItem>
-                        <SelectItem value="manutencao">Manutenção</SelectItem>
-                        <SelectItem value="salario">Salário</SelectItem>
-                        <SelectItem value="equipamento">Equipamento</SelectItem>
-                        <SelectItem value="outros">Outros</SelectItem>
+                        {categoriasFiltradas?.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            <div className="flex items-center gap-2">
+                              {cat.icone && <span>{cat.icone}</span>}
+                              <span>{cat.nome}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />

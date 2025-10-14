@@ -283,7 +283,7 @@ export default function Financeiro() {
                     </Button>
                   </CardHeader>
                   <CardContent>
-                    <AssinaturasArenaTable />
+                    <AssinaturasArenaTable arenaFilter={selectedArenaFilter} />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -297,7 +297,7 @@ export default function Financeiro() {
                     </p>
                   </CardHeader>
                   <CardContent>
-                    <FaturasSistemaTable />
+                    <FaturasSistemaTable arenaFilter={selectedArenaFilter} />
                   </CardContent>
                 </Card>
               </TabsContent>

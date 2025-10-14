@@ -1,0 +1,150 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { Loader2, Lock } from "lucide-react";
+
+export function ModulosArenaManager() {
+  const { arenaId } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Buscar plano atual da arena
+  const { data: arena, isLoading: loadingArena } = useQuery({
+    queryKey: ["arena-plano", arenaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("arenas")
+        .select("*, planos_sistema(*)")
+        .eq("id", arenaId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!arenaId,
+  });
+
+  // Buscar todos os módulos do sistema
+  const { data: modulosSistema, isLoading: loadingModulos } = useQuery({
+    queryKey: ["modulos-sistema"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("modulos_sistema")
+        .select("*")
+        .eq("status", "ativo")
+        .order("ordem");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Buscar módulos ativos da arena
+  const { data: modulosAtivos, isLoading: loadingAtivos } = useQuery({
+    queryKey: ["arena-modulos", arenaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("arena_modulos")
+        .select("modulo_id, ativo")
+        .eq("arena_id", arenaId!);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!arenaId,
+  });
+
+  // Mutation para ativar/desativar módulo
+  const toggleModulo = useMutation({
+    mutationFn: async ({ moduloId, ativo }: { moduloId: string; ativo: boolean }) => {
+      const { error } = await supabase
+        .from("arena_modulos")
+        .update({ ativo })
+        .eq("arena_id", arenaId!)
+        .eq("modulo_id", moduloId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["arena-modulos", arenaId] });
+      toast.success("Módulo atualizado!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Erro ao atualizar módulo");
+    },
+  });
+
+  const isLoading = loadingArena || loadingModulos || loadingAtivos;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Módulos inclusos no plano (convert JSON to array)
+  const modulosInclusos = Array.isArray(arena?.planos_sistema?.modulos_inclusos)
+    ? arena.planos_sistema.modulos_inclusos
+    : [];
+  
+  // Mapa de módulos ativos
+  const modulosAtivosMapa = new Map(
+    modulosAtivos?.map((m) => [m.modulo_id, m.ativo]) || []
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {modulosSistema?.map((modulo) => {
+          const isInclusoNoPlano = modulosInclusos.includes(modulo.slug);
+          const isAtivo = modulosAtivosMapa.get(modulo.id) || false;
+          
+          return (
+            <Card key={modulo.id} className={!isInclusoNoPlano ? "opacity-60" : ""}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{modulo.icone}</span>
+                    <div>
+                      <CardTitle className="text-base">{modulo.nome}</CardTitle>
+                      {!isInclusoNoPlano && (
+                        <Badge variant="outline" className="mt-1">
+                          <Lock className="h-3 w-3 mr-1" />
+                          Upgrade Necessário
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  {isInclusoNoPlano && (
+                    <Switch
+                      checked={isAtivo}
+                      onCheckedChange={(checked) =>
+                        toggleModulo.mutate({ moduloId: modulo.id, ativo: checked })
+                      }
+                      disabled={toggleModulo.isPending}
+                    />
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-sm">
+                  {modulo.descricao}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="border-t pt-4">
+        <p className="text-sm text-muted-foreground">
+          <strong>Plano Atual:</strong> {arena?.planos_sistema?.nome || "N/A"}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Para ativar módulos adicionais, entre em contato com o suporte ou faça upgrade do seu plano.
+        </p>
+      </div>
+    </div>
+  );
+}

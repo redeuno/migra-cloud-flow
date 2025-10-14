@@ -24,15 +24,19 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export function AssinaturasArenaTable() {
+interface AssinaturasArenaTableProps {
+  arenaFilter?: string;
+}
+
+export function AssinaturasArenaTable({ arenaFilter }: AssinaturasArenaTableProps) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAssinatura, setSelectedAssinatura] = useState<any>(null);
 
   const { data: assinaturas, isLoading } = useQuery({
-    queryKey: ["assinaturas-arena"],
+    queryKey: ["assinaturas-arena", arenaFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("assinaturas_arena")
         .select(`
           *,
@@ -41,6 +45,11 @@ export function AssinaturasArenaTable() {
         `)
         .order("created_at", { ascending: false });
 
+      if (arenaFilter && arenaFilter !== "all") {
+        query = query.eq("arena_id", arenaFilter);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },

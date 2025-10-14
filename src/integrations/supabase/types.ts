@@ -1145,7 +1145,7 @@ export type Database = {
       movimentacoes_financeiras: {
         Row: {
           arena_id: string
-          categoria: Database["public"]["Enums"]["categoria_financeira"]
+          categoria_id: string | null
           created_at: string | null
           data_movimentacao: string
           descricao: string
@@ -1161,7 +1161,7 @@ export type Database = {
         }
         Insert: {
           arena_id: string
-          categoria: Database["public"]["Enums"]["categoria_financeira"]
+          categoria_id?: string | null
           created_at?: string | null
           data_movimentacao: string
           descricao: string
@@ -1179,7 +1179,7 @@ export type Database = {
         }
         Update: {
           arena_id?: string
-          categoria?: Database["public"]["Enums"]["categoria_financeira"]
+          categoria_id?: string | null
           created_at?: string | null
           data_movimentacao?: string
           descricao?: string
@@ -1201,6 +1201,13 @@ export type Database = {
             columns: ["arena_id"]
             isOneToOne: false
             referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_financeiras_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_financeiras"
             referencedColumns: ["id"]
           },
           {

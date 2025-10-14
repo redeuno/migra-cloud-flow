@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Loader2, Info } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { TemplateService } from "@/lib/services/templateService";
 
 const templateSchema = z.object({
   nome: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
@@ -262,6 +263,23 @@ export function TemplateDialog({ open, onOpenChange, template }: TemplateDialogP
               <p className="text-xs text-muted-foreground mt-2">
                 Clique em uma variável para adicionar à mensagem
               </p>
+            </div>
+
+            {/* Preview do Template */}
+            <div className="border rounded-lg p-4 bg-muted/30">
+              <div className="flex items-center gap-2 mb-3">
+                <Info className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium">Preview da Mensagem</p>
+              </div>
+              <div className="text-sm whitespace-pre-wrap bg-background p-3 rounded">
+                {(() => {
+                  const { mensagem } = TemplateService.renderPreview(
+                    form.watch("mensagem") || "",
+                    form.watch("assunto")
+                  );
+                  return mensagem || "Digite uma mensagem para ver o preview...";
+                })()}
+              </div>
             </div>
 
             <FormField
