@@ -24,6 +24,7 @@ import MinhasAulas from "./pages/MinhasAulas";
 import DashboardAluno from "./pages/DashboardAluno";
 import SetupArenaAdmin from "./pages/SetupArenaAdmin";
 import AulaPresencas from "./pages/AulaPresencas";
+import ArenaSetup from "./pages/ArenaSetup";
 
 const queryClient = new QueryClient();
 
@@ -131,6 +132,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="super_admin">
                   <ConfiguracoesSistema />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/arena-setup"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <ArenaSetup />
                 </ProtectedRoute>
               }
             />
