@@ -1,16 +1,19 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, CreditCard, FileText, TrendingUp, MessageSquare } from "lucide-react";
+import { Calendar, CreditCard, FileText, TrendingUp, MessageSquare, CheckCircle2, Bell, Award, Activity } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+import { Progress } from "@/components/ui/progress";
 
 export default function DashboardAluno() {
   const { user } = useAuth();
@@ -99,6 +102,7 @@ export default function DashboardAluno() {
           hora_inicio,
           hora_fim,
           modalidade,
+          checkin_realizado,
           quadras(nome)
         `)
         .eq("cliente_id", usuario?.id)
@@ -109,6 +113,79 @@ export default function DashboardAluno() {
 
       if (error) throw error;
       return data;
+    },
+    enabled: !!usuario?.id,
+  });
+
+  // Buscar estatísticas de frequência (últimos 30 dias)
+  const { data: frequenciaStats, isLoading: loadingFrequencia } = useQuery({
+    queryKey: ["frequencia-aluno", usuario?.id],
+    queryFn: async () => {
+      const thirtyDaysAgo = subDays(new Date(), 30).toISOString().split("T")[0];
+      
+      const { data, error } = await supabase
+        .from("agendamentos")
+        .select("id, checkin_realizado, data_agendamento")
+        .eq("cliente_id", usuario?.id)
+        .gte("data_agendamento", thirtyDaysAgo)
+        .lte("data_agendamento", new Date().toISOString().split("T")[0]);
+
+      if (error) throw error;
+
+      const total = data?.length || 0;
+      const comCheckin = data?.filter(a => a.checkin_realizado).length || 0;
+      const percentual = total > 0 ? Math.round((comCheckin / total) * 100) : 0;
+
+      return { total, comCheckin, percentual };
+    },
+    enabled: !!usuario?.id,
+  });
+
+  // Buscar notificações recentes
+  const { data: notificacoesRecentes, isLoading: loadingNotif } = useQuery({
+    queryKey: ["notificacoes-recentes-aluno", usuario?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notificacoes")
+        .select("*")
+        .eq("usuario_id", usuario?.id)
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!usuario?.id,
+  });
+
+  // Buscar atividade semanal (para gráfico)
+  const { data: atividadeSemanal, isLoading: loadingAtividade } = useQuery({
+    queryKey: ["atividade-semanal", usuario?.id],
+    queryFn: async () => {
+      const sevenDaysAgo = subDays(new Date(), 6).toISOString().split("T")[0];
+      
+      const { data, error } = await supabase
+        .from("agendamentos")
+        .select("data_agendamento, checkin_realizado")
+        .eq("cliente_id", usuario?.id)
+        .gte("data_agendamento", sevenDaysAgo)
+        .order("data_agendamento", { ascending: true });
+
+      if (error) throw error;
+
+      const grouped = (data || []).reduce((acc: any, item: any) => {
+        const dia = format(new Date(item.data_agendamento), 'EEE', { locale: ptBR });
+        if (!acc[dia]) {
+          acc[dia] = { dia, agendamentos: 0, checkins: 0 };
+        }
+        acc[dia].agendamentos += 1;
+        if (item.checkin_realizado) {
+          acc[dia].checkins += 1;
+        }
+        return acc;
+      }, {});
+
+      return Object.values(grouped);
     },
     enabled: !!usuario?.id,
   });
@@ -124,7 +201,7 @@ export default function DashboardAluno() {
         </p>
       </div>
 
-      {/* Cards de Resumo */}
+      {/* Cards de Resumo - Responsivo */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card 
           className="cursor-pointer hover:bg-accent/50 transition-colors"
@@ -194,19 +271,108 @@ export default function DashboardAluno() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Minha Arena</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Frequência (30d)</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {usuario ? (
-              <>
-                <div className="text-lg font-bold truncate">{usuario.arenas?.nome || "N/A"}</div>
-                <p className="text-xs text-muted-foreground">
-                  Membro desde {format(new Date(usuario.data_cadastro), "MMM yyyy", { locale: ptBR })}
-                </p>
-              </>
+            {loadingFrequencia ? (
+              <Skeleton className="h-8 w-16" />
             ) : (
-              <Skeleton className="h-8 w-full" />
+              <>
+                <div className="text-2xl font-bold">{frequenciaStats?.percentual || 0}%</div>
+                <p className="text-xs text-muted-foreground">
+                  {frequenciaStats?.comCheckin || 0} de {frequenciaStats?.total || 0} agendamentos
+                </p>
+                <Progress value={frequenciaStats?.percentual || 0} className="mt-2 h-1" />
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Seção de Gráficos e Atividade */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Minha Atividade Semanal</CardTitle>
+            <CardDescription>Agendamentos e check-ins dos últimos 7 dias</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingAtividade ? (
+              <Skeleton className="h-[200px] w-full" />
+            ) : atividadeSemanal && atividadeSemanal.length > 0 ? (
+              <ChartContainer
+                config={{
+                  agendamentos: {
+                    label: "Agendamentos",
+                    color: "hsl(var(--primary))",
+                  },
+                  checkins: {
+                    label: "Check-ins",
+                    color: "hsl(var(--chart-2))",
+                  },
+                }}
+                className="h-[180px] sm:h-[200px]"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={atividadeSemanal}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="dia" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="agendamentos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="checkins" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            ) : (
+              <EmptyState
+                icon={Activity}
+                title="Sem dados"
+                description="Nenhuma atividade registrada nos últimos 7 dias"
+                className="py-8"
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Notificações Recentes */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              Notificações
+            </CardTitle>
+            <CardDescription>Últimas atualizações</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingNotif ? (
+              <div className="space-y-3">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            ) : notificacoesRecentes && notificacoesRecentes.length > 0 ? (
+              <div className="space-y-3">
+                {notificacoesRecentes.map((notif: any) => (
+                  <div key={notif.id} className="flex items-start gap-2 border-b pb-2 last:border-0">
+                    <div className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${notif.lida ? 'bg-muted' : 'bg-primary'}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{notif.titulo}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{notif.mensagem}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {format(new Date(notif.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={Bell}
+                title="Sem notificações"
+                description="Você está em dia"
+                className="py-4"
+              />
             )}
           </CardContent>
         </Card>
@@ -235,14 +401,20 @@ export default function DashboardAluno() {
             ) : (
               <div className="space-y-3">
                 {proximosAgendamentos.map((agend: any) => (
-                  <div key={agend.id} className="flex items-center justify-between border-b pb-3 last:border-0">
-                    <div>
-                      <p className="font-medium">{agend.quadras?.nome}</p>
+                  <div key={agend.id} className="flex items-center justify-between border-b pb-3 last:border-0 hover:bg-accent/50 -mx-2 px-2 py-2 rounded transition-colors cursor-pointer"
+                    onClick={() => navigate('/agendamentos')}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium truncate">{agend.quadras?.nome}</p>
+                        {agend.checkin_realizado && (
+                          <CheckCircle2 className="h-3 w-3 text-green-600 flex-shrink-0" />
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {format(new Date(agend.data_agendamento), "dd/MMM", { locale: ptBR })} • {agend.hora_inicio.slice(0, 5)} - {agend.hora_fim.slice(0, 5)}
                       </p>
                     </div>
-                    <Badge variant="outline">{agend.modalidade}</Badge>
+                    <Badge variant="outline" className="flex-shrink-0">{agend.modalidade}</Badge>
                   </div>
                 ))}
               </div>
