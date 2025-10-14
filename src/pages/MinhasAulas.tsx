@@ -231,14 +231,14 @@ export default function MinhasAulas() {
     <Layout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Minhas Aulas</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Minhas Aulas</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Acompanhe suas aulas e frequência
           </p>
         </div>
 
         <Tabs defaultValue="proximas" className="space-y-4">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-2 h-auto">
             <TabsTrigger value="proximas">Próximas Aulas</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
@@ -260,7 +260,7 @@ export default function MinhasAulas() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                 {proximasAulas.map((inscricao) => renderAulaCard(inscricao))}
               </div>
             )}
@@ -292,7 +292,7 @@ export default function MinhasAulas() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                       <div>
                         <p className="text-2xl font-bold">{historicoAulas.length}</p>
                         <p className="text-sm text-muted-foreground">Total de Aulas</p>
@@ -313,7 +313,7 @@ export default function MinhasAulas() {
                   </CardContent>
                 </Card>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                   {historicoAulas.map((inscricao) => renderAulaCard(inscricao, true))}
                 </div>
               </div>

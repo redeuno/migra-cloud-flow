@@ -118,8 +118,8 @@ export default function DashboardAluno() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Olá, {usuario?.nome_completo?.split(" ")[0]}!</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Olá, {usuario?.nome_completo?.split(" ")[0]}!</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Bem-vindo ao seu painel. Confira suas informações abaixo.
         </p>
       </div>

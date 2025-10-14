@@ -106,8 +106,8 @@ export default function MeuFinanceiro() {
     <Layout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Meu Financeiro</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Meu Financeiro</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Gerencie seus contratos, mensalidades e pagamentos
           </p>
         </div>
@@ -171,7 +171,7 @@ export default function MeuFinanceiro() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto">
             <TabsTrigger value="pendentes">Pendentes</TabsTrigger>
             <TabsTrigger value="contratos">Contratos</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>

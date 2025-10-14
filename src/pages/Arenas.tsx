@@ -87,36 +87,38 @@ export default function Arenas() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Arenas</h1>
-            <p className="text-muted-foreground">
-              Gerencie todas as arenas do sistema
-            </p>
-            {arenasInadimplentes > 0 && (
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant="destructive" className="gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {arenasInadimplentes} inadimplente{arenasInadimplentes > 1 ? "s" : ""}
-                </Badge>
-                {arenasVencendoEmBreve > 0 && (
-                  <Badge variant="secondary" className="gap-1">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Arenas</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Gerencie todas as arenas do sistema
+              </p>
+              {arenasInadimplentes > 0 && (
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <Badge variant="destructive" className="gap-1">
                     <AlertCircle className="h-3 w-3" />
-                    {arenasVencendoEmBreve} vencendo em 3 dias
+                    {arenasInadimplentes} inadimplente{arenasInadimplentes > 1 ? "s" : ""}
                   </Badge>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => arenas && exportToCSV(arenas, "arenas")}>
-              <Download className="mr-2 h-4 w-4" />
-              Exportar
-            </Button>
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Arena
-            </Button>
+                  {arenasVencendoEmBreve > 0 && (
+                    <Badge variant="secondary" className="gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {arenasVencendoEmBreve} vencendo em 3 dias
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              <Button variant="outline" onClick={() => arenas && exportToCSV(arenas, "arenas")} className="flex-1 sm:flex-none">
+                <Download className="mr-2 h-4 w-4" />
+                Exportar
+              </Button>
+              <Button onClick={() => setDialogOpen(true)} className="flex-1 sm:flex-none">
+                <Plus className="mr-2 h-4 w-4" />
+                Nova Arena
+              </Button>
+            </div>
           </div>
         </div>
 

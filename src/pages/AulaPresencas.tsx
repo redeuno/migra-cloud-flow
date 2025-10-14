@@ -73,17 +73,17 @@ export default function AulaPresencas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/aulas")}>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/aulas")} className="self-start">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gerenciar Presenças</h1>
-          <p className="text-muted-foreground">{aula.titulo}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Gerenciar Presenças</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">{aula.titulo}</p>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Data da Aula</CardTitle>
@@ -151,7 +151,7 @@ export default function AulaPresencas() {
           <CardDescription>Detalhes completos sobre a aula</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             <div>
               <label className="text-sm font-medium text-muted-foreground">Professor</label>
               <p className="text-sm">{aula.professores?.usuarios?.nome_completo}</p>
