@@ -125,7 +125,7 @@ export default function DashboardAluno() {
       </div>
 
       {/* Cards de Resumo */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card 
           className="cursor-pointer hover:bg-accent/50 transition-colors"
           onClick={() => navigate('/meu-financeiro?tab=contratos')}
@@ -212,7 +212,7 @@ export default function DashboardAluno() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {/* Próximos Agendamentos */}
         <Card>
           <CardHeader>
@@ -287,7 +287,7 @@ export default function DashboardAluno() {
                         <Badge variant="secondary">Pendente</Badge>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <Button 
                         onClick={() => handlePagarAgora(ASAAS_CHECKOUT_LINK)}
                         size="sm"

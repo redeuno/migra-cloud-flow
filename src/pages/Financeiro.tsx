@@ -281,7 +281,7 @@ export default function Financeiro() {
 
         {/* Tabs de Conteúdo */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 gap-1 h-auto">
             {!isSuperAdmin && (
               <>
                 <TabsTrigger value="contratos">Contratos</TabsTrigger>

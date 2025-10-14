@@ -236,7 +236,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {statsLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}>
@@ -274,8 +274,8 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
+        <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle>Próximos Agendamentos</CardTitle>
           </CardHeader>
@@ -325,7 +325,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-3">
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Ações Rápidas</CardTitle>
             <CardDescription>Acessos rápidos às principais funções</CardDescription>
@@ -368,7 +368,7 @@ export default function Dashboard() {
       </div>
 
       {/* Seção de Gráficos */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {/* Gráfico de Agendamentos Semanais */}
         <Card>
           <CardHeader>
@@ -386,7 +386,7 @@ export default function Dashboard() {
                     color: "hsl(var(--primary))",
                   },
                 }}
-                className="h-[300px]"
+                className="h-[250px] sm:h-[300px]"
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={weeklyData}>
@@ -423,7 +423,7 @@ export default function Dashboard() {
                     color: "hsl(var(--destructive))",
                   },
                 }}
-                className="h-[300px]"
+                className="h-[250px] sm:h-[300px]"
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={monthlyRevenue}>
@@ -441,7 +441,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Gráfico de Uso de Quadras */}
-        <Card className="md:col-span-2">
+        <Card className="col-span-1 md:col-span-2">
           <CardHeader>
             <CardTitle>Uso de Quadras</CardTitle>
             <CardDescription>Últimos 30 dias</CardDescription>
@@ -457,7 +457,7 @@ export default function Dashboard() {
                     color: "hsl(var(--primary))",
                   },
                 }}
-                className="h-[300px]"
+                className="h-[250px] sm:h-[300px]"
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
