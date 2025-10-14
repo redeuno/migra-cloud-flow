@@ -395,7 +395,7 @@ export default function DashboardSuperAdmin() {
                     color: "hsl(var(--primary))",
                   },
                 }}
-                className="h-[300px]"
+                className="h-[240px] sm:h-[300px]"
               >
                 <LineChart data={arenasEvolution}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -444,7 +444,7 @@ export default function DashboardSuperAdmin() {
                     color: "hsl(var(--destructive))",
                   },
                 }}
-                className="h-[300px]"
+                className="h-[240px] sm:h-[300px]"
               >
                 <BarChart data={revenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -477,7 +477,7 @@ export default function DashboardSuperAdmin() {
                     color: "hsl(var(--primary))",
                   },
                 }}
-                className="h-[300px]"
+                className="h-[240px] sm:h-[300px]"
               >
                 <PieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
