@@ -730,6 +730,79 @@ export type Database = {
           },
         ]
       }
+      comissoes_professores: {
+        Row: {
+          arena_id: string
+          aula_id: string | null
+          created_at: string | null
+          data_pagamento: string | null
+          id: string
+          metadata: Json | null
+          observacoes: string | null
+          percentual_comissao: number
+          professor_id: string
+          referencia: string
+          status: string
+          updated_at: string | null
+          valor_aulas: number
+          valor_comissao: number
+        }
+        Insert: {
+          arena_id: string
+          aula_id?: string | null
+          created_at?: string | null
+          data_pagamento?: string | null
+          id?: string
+          metadata?: Json | null
+          observacoes?: string | null
+          percentual_comissao?: number
+          professor_id: string
+          referencia: string
+          status?: string
+          updated_at?: string | null
+          valor_aulas?: number
+          valor_comissao?: number
+        }
+        Update: {
+          arena_id?: string
+          aula_id?: string | null
+          created_at?: string | null
+          data_pagamento?: string | null
+          id?: string
+          metadata?: Json | null
+          observacoes?: string | null
+          percentual_comissao?: number
+          professor_id?: string
+          referencia?: string
+          status?: string
+          updated_at?: string | null
+          valor_aulas?: number
+          valor_comissao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comissoes_professores_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_professores_aula_id_fkey"
+            columns: ["aula_id"]
+            isOneToOne: false
+            referencedRelation: "aulas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_professores_professor_id_fkey"
+            columns: ["professor_id"]
+            isOneToOne: false
+            referencedRelation: "professores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       configuracoes_arena: {
         Row: {
           arena_id: string
@@ -1394,6 +1467,7 @@ export type Database = {
           especialidades: Json | null
           foto_url: string | null
           id: string
+          percentual_comissao_padrao: number | null
           registro_profissional: string | null
           status: Database["public"]["Enums"]["status_geral"] | null
           total_avaliacoes: number | null
@@ -1410,6 +1484,7 @@ export type Database = {
           especialidades?: Json | null
           foto_url?: string | null
           id?: string
+          percentual_comissao_padrao?: number | null
           registro_profissional?: string | null
           status?: Database["public"]["Enums"]["status_geral"] | null
           total_avaliacoes?: number | null
@@ -1426,6 +1501,7 @@ export type Database = {
           especialidades?: Json | null
           foto_url?: string | null
           id?: string
+          percentual_comissao_padrao?: number | null
           registro_profissional?: string | null
           status?: Database["public"]["Enums"]["status_geral"] | null
           total_avaliacoes?: number | null
