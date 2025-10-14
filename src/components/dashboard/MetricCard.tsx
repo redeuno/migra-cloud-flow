@@ -8,7 +8,10 @@ interface MetricCardProps {
   icon: LucideIcon;
   description?: string;
   onClick?: () => void;
-  percentualMudanca?: number; // Percentual de mudança em relação ao período anterior
+  comparativo?: {
+    percentual: number;
+    periodo: string; // Ex: "vs. mês anterior"
+  };
   loading?: boolean;
 }
 
@@ -18,17 +21,17 @@ export function MetricCard({
   icon: Icon,
   description,
   onClick,
-  percentualMudanca,
+  comparativo,
   loading = false,
 }: MetricCardProps) {
   const getTendencia = () => {
-    if (percentualMudanca === undefined || percentualMudanca === 0) {
-      return { icon: Minus, color: "text-muted-foreground", bgColor: "bg-muted" };
+    if (!comparativo || comparativo.percentual === 0) {
+      return { icon: Minus, color: "text-muted-foreground", bgColor: "bg-muted/50" };
     }
-    if (percentualMudanca > 0) {
-      return { icon: TrendingUp, color: "text-green-600", bgColor: "bg-green-100" };
+    if (comparativo.percentual > 0) {
+      return { icon: TrendingUp, color: "text-green-600", bgColor: "bg-green-100 dark:bg-green-950" };
     }
-    return { icon: TrendingDown, color: "text-red-600", bgColor: "bg-red-100" };
+    return { icon: TrendingDown, color: "text-red-600", bgColor: "bg-red-100 dark:bg-red-950" };
   };
 
   const { icon: TrendIcon, color, bgColor } = getTendencia();
@@ -57,14 +60,14 @@ export function MetricCard({
               </p>
             )}
           </div>
-          {percentualMudanca !== undefined && (
+          {comparativo && (
             <div className={cn(
               "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
               bgColor
             )}>
               <TrendIcon className={cn("h-3 w-3", color)} />
               <span className={color}>
-                {Math.abs(percentualMudanca).toFixed(1)}%
+                {comparativo.percentual > 0 ? '+' : ''}{comparativo.percentual.toFixed(1)}%
               </span>
             </div>
           )}

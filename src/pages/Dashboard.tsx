@@ -11,10 +11,20 @@ import { ptBR } from "date-fns/locale";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import { useNavigate } from "react-router-dom";
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import { useMetricasComparativas } from "@/hooks/useMetricasComparativas";
+import { AgendaDiaWidget } from "@/components/dashboard/AgendaDiaWidget";
+import { VencimentosWidget } from "@/components/dashboard/VencimentosWidget";
 
 export default function Dashboard() {
   const { user, userRoles, arenaId } = useAuth();
   const navigate = useNavigate();
+
+  // Hook de métricas comparativas
+  const metricas = useMetricasComparativas({
+    arenaId: arenaId || undefined,
+    diasPeriodo: 30,
+  });
 
   // Query para estatísticas
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -251,28 +261,73 @@ export default function Dashboard() {
             </Card>
           ))
         ) : (
-          stats?.map((stat) => (
-            <Card 
-              key={stat.title}
-              className="cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={stat.onClick}
-            >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {stat.title}
-                </CardTitle>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))
+          <>
+            <MetricCard
+              title="Agendamentos"
+              value={metricas?.agendamentos.atual || 0}
+              icon={Calendar}
+              description="Últimos 30 dias"
+              comparativo={{
+                percentual: metricas?.agendamentos.variacao || 0,
+                periodo: "vs. período anterior"
+              }}
+              onClick={() => navigate("/agendamentos")}
+            />
+            <MetricCard
+              title="Receita"
+              value={`R$ ${(metricas?.receita.atual || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={DollarSign}
+              description="Últimos 30 dias"
+              comparativo={{
+                percentual: metricas?.receita.variacao || 0,
+                periodo: "vs. período anterior"
+              }}
+              onClick={() => navigate("/financeiro")}
+            />
+            <MetricCard
+              title="Novos Clientes"
+              value={metricas.clientes.atual}
+              icon={Users}
+              description="Últimos 30 dias"
+              comparativo={{
+                percentual: metricas.clientes.variacao,
+                periodo: "vs. período anterior"
+              }}
+              onClick={() => navigate("/clientes")}
+            />
+            {stats && stats[3] && (() => {
+              const StatIcon = stats[3].icon;
+              return (
+                <Card 
+                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={stats[3].onClick}
+                >
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      {stats[3].title}
+                    </CardTitle>
+                    <StatIcon className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats[3].value}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stats[3].description}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })()}
+          </>
         )}
       </div>
+
+      {/* Widgets: Agenda do Dia e Vencimentos */}
+      {arenaId && (
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+          <AgendaDiaWidget arenaId={arenaId} />
+          <VencimentosWidget arenaId={arenaId} />
+        </div>
+      )}
 
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
         <Card className="lg:col-span-4">
