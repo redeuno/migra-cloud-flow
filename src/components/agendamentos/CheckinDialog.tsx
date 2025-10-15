@@ -146,7 +146,7 @@ export function CheckinDialog({
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao realizar check-in");
-      console.error(error);
+      if (import.meta.env.DEV) console.error("Erro ao realizar check-in:", error);
     },
   });
 

@@ -45,7 +45,7 @@ export function QRCodeCheckinDialog({
       })
         .then((url) => setQrCodeUrl(url))
         .catch((err) => {
-          console.error("Erro ao gerar QR Code:", err);
+          if (import.meta.env.DEV) console.error("Erro ao gerar QR Code:", err);
           toast.error("Erro ao gerar QR Code");
         });
     }
@@ -92,7 +92,7 @@ export function QRCodeCheckinDialog({
         }
       );
     } catch (err) {
-      console.error("Erro ao iniciar scanner:", err);
+      if (import.meta.env.DEV) console.error("Erro ao iniciar scanner:", err);
       toast.error("Erro ao acessar câmera");
       setScanning(false);
     }
@@ -191,7 +191,7 @@ export function QRCodeCheckinDialog({
 
       toast.success("✅ Check-in realizado com sucesso!");
     } catch (error: any) {
-      console.error("Erro no check-in:", error);
+      if (import.meta.env.DEV) console.error("Erro no check-in:", error);
       toast.error("Erro ao realizar check-in");
     }
   };

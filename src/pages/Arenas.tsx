@@ -22,6 +22,21 @@ export default function Arenas() {
   const [planoFilter, setPlanoFilter] = useState<string>("todos");
   const { exportToCSV } = useExportData();
 
+  // Buscar planos disponíveis
+  const { data: planosDisponiveis } = useQuery({
+    queryKey: ["planos-sistema-filter"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("planos_sistema")
+        .select("id, nome, valor_mensal")
+        .eq("status", "ativo")
+        .order("valor_mensal");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: arenas, isLoading } = useQuery({
     queryKey: ["arenas", searchTerm, statusFilter, planoFilter],
     queryFn: async () => {
@@ -57,8 +72,8 @@ export default function Arenas() {
       let filteredData = data;
       if (planoFilter !== "todos") {
         filteredData = data?.filter((arena: any) => {
-          const valorMensal = arena.assinaturas_arena?.[0]?.valor_mensal;
-          return valorMensal === parseInt(planoFilter);
+          const planoId = arena.plano_sistema_id;
+          return planoId === planoFilter;
         });
       }
 
@@ -146,14 +161,16 @@ export default function Arenas() {
                 </SelectContent>
               </Select>
               <Select value={planoFilter} onValueChange={setPlanoFilter}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Plano" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos planos</SelectItem>
-                  <SelectItem value="99">R$ 99</SelectItem>
-                  <SelectItem value="199">R$ 199</SelectItem>
-                  <SelectItem value="299">R$ 299</SelectItem>
+                  {planosDisponiveis?.map((plano) => (
+                    <SelectItem key={plano.id} value={plano.id}>
+                      {plano.nome} - R$ {plano.valor_mensal}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

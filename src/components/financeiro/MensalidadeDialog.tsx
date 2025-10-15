@@ -106,7 +106,7 @@ export function MensalidadeDialog({ open, onOpenChange, mensalidade }: Mensalida
         description: error.message || "Erro ao salvar mensalidade",
         variant: "destructive",
       });
-      console.error("Erro ao salvar mensalidade:", error);
+      if (import.meta.env.DEV) console.error("Erro ao salvar mensalidade:", error);
     },
   });
 

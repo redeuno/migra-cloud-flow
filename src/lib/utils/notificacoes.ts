@@ -30,7 +30,7 @@ export async function criarNotificacao({
   }]);
 
   if (error) {
-    console.error("Erro ao criar notificação:", error);
+    if (import.meta.env.DEV) console.error("Erro ao criar notificação:", error);
     throw error;
   }
 }

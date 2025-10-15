@@ -29,9 +29,9 @@ export async function registrarAtividade({
       });
 
     if (error) {
-      console.error("Erro ao registrar atividade:", error);
+      if (import.meta.env.DEV) console.error("Erro ao registrar atividade:", error);
     }
   } catch (error) {
-    console.error("Erro ao registrar atividade:", error);
+    if (import.meta.env.DEV) console.error("Erro ao registrar atividade:", error);
   }
 }
