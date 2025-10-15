@@ -71,7 +71,7 @@ export function AppSidebar() {
   const isSuperAdmin = userRoles.includes("super_admin");
 
   // Buscar módulos ativos da arena (apenas para não super admins)
-  const { data: modulosAtivos } = useQuery({
+  const { data: modulosAtivos, isLoading: loadingModulosAtivos } = useQuery({
     queryKey: ["arena-modulos-ativos", arenaId],
     queryFn: async () => {
       if (!arenaId || isSuperAdmin) return null;
@@ -126,6 +126,9 @@ export function AppSidebar() {
         
         // Se não tem mapeamento de módulo, sempre mostrar (Dashboard, etc)
         if (!moduleSlug) return true;
+
+        // Enquanto ainda carregamos arenaId ou módulos, mostramos os itens
+        if (!arenaId || loadingModulosAtivos || typeof modulosAtivos === "undefined") return true;
         
         // Verificar se o módulo está ativo
         return modulosAtivosMap.has(moduleSlug);
