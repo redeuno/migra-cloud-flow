@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
@@ -15,6 +16,7 @@ import { Download } from "lucide-react";
 export function RelatorioClientes() {
   const [periodo, setPeriodo] = useState("mes_atual");
   const { exportToCSV } = useExportData();
+  const { arenaId, hasRole } = useAuth();
 
   const getDateRange = () => {
     const hoje = new Date();
@@ -34,28 +36,48 @@ export function RelatorioClientes() {
   const { inicio, fim } = getDateRange();
 
   const { data: clientes, isLoading: loadingClientes } = useQuery({
-    queryKey: ["relatorio-clientes"],
+    queryKey: ["relatorio-clientes", arenaId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!arenaId) return [];
+
+      let query = supabase
         .from("usuarios")
         .select("*")
         .order("created_at", { ascending: false });
+
+      // Super admin pode ver todos, outros apenas da sua arena
+      if (!hasRole("super_admin")) {
+        query = query.eq("arena_id", arenaId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
+    enabled: !!arenaId,
   });
 
   const { data: agendamentos, isLoading: loadingAgendamentos } = useQuery({
-    queryKey: ["agendamentos-clientes", inicio, fim],
+    queryKey: ["agendamentos-clientes", arenaId, inicio, fim],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!arenaId) return [];
+
+      let query = supabase
         .from("agendamentos")
         .select("*, usuarios!agendamentos_cliente_id_fkey(nome_completo)")
         .gte("data_agendamento", format(inicio, "yyyy-MM-dd"))
         .lte("data_agendamento", format(fim, "yyyy-MM-dd"));
+
+      // Super admin pode ver todos, outros apenas da sua arena
+      if (!hasRole("super_admin")) {
+        query = query.eq("arena_id", arenaId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
+    enabled: !!arenaId,
   });
 
   // Ranking de clientes por agendamentos

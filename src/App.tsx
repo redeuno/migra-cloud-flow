@@ -26,6 +26,7 @@ import DashboardAluno from "./pages/DashboardAluno";
 import SetupArenaAdmin from "./pages/SetupArenaAdmin";
 import AulaPresencas from "./pages/AulaPresencas";
 import ArenaSetup from "./pages/ArenaSetup";
+import Comissoes from "./pages/Comissoes";
 
 const queryClient = new QueryClient();
 
@@ -150,6 +151,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Relatorios />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/comissoes"
+              element={
+                <ProtectedRoute>
+                  <Comissoes />
                 </ProtectedRoute>
               }
             />

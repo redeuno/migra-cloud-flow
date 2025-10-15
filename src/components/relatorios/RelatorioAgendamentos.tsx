@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
@@ -17,6 +18,7 @@ const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accen
 export function RelatorioAgendamentos() {
   const [periodo, setPeriodo] = useState("mes_atual");
   const { exportToCSV } = useExportData();
+  const { arenaId, hasRole } = useAuth();
 
   const getDateRange = () => {
     const hoje = new Date();
@@ -36,16 +38,26 @@ export function RelatorioAgendamentos() {
   const { inicio, fim } = getDateRange();
 
   const { data: agendamentos, isLoading } = useQuery({
-    queryKey: ["relatorio-agendamentos", inicio, fim],
+    queryKey: ["relatorio-agendamentos", arenaId, inicio, fim],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!arenaId) return [];
+
+      let query = supabase
         .from("agendamentos")
         .select("*, quadras(nome, numero)")
         .gte("data_agendamento", format(inicio, "yyyy-MM-dd"))
         .lte("data_agendamento", format(fim, "yyyy-MM-dd"));
+
+      // Super admin pode ver todas, outros apenas da sua arena
+      if (!hasRole("super_admin")) {
+        query = query.eq("arena_id", arenaId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
+    enabled: !!arenaId,
   });
 
   const dadosPorStatus = agendamentos?.reduce((acc: any, ag: any) => {
