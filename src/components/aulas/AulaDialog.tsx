@@ -21,7 +21,7 @@ import { ptBR } from "date-fns/locale";
 
 const aulaSchema = z.object({
   professor_id: z.string().min(1, "Selecione um professor"),
-  quadra_id: z.string().optional(),
+  quadra_id: z.string().optional().nullable(),
   tipo_aula: z.enum(["individual", "grupo", "clinica", "curso"]),
   titulo: z.string().min(1, "Título é obrigatório"),
   descricao: z.string().optional(),
@@ -111,7 +111,7 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
     if (aula) {
       form.reset({
         professor_id: aula.professor_id,
-        quadra_id: aula.quadra_id || undefined,
+        quadra_id: aula.quadra_id || "none",
         tipo_aula: aula.tipo_aula,
         titulo: aula.titulo,
         descricao: aula.descricao || "",
@@ -134,7 +134,7 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
       const { error } = await supabase.from("aulas").insert([{
         arena_id: arenaId!,
         professor_id: data.professor_id,
-        quadra_id: data.quadra_id || null,
+        quadra_id: data.quadra_id === "none" ? null : data.quadra_id || null,
         tipo_aula: data.tipo_aula,
         titulo: data.titulo,
         descricao: data.descricao,
@@ -169,7 +169,7 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
         .from("aulas")
         .update({
           professor_id: data.professor_id,
-          quadra_id: data.quadra_id || null,
+          quadra_id: data.quadra_id === "none" ? null : data.quadra_id || null,
           tipo_aula: data.tipo_aula,
           titulo: data.titulo,
           descricao: data.descricao,
@@ -254,8 +254,8 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
                           <SelectValue placeholder="Selecione uma quadra" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="">Sem quadra específica</SelectItem>
+                      <SelectContent className="z-50 bg-background">
+                        <SelectItem value="none">Sem quadra específica</SelectItem>
                         {quadras?.map((quadra) => (
                           <SelectItem key={quadra.id} value={quadra.id}>
                             Quadra {quadra.numero} - {quadra.nome}
