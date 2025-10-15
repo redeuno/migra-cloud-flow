@@ -89,7 +89,7 @@ export function AppSidebar() {
         `)
         .eq("arena_id", arenaId)
         .eq("ativo", true)
-        .order("modulos_sistema(ordem)");
+        .order("ordem", { foreignTable: "modulos_sistema" });
       
       return data;
     },
@@ -129,7 +129,7 @@ export function AppSidebar() {
         if (!moduleSlug) return true;
 
         // Enquanto ainda carregamos arenaId ou módulos, mostramos os itens
-        if (!arenaId || loadingModulosAtivos || typeof modulosAtivos === "undefined") return true;
+        if (!arenaId || loadingModulosAtivos || !modulosAtivos) return true;
         
         // Verificar se o módulo está ativo
         return modulosAtivosMap.has(moduleSlug);

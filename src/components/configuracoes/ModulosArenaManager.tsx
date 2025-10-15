@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2, Lock, Square, icons as lucideIcons } from "lucide-react";
 
 export function ModulosArenaManager() {
   const { arenaId } = useAuth();
@@ -100,13 +100,14 @@ export function ModulosArenaManager() {
         {modulosSistema?.map((modulo) => {
           const isInclusoNoPlano = modulosInclusos.includes(modulo.slug);
           const isAtivo = modulosAtivosMapa.get(modulo.id) || false;
+          const IconComp = (lucideIcons as any)[modulo.icone as keyof typeof lucideIcons] || Square;
           
           return (
             <Card key={modulo.id} className={!isInclusoNoPlano ? "opacity-60" : ""}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">{modulo.icone}</span>
+                    <IconComp className="h-5 w-5" />
                     <div>
                       <CardTitle className="text-base">{modulo.nome}</CardTitle>
                       {!isInclusoNoPlano && (
