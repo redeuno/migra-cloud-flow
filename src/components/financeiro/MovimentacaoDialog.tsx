@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-
+import * as LucideIcons from "lucide-react";
 interface MovimentacaoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -24,6 +24,12 @@ export function MovimentacaoDialog({ open, onOpenChange, movimentacao }: Movimen
   const { arenaId } = useAuth();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Renderizador de ícones dinâmicos (lucide-react)
+  const Icon = ({ name }: { name?: string }) => {
+    const LucideIcon = name ? (LucideIcons as any)[name] : null;
+    return LucideIcon ? <LucideIcon className="h-4 w-4" /> : null;
+  };
 
   // Buscar categorias ativas
   const { data: categorias } = useQuery({
@@ -145,7 +151,7 @@ export function MovimentacaoDialog({ open, onOpenChange, movimentacao }: Movimen
                           categoriasFiltradas.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id}>
                               <div className="flex items-center gap-2">
-                                {cat.icone && <span>{cat.icone}</span>}
+                                {cat.icone && <Icon name={cat.icone} />}
                                 <span>{cat.nome}</span>
                               </div>
                             </SelectItem>
@@ -218,7 +224,7 @@ export function MovimentacaoDialog({ open, onOpenChange, movimentacao }: Movimen
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="z-50 bg-background">
                         <SelectItem value="dinheiro">Dinheiro</SelectItem>
                         <SelectItem value="pix">PIX</SelectItem>
                         <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>

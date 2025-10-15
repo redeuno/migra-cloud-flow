@@ -44,6 +44,19 @@ export function MovimentacoesTable() {
     enabled: !!arenaId,
   });
 
+  // Categorias ativas para mapear nome/ícone na tabela
+  const { data: categorias } = useQuery({
+    queryKey: ["categorias-financeiras-ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categorias_financeiras")
+        .select("*")
+        .eq("ativo", true);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -132,20 +145,24 @@ export function MovimentacoesTable() {
                 )}
               </TableCell>
               <TableCell>
-                <Badge variant="outline">
-                  {movimentacao.categoria_id ? "Categoria vinculada" : "N/A"}
-                </Badge>
+                {movimentacao.categoria_id ? (
+                  <Badge variant="outline">
+                    {categorias?.find((c: any) => c.id === movimentacao.categoria_id)?.nome || "Categoria"}
+                  </Badge>
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
               </TableCell>
               <TableCell>{movimentacao.descricao}</TableCell>
               <TableCell>
                 {movimentacao.forma_pagamento ? (
-                  <span className="capitalize">{movimentacao.forma_pagamento.replace("_", " ")}</span>
+                  <span className="capitalize">{String(movimentacao.forma_pagamento).replace(/_/g, " ")}</span>
                 ) : (
                   <span className="text-muted-foreground">-</span>
                 )}
               </TableCell>
               <TableCell className={movimentacao.tipo === "receita" ? "text-green-600" : "text-red-600"}>
-                {movimentacao.tipo === "receita" ? "+" : "-"} R$ {movimentacao.valor.toFixed(2)}
+                {movimentacao.tipo === "receita" ? "+" : "-"} {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(movimentacao.valor))}
               </TableCell>
               <TableCell>
                 <DropdownMenu>
@@ -154,7 +171,7 @@ export function MovimentacoesTable() {
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="z-50 bg-popover">
                     <DropdownMenuItem onClick={() => handleEdit(movimentacao)}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Editar
