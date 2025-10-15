@@ -1995,6 +1995,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_arena_status: {
+        Args: { _arena_id: string }
+        Returns: {
+          data_vencimento: string
+          dias_ate_vencimento: number
+          mensagem: string
+          pode_acessar: boolean
+          status: Database["public"]["Enums"]["status_geral"]
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

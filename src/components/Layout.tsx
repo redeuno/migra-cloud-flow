@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import { AppBreadcrumb } from "@/components/AppBreadcrumb";
 import { NotificationBell } from "@/components/Layout/NotificationBell";
+import { ArenaAccessGuard } from "@/components/ArenaAccessGuard";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -86,7 +87,9 @@ export function Layout({ children }: LayoutProps) {
           </header>
 
           <main className="flex-1 p-4 lg:p-6">
-            {children}
+            <ArenaAccessGuard>
+              {children}
+            </ArenaAccessGuard>
           </main>
         </SidebarInset>
       </div>
