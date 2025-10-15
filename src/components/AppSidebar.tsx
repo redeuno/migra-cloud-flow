@@ -80,6 +80,7 @@ export function AppSidebar() {
         .from("arena_modulos")
         .select(`
           modulo_id,
+          ativo,
           modulos_sistema (
             slug,
             nome,

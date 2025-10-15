@@ -66,6 +66,7 @@ export function ModulosArenaManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["arena-modulos", arenaId] });
+      queryClient.invalidateQueries({ queryKey: ["arena-modulos-ativos", arenaId] });
       toast.success("Módulo atualizado!");
     },
     onError: (error: any) => {
@@ -83,10 +84,10 @@ export function ModulosArenaManager() {
     );
   }
 
-  // Módulos inclusos no plano (convert JSON to array)
-  const modulosInclusos = Array.isArray(arena?.planos_sistema?.modulos_inclusos)
-    ? arena.planos_sistema.modulos_inclusos
-    : [];
+  // Módulos inclusos no plano
+  const modulosInclusos = (Array.isArray(arena?.planos_sistema?.modulos_inclusos) 
+    ? arena.planos_sistema.modulos_inclusos 
+    : []) as string[];
   
   // Mapa de módulos ativos
   const modulosAtivosMapa = new Map(
