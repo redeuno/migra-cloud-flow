@@ -140,15 +140,21 @@ export function MovimentacaoDialog({ open, onOpenChange, movimentacao }: Movimen
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        {categoriasFiltradas?.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            <div className="flex items-center gap-2">
-                              {cat.icone && <span>{cat.icone}</span>}
-                              <span>{cat.nome}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
+                      <SelectContent className="z-50 bg-background">
+                        {categoriasFiltradas && categoriasFiltradas.length > 0 ? (
+                          categoriasFiltradas.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.id}>
+                              <div className="flex items-center gap-2">
+                                {cat.icone && <span>{cat.icone}</span>}
+                                <span>{cat.nome}</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="py-6 text-center text-sm text-muted-foreground">
+                            Nenhuma categoria disponível
+                          </div>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

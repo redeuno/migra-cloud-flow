@@ -44,9 +44,12 @@ export function MensalidadeDialog({ open, onOpenChange, mensalidade }: Mensalida
   const { data: contratos } = useQuery({
     queryKey: ["contratos-ativos", arenaId],
     queryFn: async () => {
+      if (!arenaId) return [];
+
       const { data, error } = await supabase
         .from("contratos")
         .select("id, numero_contrato, usuarios!contratos_usuario_id_fkey(nome_completo)")
+        .eq("arena_id", arenaId)
         .eq("status", "ativo")
         .order("numero_contrato");
 
@@ -138,12 +141,18 @@ export function MensalidadeDialog({ open, onOpenChange, mensalidade }: Mensalida
                           <SelectValue placeholder="Selecione o contrato" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        {contratos?.map((contrato) => (
-                          <SelectItem key={contrato.id} value={contrato.id}>
-                            {contrato.numero_contrato} - {contrato.usuarios?.nome_completo}
-                          </SelectItem>
-                        ))}
+                      <SelectContent className="z-50 bg-background">
+                        {contratos && contratos.length > 0 ? (
+                          contratos.map((contrato) => (
+                            <SelectItem key={contrato.id} value={contrato.id}>
+                              {contrato.numero_contrato} - {contrato.usuarios?.nome_completo}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="py-6 text-center text-sm text-muted-foreground">
+                            Nenhum contrato ativo encontrado
+                          </div>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

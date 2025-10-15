@@ -79,16 +79,20 @@ export function AgendamentoDialog({
   });
 
   const { data: quadras } = useQuery({
-    queryKey: ["quadras-select"],
+    queryKey: ["quadras-select", arenaId],
     queryFn: async () => {
+      if (!arenaId) return [];
+
       const { data, error } = await supabase
         .from("quadras")
         .select("*")
+        .eq("arena_id", arenaId)
         .eq("status", "ativa")
         .order("numero");
       if (error) throw error;
       return data;
     },
+    enabled: !!arenaId,
   });
 
   const { data: clientes } = useQuery({

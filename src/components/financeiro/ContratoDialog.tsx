@@ -181,12 +181,18 @@ export function ContratoDialog({ open, onOpenChange, contrato, preSelectedUsuari
                         <SelectValue placeholder="Selecione o cliente" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      {usuarios?.map((usuario) => (
-                        <SelectItem key={usuario.id} value={usuario.id}>
-                          {usuario.nome_completo}
-                        </SelectItem>
-                      ))}
+                    <SelectContent className="z-50 bg-background">
+                      {usuarios && usuarios.length > 0 ? (
+                        usuarios.map((usuario) => (
+                          <SelectItem key={usuario.id} value={usuario.id}>
+                            {usuario.nome_completo}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="py-6 text-center text-sm text-muted-foreground">
+                          Nenhum cliente ativo encontrado
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
