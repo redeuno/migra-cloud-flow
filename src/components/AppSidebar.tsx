@@ -107,8 +107,9 @@ export function AppSidebar() {
         // Verificar role
         if (!hasAccess(item.roles)) return false;
         
-        // Se não há módulos carregados ainda, não mostrar nada (evitar flicker)
-        if (!isSuperAdmin && arenaId && !modulosAtivos) return false;
+        // Itens sem módulo aparecem mesmo durante o carregamento
+        // (evitamos sidebar vazia no login)
+
         
         // Mapear URLs para slugs de módulos
         const urlToModuleMap: Record<string, string> = {
