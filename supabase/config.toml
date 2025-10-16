@@ -23,3 +23,9 @@ verify_jwt = false
 
 [functions.enviar-whatsapp-evolution]
 verify_jwt = true
+
+[functions.verificar-vencimentos-arena]
+verify_jwt = false
+
+[functions.lembretes-pagamento]
+verify_jwt = false
