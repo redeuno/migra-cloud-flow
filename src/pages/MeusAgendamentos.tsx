@@ -1,48 +1,41 @@
-import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { PerfilAccessGuard } from "@/components/PerfilAccessGuard";
-import { useAuth } from "@/contexts/AuthContext";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/EmptyState";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { MeusCheckins } from "@/components/checkins/MeusCheckins";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function MeusAgendamentos() {
-  const { user, arenaId } = useAuth();
-  const [filtro, setFiltro] = useState<"proximos" | "passados">("proximos");
-
-  // Buscar ID do usuário no sistema
-  const { data: usuarioData } = useQuery({
-    queryKey: ["usuario-id", user?.id],
+  const { data: usuario } = useQuery({
+    queryKey: ["usuario-atual"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { data, error } = await supabase
         .from("usuarios")
-        .select("id")
-        .eq("auth_id", user?.id)
+        .select("id, nome_completo")
+        .eq("auth_id", user.id)
         .single();
 
+      if (error) throw error;
       return data;
     },
-    enabled: !!user?.id,
   });
 
-  const usuarioId = usuarioData?.id;
-
-  // Buscar agendamentos do usuário
   const { data: agendamentos, isLoading } = useQuery({
-    queryKey: ["meus-agendamentos", usuarioId, arenaId, filtro],
+    queryKey: ["meus-agendamentos", usuario?.id],
     queryFn: async () => {
-      if (!usuarioId || !arenaId) return [];
+      if (!usuario?.id) return [];
 
-      const hoje = new Date().toISOString().split("T")[0];
-
-      const query = supabase
+      const { data, error } = await supabase
         .from("agendamentos")
         .select(`
           id,
@@ -50,143 +43,137 @@ export default function MeusAgendamentos() {
           hora_inicio,
           hora_fim,
           status,
-          status_pagamento,
           valor_total,
+          status_pagamento,
           checkin_realizado,
-          quadras(id, nome, numero),
-          modalidade
+          quadras (
+            nome,
+            numero,
+            tipo_esporte
+          ),
+          arenas (
+            nome
+          )
         `)
-        .eq("cliente_id", usuarioId)
-        .eq("arena_id", arenaId)
-        .order("data_agendamento", { ascending: filtro === "proximos" })
-        .order("hora_inicio", { ascending: true });
-
-      if (filtro === "proximos") {
-        query.gte("data_agendamento", hoje);
-      } else {
-        query.lt("data_agendamento", hoje);
-      }
-
-      const { data, error } = await query;
+        .eq("cliente_id", usuario.id)
+        .order("data_agendamento", { ascending: false })
+        .order("hora_inicio", { ascending: false })
+        .limit(50);
 
       if (error) throw error;
-      return data || [];
+      return data;
     },
-    enabled: !!usuarioId && !!arenaId,
+    enabled: !!usuario?.id,
   });
-
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-      confirmado: { variant: "default", label: "Confirmado" },
-      pendente: { variant: "secondary", label: "Pendente" },
-      cancelado: { variant: "destructive", label: "Cancelado" },
-      concluido: { variant: "outline", label: "Concluído" },
-    };
-
-    const config = statusMap[status] || { variant: "outline" as const, label: status };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
-  const getPagamentoBadge = (status: string) => {
-    const statusMap: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-      pago: { variant: "default", label: "Pago" },
-      pendente: { variant: "secondary", label: "Pendente" },
-      cancelado: { variant: "destructive", label: "Cancelado" },
-    };
-
-    const config = statusMap[status] || { variant: "outline" as const, label: status };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
 
   return (
     <Layout>
       <PerfilAccessGuard allowedRoles={["aluno"]}>
         <div className="space-y-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Meus Agendamentos</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Meus Agendamentos
+            </h1>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Visualize e gerencie seus agendamentos
+              Visualize e gerencie seus agendamentos e check-ins
             </p>
           </div>
 
-          <Tabs value={filtro} onValueChange={(v) => setFiltro(v as "proximos" | "passados")}>
-            <TabsList className="grid w-full grid-cols-2 max-w-md">
-              <TabsTrigger value="proximos">Próximos</TabsTrigger>
-              <TabsTrigger value="passados">Histórico</TabsTrigger>
+          <Tabs defaultValue="agendamentos" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2 h-auto">
+              <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>
+              <TabsTrigger value="checkins">Check-ins</TabsTrigger>
             </TabsList>
 
-            <TabsContent value={filtro} className="space-y-4">
+            <TabsContent value="agendamentos" className="space-y-4">
               {isLoading ? (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <Card key={i}>
-                      <CardHeader>
-                        <Skeleton className="h-6 w-32" />
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-24" />
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="space-y-4">
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-32 w-full" />
                 </div>
-              ) : !agendamentos || agendamentos.length === 0 ? (
-                <EmptyState
-                  icon={Calendar}
-                  title="Nenhum agendamento encontrado"
-                  description={
-                    filtro === "proximos"
-                      ? "Você não tem agendamentos futuros no momento."
-                      : "Você não tem agendamentos passados."
-                  }
-                  className="py-12"
-                />
-              ) : (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                  {agendamentos.map((agendamento: any) => (
-                    <Card key={agendamento.id} className="hover:shadow-md transition-shadow">
+              ) : agendamentos && agendamentos.length > 0 ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {agendamentos.map((agendamento) => (
+                    <Card key={agendamento.id}>
                       <CardHeader>
-                        <CardTitle className="flex items-center justify-between text-base">
-                          <span>{agendamento.quadras?.nome || `Quadra ${agendamento.quadras?.numero}`}</span>
-                          {agendamento.checkin_realizado && (
-                            <Badge variant="outline" className="ml-2">
-                              ✓ Check-in
-                            </Badge>
-                          )}
+                        <CardTitle className="text-base flex items-center justify-between">
+                          <span>
+                            Quadra {agendamento.quadras?.numero} -{" "}
+                            {agendamento.quadras?.nome}
+                          </span>
+                          <Badge
+                            variant={
+                              agendamento.status === "confirmado"
+                                ? "default"
+                                : agendamento.status === "cancelado"
+                                ? "destructive"
+                                : "secondary"
+                            }
+                          >
+                            {agendamento.status}
+                          </Badge>
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
+                      <CardContent className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>{format(new Date(agendamento.data_agendamento), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+                          <span>
+                            {format(
+                              new Date(agendamento.data_agendamento),
+                              "dd/MM/yyyy",
+                              { locale: ptBR }
+                            )}
+                          </span>
                         </div>
-
-                        <div className="flex items-center gap-2 text-sm">
+                        <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
                           <span>
-                            {agendamento.hora_inicio.slice(0, 5)} - {agendamento.hora_fim.slice(0, 5)}
+                            {agendamento.hora_inicio.substring(0, 5)} -{" "}
+                            {agendamento.hora_fim.substring(0, 5)}
                           </span>
                         </div>
-
-                        <div className="flex items-center gap-2 text-sm">
+                        <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span className="capitalize">{agendamento.modalidade || "Beach Tennis"}</span>
+                          <span>{agendamento.arenas?.nome}</span>
                         </div>
-
-                        <div className="flex items-center justify-between pt-2 border-t">
-                          <span className="text-sm font-medium">
-                            R$ {Number(agendamento.valor_total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        <div className="flex items-center justify-between pt-2 mt-2 border-t">
+                          <span className="text-muted-foreground">Pagamento:</span>
+                          <Badge
+                            variant={
+                              agendamento.status_pagamento === "pago"
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
+                            {agendamento.status_pagamento}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Valor:</span>
+                          <span className="font-medium">
+                            {new Intl.NumberFormat("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            }).format(agendamento.valor_total)}
                           </span>
-                          <div className="flex gap-2">
-                            {getStatusBadge(agendamento.status)}
-                            {getPagamentoBadge(agendamento.status_pagamento)}
-                          </div>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
+              ) : (
+                <Alert>
+                  <Calendar className="h-4 w-4" />
+                  <AlertDescription>
+                    Você ainda não tem agendamentos.
+                  </AlertDescription>
+                </Alert>
               )}
+            </TabsContent>
+
+            <TabsContent value="checkins" className="space-y-4">
+              <MeusCheckins />
             </TabsContent>
           </Tabs>
         </div>

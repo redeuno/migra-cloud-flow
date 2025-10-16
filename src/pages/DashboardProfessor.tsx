@@ -8,6 +8,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckinsProfessor } from "@/components/checkins/CheckinsProfessor";
 
 export default function DashboardProfessor() {
   const { user, arenaId } = useAuth();
@@ -133,119 +135,132 @@ export default function DashboardProfessor() {
         </p>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {statsLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-4 w-4 rounded" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-24 mb-2" />
-                <Skeleton className="h-3 w-40" />
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <>
-            <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Aulas Hoje</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.aulasHoje || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.aulasHoje ? `${stats.aulasHoje} aula${stats.aulasHoje > 1 ? 's' : ''} agendada${stats.aulasHoje > 1 ? 's' : ''}` : "Nenhuma aula hoje"}
-                </p>
-              </CardContent>
-            </Card>
+      <Tabs defaultValue="visao-geral" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2 h-auto">
+          <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
+          <TabsTrigger value="checkins">Check-ins</TabsTrigger>
+        </TabsList>
 
-            <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => navigate("/minhas-aulas")}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Aulas do Mês</CardTitle>
-                <GraduationCap className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.aulasDoMes || 0}</div>
-                <p className="text-xs text-muted-foreground">Total no mês atual</p>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Alunos</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.totalAlunos || 0}</div>
-                <p className="text-xs text-muted-foreground">Alunos únicos</p>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => navigate("/comissoes")}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Comissões Pendentes</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  R$ {(stats?.comissoesPendentes || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </div>
-                <p className="text-xs text-muted-foreground">A receber</p>
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Próximas Aulas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {aulasLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-center justify-between border-b pb-3">
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
-                  <Skeleton className="h-3 w-24" />
-                </div>
-              ))}
-            </div>
-          ) : !proximasAulas || proximasAulas.length === 0 ? (
-            <EmptyState
-              icon={GraduationCap}
-              title="Nenhuma aula agendada"
-              description="Você não tem aulas agendadas no momento."
-              className="py-8"
-            />
-          ) : (
-            <div className="space-y-4">
-              {proximasAulas.map((aula: any) => (
-                <div
-                  key={aula.id}
-                  className="flex items-center justify-between border-b pb-3 last:border-0 cursor-pointer hover:bg-accent/50 -mx-2 px-2 py-2 rounded transition-colors"
-                  onClick={() => navigate("/minhas-aulas")}
-                >
-                  <div>
-                    <p className="font-medium">{aula.titulo}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(aula.data_aula), "dd/MMM", { locale: ptBR })} • {aula.hora_inicio.slice(0, 5)} -{" "}
-                      {aula.hora_fim.slice(0, 5)}
+        <TabsContent value="visao-geral" className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {statsLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-4 rounded" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-8 w-24 mb-2" />
+                    <Skeleton className="h-3 w-40" />
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <>
+                <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Aulas Hoje</CardTitle>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats?.aulasHoje || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stats?.aulasHoje ? `${stats.aulasHoje} aula${stats.aulasHoje > 1 ? 's' : ''} agendada${stats.aulasHoje > 1 ? 's' : ''}` : "Nenhuma aula hoje"}
                     </p>
-                  </div>
-                  <div className="text-sm text-muted-foreground">{aula.quadras?.nome || "—"}</div>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => navigate("/minhas-aulas")}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Aulas do Mês</CardTitle>
+                    <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats?.aulasDoMes || 0}</div>
+                    <p className="text-xs text-muted-foreground">Total no mês atual</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total de Alunos</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats?.totalAlunos || 0}</div>
+                    <p className="text-xs text-muted-foreground">Alunos únicos</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => navigate("/comissoes")}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Comissões Pendentes</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      R$ {(stats?.comissoesPendentes || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </div>
+                    <p className="text-xs text-muted-foreground">A receber</p>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Próximas Aulas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {aulasLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between border-b pb-3">
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="h-3 w-32" />
+                      </div>
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              ) : !proximasAulas || proximasAulas.length === 0 ? (
+                <EmptyState
+                  icon={GraduationCap}
+                  title="Nenhuma aula agendada"
+                  description="Você não tem aulas agendadas no momento."
+                  className="py-8"
+                />
+              ) : (
+                <div className="space-y-4">
+                  {proximasAulas.map((aula: any) => (
+                    <div
+                      key={aula.id}
+                      className="flex items-center justify-between border-b pb-3 last:border-0 cursor-pointer hover:bg-accent/50 -mx-2 px-2 py-2 rounded transition-colors"
+                      onClick={() => navigate("/minhas-aulas")}
+                    >
+                      <div>
+                        <p className="font-medium">{aula.titulo}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(aula.data_aula), "dd/MMM", { locale: ptBR })} • {aula.hora_inicio.slice(0, 5)} -{" "}
+                          {aula.hora_fim.slice(0, 5)}
+                        </p>
+                      </div>
+                      <div className="text-sm text-muted-foreground">{aula.quadras?.nome || "—"}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="checkins" className="space-y-4">
+          <CheckinsProfessor />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
