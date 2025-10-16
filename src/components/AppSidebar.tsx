@@ -41,15 +41,17 @@ const superAdminItems = [
 
 // Menu para Arena Admin e Staff (visão da arena)
 const arenaNavItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["arena_admin", "funcionario", "aluno"] },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["arena_admin", "funcionario", "aluno", "professor"] },
   { title: "Quadras", url: "/quadras", icon: SquareActivity, roles: ["arena_admin", "funcionario"] },
-  { title: "Agendamentos", url: "/agendamentos", icon: Calendar, roles: ["arena_admin", "funcionario", "aluno"] },
+  { title: "Agendamentos", url: "/agendamentos", icon: Calendar, roles: ["arena_admin", "funcionario"] },
+  { title: "Meus Agendamentos", url: "/meus-agendamentos", icon: Calendar, roles: ["aluno"] },
   { title: "Clientes", url: "/clientes", icon: Users, roles: ["arena_admin", "funcionario"] },
   { title: "Financeiro", url: "/financeiro", icon: DollarSign, roles: ["arena_admin"] },
   { title: "Meu Financeiro", url: "/meu-financeiro", icon: Wallet, roles: ["aluno"] },
-  { title: "Aulas", url: "/aulas", icon: GraduationCap, roles: ["arena_admin", "funcionario", "professor"] },
-  { title: "Minhas Aulas", url: "/minhas-aulas", icon: BookOpen, roles: ["aluno"] },
-  { title: "Torneios", url: "/torneios", icon: Trophy, roles: ["arena_admin", "funcionario", "aluno"] },
+  { title: "Aulas", url: "/aulas", icon: GraduationCap, roles: ["arena_admin", "funcionario"] },
+  { title: "Minhas Aulas", url: "/minhas-aulas", icon: BookOpen, roles: ["aluno", "professor"] },
+  { title: "Comissões", url: "/comissoes", icon: DollarSign, roles: ["arena_admin", "funcionario", "professor"] },
+  { title: "Torneios", url: "/torneios", icon: Trophy, roles: ["arena_admin", "funcionario"] },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["arena_admin"] },
 ];
 

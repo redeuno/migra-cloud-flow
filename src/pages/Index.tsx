@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Dashboard from "./Dashboard";
 import DashboardAluno from "./DashboardAluno";
 import DashboardSuperAdmin from "./DashboardSuperAdmin";
+import DashboardProfessor from "./DashboardProfessor";
 import { useArenaStatus } from "@/hooks/useArenaStatus";
 
 const Index = () => {
@@ -16,6 +17,15 @@ const Index = () => {
     return (
       <Layout>
         <DashboardSuperAdmin />
+      </Layout>
+    );
+  }
+
+  // Professores veem dashboard dedicado
+  if (hasRole("professor")) {
+    return (
+      <Layout>
+        <DashboardProfessor />
       </Layout>
     );
   }

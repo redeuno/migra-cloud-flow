@@ -22,6 +22,7 @@ import ConfiguracoesSistema from "./pages/ConfiguracoesSistema";
 import ArenaSuspensa from "./pages/ArenaSuspensa";
 import Relatorios from "./pages/Relatorios";
 import MinhasAulas from "./pages/MinhasAulas";
+import MeusAgendamentos from "./pages/MeusAgendamentos";
 import DashboardAluno from "./pages/DashboardAluno";
 import SetupArenaAdmin from "./pages/SetupArenaAdmin";
 import AulaPresencas from "./pages/AulaPresencas";
@@ -165,8 +166,16 @@ const App = () => (
             <Route
               path="/minhas-aulas"
               element={
-                <ProtectedRoute requiredRole="aluno">
+                <ProtectedRoute>
                   <MinhasAulas />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/meus-agendamentos"
+              element={
+                <ProtectedRoute requiredRole="aluno">
+                  <MeusAgendamentos />
                 </ProtectedRoute>
               }
             />
