@@ -57,7 +57,7 @@ export function AgendamentoDialog({
   defaultValues,
 }: AgendamentoDialogProps) {
   const queryClient = useQueryClient();
-  const { arenaId } = useAuth();
+  const { arenaId, user, hasRole } = useAuth();
 
   const [recorrenciaConfig, setRecorrenciaConfig] = useState({
     ativo: false,
@@ -145,10 +145,23 @@ export function AgendamentoDialog({
 
   const saveMutation = useMutation({
     mutationFn: async (data: AgendamentoFormData) => {
+      // Garantir vinculação do aluno ao agendamento, quando aplicável
+      let resolvedClienteId = data.cliente_id || null;
+      if (!resolvedClienteId && hasRole && hasRole("aluno")) {
+        try {
+          const { data: me } = await supabase
+            .from("usuarios")
+            .select("id")
+            .eq("auth_id", user?.id || "")
+            .single();
+          resolvedClienteId = me?.id || null;
+        } catch {}
+      }
+
       const basePayload = {
         arena_id: arenaId,
         quadra_id: data.quadra_id,
-        cliente_id: data.cliente_id || null,
+        cliente_id: resolvedClienteId,
         hora_inicio: data.hora_inicio,
         hora_fim: data.hora_fim,
         modalidade: data.modalidade,
