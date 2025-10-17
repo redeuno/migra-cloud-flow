@@ -181,7 +181,9 @@ export default function MinhasAulasProfessor() {
               <div className="grid gap-4 md:grid-cols-2">
                 {aulasProximas.map((aula) => {
                   const inscritos = (aula.presencas as any[])?.length || 0;
-                  const podeEditar = aula.data_aula >= hoje && aula.status !== "cancelada" && aula.status !== "realizada";
+                  const podeEditar = aula.data_aula >= hoje && 
+                                    aula.status !== "cancelada" && 
+                                    aula.status !== "realizada";
 
                   return (
                     <Card key={aula.id}>
