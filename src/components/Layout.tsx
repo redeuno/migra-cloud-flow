@@ -6,8 +6,10 @@ import { ArenaAccessGuard } from "@/components/ArenaAccessGuard";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, User, Settings } from "lucide-react";
+import { LogOut, User, Settings, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,11 +25,26 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { user, signOut, userRoles } = useAuth();
+  const { user, signOut, userRoles, arenaId } = useAuth();
   const navigate = useNavigate();
   
   // Hook para notificações em tempo real
   useNotifications();
+
+  // Query para buscar nome da arena
+  const { data: arenaData } = useQuery({
+    queryKey: ["arena-header", arenaId],
+    queryFn: async () => {
+      if (!arenaId) return null;
+      const { data } = await supabase
+        .from("arenas")
+        .select("nome")
+        .eq("id", arenaId)
+        .single();
+      return data;
+    },
+    enabled: !!arenaId,
+  });
 
   const getInitials = (email: string) => {
     return email.substring(0, 2).toUpperCase();
@@ -47,6 +64,12 @@ export function Layout({ children }: LayoutProps) {
             </div>
 
             <div className="flex items-center gap-2">
+              {arenaData && !userRoles.includes("super_admin") && (
+                <div className="hidden md:flex items-center gap-2 mr-2 px-3 py-1 bg-primary/10 rounded-full">
+                  <Building2 className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">{arenaData.nome}</span>
+                </div>
+              )}
               <NotificationBell />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

@@ -15,6 +15,8 @@ import { MetricCard } from "@/components/dashboard/MetricCard";
 import { useMetricasComparativas } from "@/hooks/useMetricasComparativas";
 import { AgendaDiaWidget } from "@/components/dashboard/AgendaDiaWidget";
 import { VencimentosWidget } from "@/components/dashboard/VencimentosWidget";
+import { AlertasWidget } from "@/components/dashboard/AlertasWidget";
+import { OcupacaoQuadrasWidget } from "@/components/dashboard/OcupacaoQuadrasWidget";
 
 export default function Dashboard() {
   const { user, userRoles, arenaId } = useAuth();
@@ -321,12 +323,18 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Widgets: Agenda do Dia e Vencimentos */}
+      {/* Widgets: Agenda do Dia, Vencimentos, Alertas e Ocupação */}
       {arenaId && (
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-          <AgendaDiaWidget arenaId={arenaId} />
-          <VencimentosWidget arenaId={arenaId} />
-        </div>
+        <>
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+            <AgendaDiaWidget arenaId={arenaId} />
+            <VencimentosWidget arenaId={arenaId} />
+          </div>
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+            <AlertasWidget arenaId={arenaId} />
+            <OcupacaoQuadrasWidget arenaId={arenaId} />
+          </div>
+        </>
       )}
 
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
