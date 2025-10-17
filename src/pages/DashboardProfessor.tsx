@@ -171,7 +171,7 @@ export default function DashboardProfessor() {
                   </CardContent>
                 </Card>
 
-                <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => navigate("/minhas-aulas")}>
+                <Card className="cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => navigate("/minhas-aulas-professor")}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Aulas do Mês</CardTitle>
                     <GraduationCap className="h-4 w-4 text-muted-foreground" />
@@ -239,7 +239,7 @@ export default function DashboardProfessor() {
                     <div
                       key={aula.id}
                       className="flex items-center justify-between border-b pb-3 last:border-0 cursor-pointer hover:bg-accent/50 -mx-2 px-2 py-2 rounded transition-colors"
-                      onClick={() => navigate("/minhas-aulas")}
+                      onClick={() => navigate("/minhas-aulas-professor")}
                     >
                       <div>
                         <p className="font-medium">{aula.titulo}</p>
