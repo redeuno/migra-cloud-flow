@@ -107,16 +107,8 @@ export function CheckinsProfessor() {
   };
 
   const podeCheckin = (aula: any) => {
-    if (aula.realizada) return false;
-
-    const agora = new Date();
-    agora.setHours(0, 0, 0, 0);
-    
-    const dataAula = new Date(aula.data_aula);
-    dataAula.setHours(0, 0, 0, 0);
-    
-    // Permitir iniciar apenas no dia da aula
-    return agora.getTime() === dataAula.getTime();
+    // Liberação total: professor pode iniciar a aula a qualquer momento
+    return !aula.realizada;
   };
 
   if (isLoading) {
