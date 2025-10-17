@@ -136,7 +136,7 @@ const App = () => (
             <Route
               path="/configuracoes"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="arena_admin">
                   <Configuracoes />
                 </ProtectedRoute>
               }
@@ -160,7 +160,7 @@ const App = () => (
             <Route
               path="/relatorios"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="arena_admin">
                   <Relatorios />
                 </ProtectedRoute>
               }
@@ -168,7 +168,7 @@ const App = () => (
             <Route
               path="/comissoes"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="professor">
                   <Comissoes />
                 </ProtectedRoute>
               }

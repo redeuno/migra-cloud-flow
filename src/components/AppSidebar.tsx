@@ -52,7 +52,7 @@ const arenaNavItems = [
   { title: "Aulas", url: "/aulas", icon: GraduationCap, roles: ["arena_admin", "funcionario"] },
   { title: "Minhas Aulas", url: "/minhas-aulas", icon: BookOpen, roles: ["aluno"] },
   { title: "Minhas Aulas", url: "/minhas-aulas-professor", icon: GraduationCap, roles: ["professor"] },
-  { title: "Comissões", url: "/comissoes", icon: DollarSign, roles: ["arena_admin", "funcionario", "professor"] },
+  { title: "Comissões", url: "/comissoes", icon: DollarSign, roles: ["arena_admin", "professor"] },
   { title: "Torneios", url: "/torneios", icon: Trophy, roles: ["arena_admin", "funcionario"] },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["arena_admin"] },
 ];
