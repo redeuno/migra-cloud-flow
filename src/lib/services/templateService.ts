@@ -1,5 +1,23 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export type TemplateData = {
+  id: string;
+  nome: string;
+  tipo: string;
+  categoria: string | null;
+  assunto: string | null;
+  mensagem: string;
+  ativo: boolean;
+};
+
+export type TemplateForm = {
+  nome: string;
+  tipo: string;
+  categoria: string;
+  assunto: string;
+  mensagem: string;
+};
+
 export class TemplateService {
   /**
    * Renderiza um template substituindo as variáveis
@@ -69,5 +87,58 @@ export class TemplateService {
     });
     
     return { mensagem: previewMensagem, assunto: previewAssunto };
+  }
+
+  /**
+   * Busca templates de uma arena
+   */
+  static async fetchTemplates(arenaId: string | null): Promise<TemplateData[]> {
+    if (!arenaId) return [];
+    
+    try {
+      // @ts-ignore - Evita problema de inferência profunda de tipos do Supabase
+      const result = await supabase
+        .from("templates_notificacao")
+        .select("*")
+        .eq("arena_id", arenaId)
+        .eq("ativo", true)
+        .order("tipo");
+
+      if (result.error) throw result.error;
+      
+      return (result.data || []) as TemplateData[];
+    } catch (error) {
+      console.error("Erro ao carregar templates:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Salva ou atualiza um template
+   */
+  static async saveTemplate(template: TemplateForm, arenaId: string, templateId?: string) {
+    if (templateId) {
+      const { error } = await supabase
+        .from("templates_notificacao")
+        .update(template)
+        .eq("id", templateId);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from("templates_notificacao")
+        .insert({ ...template, arena_id: arenaId, ativo: true });
+      if (error) throw error;
+    }
+  }
+
+  /**
+   * Desativa um template
+   */
+  static async deleteTemplate(id: string) {
+    const { error } = await supabase
+      .from("templates_notificacao")
+      .update({ ativo: false })
+      .eq("id", id);
+    if (error) throw error;
   }
 }

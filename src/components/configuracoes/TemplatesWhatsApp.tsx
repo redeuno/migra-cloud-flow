@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,24 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-type TemplateData = {
-  id: string;
-  nome: string;
-  tipo: string;
-  categoria: string | null;
-  assunto: string | null;
-  mensagem: string;
-  ativo: boolean;
-};
-
-type TemplateForm = {
-  nome: string;
-  tipo: string;
-  categoria: string;
-  assunto: string;
-  mensagem: string;
-};
+import { TemplateService, TemplateData, TemplateForm } from "@/lib/services/templateService";
 
 export function TemplatesWhatsApp() {
   const { arenaId } = useAuth();
@@ -56,45 +38,15 @@ export function TemplatesWhatsApp() {
     mensagem: "",
   });
 
-  const { data: templatesData, isLoading } = useQuery({
+  const { data: templates = [], isLoading } = useQuery({
     queryKey: ["templates-whatsapp", arenaId],
-    queryFn: async () => {
-      if (!arenaId) return [];
-      
-      try {
-        const { data, error } = await supabase
-          .from("templates_notificacao")
-          .select("id, nome, tipo, categoria, assunto, mensagem, ativo")
-          .eq("arena_id", arenaId)
-          .eq("ativo", true)
-          .order("tipo");
-
-        if (error) throw error;
-        return data as unknown as TemplateData[];
-      } catch (error) {
-        console.error("Erro ao carregar templates:", error);
-        return [];
-      }
-    },
+    queryFn: () => TemplateService.fetchTemplates(arenaId),
     enabled: !!arenaId,
   });
 
-  const templates = templatesData || [];
-
   const saveMutation = useMutation({
     mutationFn: async (data: TemplateForm) => {
-      if (editingTemplate) {
-        const { error } = await supabase
-          .from("templates_notificacao")
-          .update(data)
-          .eq("id", editingTemplate.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("templates_notificacao")
-          .insert({ ...data, arena_id: arenaId, ativo: true });
-        if (error) throw error;
-      }
+      await TemplateService.saveTemplate(data, arenaId!, editingTemplate?.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates-whatsapp"] });
@@ -107,13 +59,7 @@ export function TemplatesWhatsApp() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("templates_notificacao")
-        .update({ ativo: false })
-        .eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: TemplateService.deleteTemplate,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates-whatsapp"] });
       toast.success("Template removido!");
