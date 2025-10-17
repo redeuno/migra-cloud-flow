@@ -131,7 +131,13 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
 
   const createMutation = useMutation({
     mutationFn: async (data: AulaFormData) => {
-      const { error } = await supabase.from("aulas").insert([{
+      console.log("🔍 DEBUG - Criando aula:", {
+        arena_id: arenaId,
+        professor_id: data.professor_id,
+        data_aula: format(data.data_aula, "yyyy-MM-dd"),
+      });
+
+      const { data: result, error } = await supabase.from("aulas").insert([{
         arena_id: arenaId!,
         professor_id: data.professor_id,
         quadra_id: data.quadra_id === "none" ? null : data.quadra_id || null,
@@ -149,22 +155,37 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
         objetivos: data.objetivos,
         material_necessario: data.material_necessario,
         status: "agendada",
-      }]);
-      if (error) throw error;
+      }]).select();
+
+      if (error) {
+        console.error("❌ ERRO ao criar aula:", error);
+        throw error;
+      }
+      
+      console.log("✅ Aula criada com sucesso:", result);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["aulas"] });
+      queryClient.invalidateQueries({ queryKey: ["minhas-aulas-professor"] });
       toast({ title: "Aula criada com sucesso!" });
       onOpenChange(false);
       form.reset();
     },
-    onError: () => {
-      toast({ title: "Erro ao criar aula", variant: "destructive" });
+    onError: (error: any) => {
+      const errorMessage = error.message || "Erro desconhecido";
+      console.error("❌ Erro na mutation:", error);
+      toast({ 
+        title: "Erro ao criar aula", 
+        description: errorMessage,
+        variant: "destructive" 
+      });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: async (data: AulaFormData) => {
+      console.log("🔍 DEBUG - Atualizando aula:", aulaId);
+
       const { error } = await supabase
         .from("aulas")
         .update({
@@ -185,15 +206,28 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
           material_necessario: data.material_necessario,
         })
         .eq("id", aulaId);
-      if (error) throw error;
+      
+      if (error) {
+        console.error("❌ ERRO ao atualizar aula:", error);
+        throw error;
+      }
+      
+      console.log("✅ Aula atualizada com sucesso");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["aulas"] });
+      queryClient.invalidateQueries({ queryKey: ["minhas-aulas-professor"] });
       toast({ title: "Aula atualizada com sucesso!" });
       onOpenChange(false);
     },
-    onError: () => {
-      toast({ title: "Erro ao atualizar aula", variant: "destructive" });
+    onError: (error: any) => {
+      const errorMessage = error.message || "Erro desconhecido";
+      console.error("❌ Erro na mutation de update:", error);
+      toast({ 
+        title: "Erro ao atualizar aula",
+        description: errorMessage, 
+        variant: "destructive" 
+      });
     },
   });
 
