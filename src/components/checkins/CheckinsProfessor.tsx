@@ -111,15 +111,32 @@ export function CheckinsProfessor() {
 
     const agora = new Date();
     const dataAula = new Date(aula.data_aula);
+    
+    // Verificar se é hoje ou data futura
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    dataAula.setHours(0, 0, 0, 0);
+    
+    if (dataAula < hoje) return false; // Aula já passou
+    
+    // Se for uma data futura, não pode iniciar ainda
+    if (dataAula > hoje) return false;
+    
+    // Se for hoje, permitir de X minutos antes até o fim da aula + Y minutos
     const [horaInicio, minInicio] = aula.hora_inicio.split(":");
-    const horarioAula = new Date(dataAula);
-    horarioAula.setHours(parseInt(horaInicio), parseInt(minInicio), 0);
+    const [horaFim, minFim] = aula.hora_fim.split(":");
+    
+    const horarioInicio = new Date(aula.data_aula);
+    horarioInicio.setHours(parseInt(horaInicio), parseInt(minInicio), 0);
+    
+    const horarioFim = new Date(aula.data_aula);
+    horarioFim.setHours(parseInt(horaFim), parseInt(minFim), 0);
 
     const minutosAntes = arenaConfig?.janela_checkin_minutos_antes || 30;
-    const minutosDepois = arenaConfig?.janela_checkin_minutos_depois || 15;
+    const minutosDepois = arenaConfig?.janela_checkin_minutos_depois || 30;
 
-    const inicioJanela = new Date(horarioAula.getTime() - minutosAntes * 60000);
-    const fimJanela = new Date(horarioAula.getTime() + minutosDepois * 60000);
+    const inicioJanela = new Date(horarioInicio.getTime() - minutosAntes * 60000);
+    const fimJanela = new Date(horarioFim.getTime() + minutosDepois * 60000);
 
     return agora >= inicioJanela && agora <= fimJanela;
   };
