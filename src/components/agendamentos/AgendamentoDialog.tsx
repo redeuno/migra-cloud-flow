@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { agendamentoFormSchema, type AgendamentoFormData } from "@/lib/validations/agendamento";
 import { AgendamentoRecorrenteConfig } from "./AgendamentoRecorrenteConfig";
 import { addDays, addWeeks, addMonths } from "date-fns";
+import { validarAgendamentoCompleto } from "@/lib/utils/validarConflitosAgendamento";
 
 interface AgendamentoDialogProps {
   open: boolean;
@@ -145,6 +146,19 @@ export function AgendamentoDialog({
 
   const saveMutation = useMutation({
     mutationFn: async (data: AgendamentoFormData) => {
+      // Validar conflitos antes de salvar
+      const validacao = await validarAgendamentoCompleto(
+        data.quadra_id,
+        data.data_agendamento,
+        data.hora_inicio,
+        data.hora_fim,
+        agendamentoId
+      );
+
+      if (validacao.temConflito) {
+        throw new Error(validacao.mensagem);
+      }
+
       // Garantir vinculação do aluno ao agendamento, quando aplicável
       let resolvedClienteId = data.cliente_id || null;
       if (!resolvedClienteId && hasRole && hasRole("aluno")) {

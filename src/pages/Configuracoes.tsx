@@ -7,6 +7,7 @@ import { ConfiguracoesHorarios } from "@/components/configuracoes/ConfiguracoesH
 import { ConfiguracoesPagamentos } from "@/components/configuracoes/ConfiguracoesPagamentos";
 import { ModulosArenaManager } from "@/components/configuracoes/ModulosArenaManager";
 import { MinhaAssinatura } from "@/components/configuracoes/MinhaAssinatura";
+import { TemplatesWhatsApp } from "@/components/configuracoes/TemplatesWhatsApp";
 
 export default function Configuracoes() {
   return (
@@ -20,11 +21,12 @@ export default function Configuracoes() {
         </div>
 
         <Tabs defaultValue="geral" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 h-auto">
             <TabsTrigger value="geral">Geral</TabsTrigger>
-            <TabsTrigger value="assinatura">Minha Assinatura</TabsTrigger>
+            <TabsTrigger value="assinatura">Assinatura</TabsTrigger>
             <TabsTrigger value="modulos">Módulos</TabsTrigger>
             <TabsTrigger value="evolution">Evolution</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
             <TabsTrigger value="horarios">Horários</TabsTrigger>
             <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
           </TabsList>
@@ -53,6 +55,10 @@ export default function Configuracoes() {
 
           <TabsContent value="evolution" className="space-y-4">
             <ConfiguracoesEvolution />
+          </TabsContent>
+
+          <TabsContent value="templates" className="space-y-4">
+            <TemplatesWhatsApp />
           </TabsContent>
 
           <TabsContent value="horarios" className="space-y-4">

@@ -13,6 +13,7 @@ import Quadras from "./pages/Quadras";
 import Agendamentos from "./pages/Agendamentos";
 import Clientes from "./pages/Clientes";
 import Financeiro from "./pages/Financeiro";
+import FinanceiroDashboard from "./pages/FinanceiroDashboard";
 import MeuFinanceiro from "./pages/MeuFinanceiro";
 import Aulas from "./pages/Aulas";
 import Torneios from "./pages/Torneios";
@@ -81,6 +82,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Financeiro />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/financeiro-dashboard" 
+              element={
+                <ProtectedRoute>
+                  <FinanceiroDashboard />
                 </ProtectedRoute>
               } 
             />
