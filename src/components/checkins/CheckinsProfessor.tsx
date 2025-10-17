@@ -82,6 +82,11 @@ export function CheckinsProfessor() {
           quadras (
             nome,
             numero
+          ),
+          aulas_alunos (
+            id,
+            usuario_id,
+            presenca
           )
         `)
         .eq("professor_id", professor.id)
@@ -155,8 +160,8 @@ export function CheckinsProfessor() {
           <h3 className="text-lg font-semibold">Aulas Pendentes</h3>
           <div className="grid gap-4 md:grid-cols-2">
             {aulasPendentes.map((aula) => {
-              const presencas = (aula.presencas as any[]) || [];
-              const totalAlunos = presencas.length;
+              const alunosInscritos = (aula.aulas_alunos as any[]) || [];
+              const totalAlunos = alunosInscritos.length;
 
               return (
                 <Card key={aula.id}>
@@ -219,8 +224,9 @@ export function CheckinsProfessor() {
           <h3 className="text-lg font-semibold">Aulas Realizadas</h3>
           <div className="grid gap-4 md:grid-cols-2">
             {aulasRealizadas.map((aula) => {
-              const presencas = (aula.presencas as any[]) || [];
-              const totalAlunos = presencas.length;
+              const alunosInscritos = (aula.aulas_alunos as any[]) || [];
+              const presentes = alunosInscritos.filter((a: any) => a.presenca);
+              const totalAlunos = alunosInscritos.length;
 
               return (
                 <Card
@@ -258,12 +264,12 @@ export function CheckinsProfessor() {
                       </span>
                     </div>
                     <div className="mt-2 pt-2 border-t text-xs text-muted-foreground">
-                      {presencas.length > 0 ? (
+                      {totalAlunos > 0 ? (
                         <div>
-                          <strong>Presenças:</strong> {presencas.filter((p: any) => p.presente).length}/{presencas.length}
+                          <strong>Presenças:</strong> {presentes.length}/{totalAlunos}
                         </div>
                       ) : (
-                        <div>Nenhuma presença registrada</div>
+                        <div>Nenhum aluno inscrito</div>
                       )}
                     </div>
                   </CardContent>
