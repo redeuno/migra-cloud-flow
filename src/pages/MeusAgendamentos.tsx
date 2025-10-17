@@ -97,7 +97,7 @@ export default function MeusAgendamentos() {
 
   return (
     <Layout>
-      <PerfilAccessGuard allowedRoles={["aluno"]}>
+      <PerfilAccessGuard allowedRoles={["aluno", "professor"]}>
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>

@@ -11,7 +11,7 @@ import { RelatorioRetencao } from "@/components/relatorios/RelatorioRetencao";
 export default function Relatorios() {
   return (
     <Layout>
-      <PerfilAccessGuard allowedRoles={["arena_admin", "funcionario"]}>
+      <PerfilAccessGuard allowedRoles={["arena_admin"]}>
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Relatórios</h1>

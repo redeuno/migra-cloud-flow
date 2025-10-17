@@ -55,18 +55,56 @@ export function ComissoesTable({ professorId }: ComissoesTableProps) {
 
   const marcarPagoMutation = useMutation({
     mutationFn: async (comissaoId: string) => {
-      const { error } = await supabase
+      // Buscar dados da comissão
+      const { data: comissao, error: comissaoError } = await supabase
+        .from("comissoes_professores")
+        .select("*, professores(usuario_id, usuarios(nome_completo))")
+        .eq("id", comissaoId)
+        .single();
+
+      if (comissaoError) throw comissaoError;
+
+      // Buscar categoria de comissões (despesa)
+      const { data: categoria } = await supabase
+        .from("categorias_financeiras")
+        .select("id")
+        .eq("nome", "Comissões")
+        .eq("tipo", "despesa")
+        .maybeSingle();
+
+      // Marcar comissão como paga
+      const { error: updateError } = await supabase
         .from("comissoes_professores")
         .update({
           status: "pago",
           data_pagamento: new Date().toISOString(),
         })
         .eq("id", comissaoId);
-      if (error) throw error;
+
+      if (updateError) throw updateError;
+
+      // Criar movimentação financeira
+      const { error: movError } = await supabase
+        .from("movimentacoes_financeiras")
+        .insert({
+          arena_id: comissao.arena_id,
+          tipo: "despesa",
+          categoria_id: categoria?.id,
+          descricao: `Pagamento de comissão - ${comissao.professores?.usuarios?.nome_completo || "Professor"}`,
+          valor: comissao.valor_comissao,
+          data_movimentacao: new Date().toISOString().split("T")[0],
+          forma_pagamento: "pix",
+          referencia_tipo: "comissao",
+          referencia_id: comissaoId,
+          observacoes: `Referência: ${comissao.referencia}`,
+        });
+
+      if (movError) throw movError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comissoes"] });
-      toast.success("Comissão marcada como paga!");
+      queryClient.invalidateQueries({ queryKey: ["movimentacoes"] });
+      toast.success("Comissão paga e lançada no financeiro!");
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao marcar comissão como paga");
