@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { PerfilAccessGuard } from "@/components/PerfilAccessGuard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +12,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MeusCheckins } from "@/components/checkins/MeusCheckins";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { AgendamentoDialog } from "@/components/agendamentos/AgendamentoDialog";
+import { toast } from "sonner";
+import { Pencil, Trash2, Plus } from "lucide-react";
 
 export default function MeusAgendamentos() {
   const { data: usuario } = useQuery({
@@ -66,17 +71,46 @@ export default function MeusAgendamentos() {
     enabled: !!usuario?.id,
   });
 
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("agendamentos").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meus-agendamentos", usuario?.id] });
+      toast.success("Agendamento cancelado/excluído com sucesso");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Não foi possível excluir este agendamento");
+    },
+  });
+  const handleNew = () => { setEditingId(null); setDialogOpen(true); };
+  const handleEdit = (id: string) => { setEditingId(id); setDialogOpen(true); };
+  const handleDelete = (id: string) => {
+    if (window.confirm("Confirma a exclusão deste agendamento?")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
   return (
     <Layout>
       <PerfilAccessGuard allowedRoles={["aluno"]}>
         <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Meus Agendamentos
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground">
-              Visualize e gerencie seus agendamentos e check-ins
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                Meus Agendamentos
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Visualize e gerencie seus agendamentos e check-ins
+              </p>
+            </div>
+            <Button onClick={handleNew} className="sm:shrink-0">
+              <Plus className="mr-2 h-4 w-4" /> Novo Agendamento
+            </Button>
           </div>
 
           <Tabs defaultValue="agendamentos" className="space-y-4">
@@ -115,7 +149,7 @@ export default function MeusAgendamentos() {
                           </Badge>
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-2 text-sm">
+                      <CardContent className="space-y-4 text-sm">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           <span>
@@ -158,6 +192,24 @@ export default function MeusAgendamentos() {
                             }).format(agendamento.valor_total)}
                           </span>
                         </div>
+                        <div className="flex items-center justify-end gap-2 pt-3 border-t">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(agendamento.id)}
+                            disabled={!(agendamento.status === "pendente" && new Date(agendamento.data_agendamento) >= new Date(new Date().toDateString()))}
+                          >
+                            <Pencil className="mr-1 h-4 w-4" /> Editar
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDelete(agendamento.id)}
+                            disabled={!(agendamento.status === "pendente" && new Date(agendamento.data_agendamento) >= new Date(new Date().toDateString())) || deleteMutation.isPending}
+                          >
+                            <Trash2 className="mr-1 h-4 w-4" /> Excluir
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -175,9 +227,20 @@ export default function MeusAgendamentos() {
             <TabsContent value="checkins" className="space-y-4">
               <MeusCheckins />
             </TabsContent>
-          </Tabs>
-        </div>
-      </PerfilAccessGuard>
-    </Layout>
+            </Tabs>
+
+            <AgendamentoDialog
+              open={dialogOpen}
+              onOpenChange={(open) => {
+                setDialogOpen(open);
+                if (!open) {
+                  queryClient.invalidateQueries({ queryKey: ["meus-agendamentos", usuario?.id] });
+                }
+              }}
+              agendamentoId={editingId ?? undefined}
+            />
+          </div>
+        </PerfilAccessGuard>
+      </Layout>
   );
 }
