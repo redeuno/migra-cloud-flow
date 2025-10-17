@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock, Users, CheckCircle, BookOpen } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CheckinDialog } from "@/components/agendamentos/CheckinDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { RegistrarPresencaDialog } from "@/components/aulas/RegistrarPresencaDialog";
 
 export function CheckinsProfessor() {
-  const [selectedAgendamento, setSelectedAgendamento] = useState<string | null>(null);
-  const [checkinDialogOpen, setCheckinDialogOpen] = useState(false);
+  const [selectedAula, setSelectedAula] = useState<string | null>(null);
+  const [presencaDialogOpen, setPresencaDialogOpen] = useState(false);
 
   const { data: professor } = useQuery({
     queryKey: ["professor-atual"],
@@ -40,14 +40,29 @@ export function CheckinsProfessor() {
     },
   });
 
+  const { data: arenaConfig } = useQuery({
+    queryKey: ["arena-config", professor?.arena_id],
+    queryFn: async () => {
+      if (!professor?.arena_id) return null;
+
+      const { data, error } = await supabase
+        .from("arenas")
+        .select("janela_checkin_minutos_antes, janela_checkin_minutos_depois")
+        .eq("id", professor.arena_id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!professor?.arena_id,
+  });
+
   const { data: aulas, isLoading } = useQuery({
     queryKey: ["minhas-aulas-checkin", professor?.id],
     queryFn: async () => {
       if (!professor?.id) return [];
 
       const hoje = new Date();
-      const trintaDiasAtras = new Date();
-      trintaDiasAtras.setDate(hoje.getDate() - 30);
       const trintaDiasDepois = new Date();
       trintaDiasDepois.setDate(hoje.getDate() + 30);
 
@@ -63,25 +78,14 @@ export function CheckinsProfessor() {
           status,
           realizada,
           presencas,
-          agendamento_id,
           max_alunos,
           quadras (
             nome,
             numero
-          ),
-          agendamentos (
-            id,
-            checkin_realizado,
-            data_checkin,
-            arenas (
-              nome,
-              janela_checkin_minutos_antes,
-              janela_checkin_minutos_depois
-            )
           )
         `)
         .eq("professor_id", professor.id)
-        .gte("data_aula", trintaDiasAtras.toISOString().split("T")[0])
+        .gte("data_aula", new Date().toISOString().split("T")[0])
         .lte("data_aula", trintaDiasDepois.toISOString().split("T")[0])
         .order("data_aula", { ascending: true })
         .order("hora_inicio", { ascending: true });
@@ -92,13 +96,13 @@ export function CheckinsProfessor() {
     enabled: !!professor?.id,
   });
 
-  const handleCheckin = (agendamentoId: string) => {
-    setSelectedAgendamento(agendamentoId);
-    setCheckinDialogOpen(true);
+  const handleIniciarAula = (aulaId: string) => {
+    setSelectedAula(aulaId);
+    setPresencaDialogOpen(true);
   };
 
   const podeCheckin = (aula: any) => {
-    if (!aula.agendamento_id || aula.agendamentos?.checkin_realizado) return false;
+    if (aula.realizada) return false;
 
     const agora = new Date();
     const dataAula = new Date(aula.data_aula);
@@ -106,8 +110,8 @@ export function CheckinsProfessor() {
     const horarioAula = new Date(dataAula);
     horarioAula.setHours(parseInt(horaInicio), parseInt(minInicio), 0);
 
-    const minutosAntes = aula.agendamentos?.arenas?.janela_checkin_minutos_antes || 30;
-    const minutosDepois = aula.agendamentos?.arenas?.janela_checkin_minutos_depois || 15;
+    const minutosAntes = arenaConfig?.janela_checkin_minutos_antes || 30;
+    const minutosDepois = arenaConfig?.janela_checkin_minutos_depois || 15;
 
     const inicioJanela = new Date(horarioAula.getTime() - minutosAntes * 60000);
     const fimJanela = new Date(horarioAula.getTime() + minutosDepois * 60000);
@@ -125,8 +129,8 @@ export function CheckinsProfessor() {
     );
   }
 
-  const aulasComCheckin = aulas?.filter((a) => a.agendamentos?.checkin_realizado) || [];
-  const aulasSemCheckin = aulas?.filter((a) => a.agendamento_id && !a.agendamentos?.checkin_realizado) || [];
+  const aulasRealizadas = aulas?.filter((a) => a.realizada) || [];
+  const aulasPendentes = aulas?.filter((a) => !a.realizada) || [];
 
   return (
     <div className="space-y-6">
@@ -137,7 +141,7 @@ export function CheckinsProfessor() {
         </p>
       </div>
 
-      {aulasSemCheckin.length === 0 && aulasComCheckin.length === 0 && (
+      {aulasPendentes.length === 0 && aulasRealizadas.length === 0 && (
         <Alert>
           <BookOpen className="h-4 w-4" />
           <AlertDescription>
@@ -146,11 +150,11 @@ export function CheckinsProfessor() {
         </Alert>
       )}
 
-      {aulasSemCheckin.length > 0 && (
+      {aulasPendentes.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Pendentes de Check-in</h3>
+          <h3 className="text-lg font-semibold">Aulas Pendentes</h3>
           <div className="grid gap-4 md:grid-cols-2">
-            {aulasSemCheckin.map((aula) => {
+            {aulasPendentes.map((aula) => {
               const presencas = (aula.presencas as any[]) || [];
               const totalAlunos = presencas.length;
 
@@ -193,16 +197,15 @@ export function CheckinsProfessor() {
                       )}
                     </div>
 
-                    {aula.agendamento_id && (
-                      <Button
-                        onClick={() => handleCheckin(aula.agendamento_id)}
-                        disabled={!podeCheckin(aula)}
-                        className="w-full"
-                      >
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Fazer Check-in
-                      </Button>
-                    )}
+                    <Button
+                      onClick={() => handleIniciarAula(aula.id)}
+                      disabled={!podeCheckin(aula)}
+                      className="w-full"
+                      variant={podeCheckin(aula) ? "default" : "secondary"}
+                    >
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Iniciar Aula
+                    </Button>
                   </CardContent>
                 </Card>
               );
@@ -211,11 +214,11 @@ export function CheckinsProfessor() {
         </div>
       )}
 
-      {aulasComCheckin.length > 0 && (
+      {aulasRealizadas.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Check-ins Realizados</h3>
+          <h3 className="text-lg font-semibold">Aulas Realizadas</h3>
           <div className="grid gap-4 md:grid-cols-2">
-            {aulasComCheckin.map((aula) => {
+            {aulasRealizadas.map((aula) => {
               const presencas = (aula.presencas as any[]) || [];
               const totalAlunos = presencas.length;
 
@@ -254,12 +257,15 @@ export function CheckinsProfessor() {
                         {totalAlunos}/{aula.max_alunos} alunos
                       </span>
                     </div>
-                    {aula.agendamentos?.data_checkin && (
-                      <div className="mt-2 pt-2 border-t text-xs text-green-700 dark:text-green-300">
-                        Check-in realizado em{" "}
-                        {format(new Date(aula.agendamentos.data_checkin), "dd/MM 'às' HH:mm")}
-                      </div>
-                    )}
+                    <div className="mt-2 pt-2 border-t text-xs text-muted-foreground">
+                      {presencas.length > 0 ? (
+                        <div>
+                          <strong>Presenças:</strong> {presencas.filter((p: any) => p.presente).length}/{presencas.length}
+                        </div>
+                      ) : (
+                        <div>Nenhuma presença registrada</div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -268,11 +274,11 @@ export function CheckinsProfessor() {
         </div>
       )}
 
-      {selectedAgendamento && (
-        <CheckinDialog
-          open={checkinDialogOpen}
-          onOpenChange={setCheckinDialogOpen}
-          agendamentoId={selectedAgendamento}
+      {selectedAula && (
+        <RegistrarPresencaDialog
+          open={presencaDialogOpen}
+          onOpenChange={setPresencaDialogOpen}
+          aulaId={selectedAula}
         />
       )}
     </div>
