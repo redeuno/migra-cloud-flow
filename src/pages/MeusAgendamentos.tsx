@@ -197,7 +197,10 @@ export default function MeusAgendamentos() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleEdit(agendamento.id)}
-                            disabled={!(agendamento.status === "pendente" && new Date(agendamento.data_agendamento) >= new Date(new Date().toDateString()))}
+                            disabled={
+                              agendamento.status === "cancelado" ||
+                              new Date(agendamento.data_agendamento) < new Date(new Date().toDateString())
+                            }
                           >
                             <Pencil className="mr-1 h-4 w-4" /> Editar
                           </Button>
@@ -205,7 +208,11 @@ export default function MeusAgendamentos() {
                             variant="destructive"
                             size="sm"
                             onClick={() => handleDelete(agendamento.id)}
-                            disabled={!(agendamento.status === "pendente" && new Date(agendamento.data_agendamento) >= new Date(new Date().toDateString())) || deleteMutation.isPending}
+                            disabled={
+                              agendamento.status === "cancelado" ||
+                              new Date(agendamento.data_agendamento) < new Date(new Date().toDateString()) ||
+                              deleteMutation.isPending
+                            }
                           >
                             <Trash2 className="mr-1 h-4 w-4" /> Excluir
                           </Button>
