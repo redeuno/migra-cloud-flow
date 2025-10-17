@@ -25,6 +25,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type TemplateData = {
+  id: string;
+  nome: string;
+  tipo: string;
+  categoria: string | null;
+  assunto: string | null;
+  mensagem: string;
+  ativo: boolean;
+};
+
 type TemplateForm = {
   nome: string;
   tipo: string;
@@ -37,7 +47,7 @@ export function TemplatesWhatsApp() {
   const { arenaId } = useAuth();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<any>(null);
+  const [editingTemplate, setEditingTemplate] = useState<TemplateData | null>(null);
   const [formData, setFormData] = useState<TemplateForm>({
     nome: "",
     tipo: "",
@@ -46,22 +56,30 @@ export function TemplatesWhatsApp() {
     mensagem: "",
   });
 
-  const { data: templates = [], isLoading } = useQuery({
+  const { data: templatesData, isLoading } = useQuery({
     queryKey: ["templates-whatsapp", arenaId],
     queryFn: async () => {
       if (!arenaId) return [];
-      const { data, error } = await supabase
-        .from("templates_notificacao")
-        .select("id, nome, tipo, categoria, assunto, mensagem, ativo")
-        .eq("arena_id", arenaId)
-        .eq("ativo", true)
-        .order("tipo");
+      
+      try {
+        const { data, error } = await supabase
+          .from("templates_notificacao")
+          .select("id, nome, tipo, categoria, assunto, mensagem, ativo")
+          .eq("arena_id", arenaId)
+          .eq("ativo", true)
+          .order("tipo");
 
-      if (error) throw error;
-      return data || [];
+        if (error) throw error;
+        return data as unknown as TemplateData[];
+      } catch (error) {
+        console.error("Erro ao carregar templates:", error);
+        return [];
+      }
     },
     enabled: !!arenaId,
   });
+
+  const templates = templatesData || [];
 
   const saveMutation = useMutation({
     mutationFn: async (data: TemplateForm) => {
@@ -110,7 +128,7 @@ export function TemplatesWhatsApp() {
     saveMutation.mutate(formData);
   };
 
-  const handleEdit = (template: any) => {
+  const handleEdit = (template: TemplateData) => {
     setEditingTemplate(template);
     setFormData({
       nome: template.nome,
@@ -275,7 +293,7 @@ export function TemplatesWhatsApp() {
 
       {isLoading ? (
         <p className="text-center text-muted-foreground">Carregando templates...</p>
-      ) : templates && templates.length > 0 ? (
+      ) : templates.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {templates.map((template) => (
             <Card key={template.id}>
