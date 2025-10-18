@@ -9,9 +9,12 @@ import { ModulosArenaManager } from "@/components/configuracoes/ModulosArenaMana
 import { MinhaAssinatura } from "@/components/configuracoes/MinhaAssinatura";
 import { TemplatesWhatsApp } from "@/components/configuracoes/TemplatesWhatsApp";
 
+import { PerfilAccessGuard } from "@/components/PerfilAccessGuard";
+
 export default function Configuracoes() {
   return (
     <Layout>
+      <PerfilAccessGuard allowedRoles={["super_admin", "arena_admin"]}>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Configurações</h1>
@@ -70,6 +73,7 @@ export default function Configuracoes() {
           </TabsContent>
         </Tabs>
       </div>
+      </PerfilAccessGuard>
     </Layout>
   );
 }
