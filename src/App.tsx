@@ -30,6 +30,7 @@ import SetupArenaAdmin from "./pages/SetupArenaAdmin";
 import AulaPresencas from "./pages/AulaPresencas";
 import ArenaSetup from "./pages/ArenaSetup";
 import Comissoes from "./pages/Comissoes";
+import Professores from "./pages/Professores";
 
 const queryClient = new QueryClient();
 
@@ -170,6 +171,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Comissoes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/professores"
+              element={
+                <ProtectedRoute requiredRole="arena_admin">
+                  <Professores />
                 </ProtectedRoute>
               }
             />

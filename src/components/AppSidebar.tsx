@@ -46,6 +46,7 @@ const arenaNavItems = [
   { title: "Agendamentos", url: "/agendamentos", icon: Calendar, roles: ["arena_admin", "funcionario"] },
   { title: "Meus Agendamentos", url: "/meus-agendamentos", icon: Calendar, roles: ["aluno"] },
   { title: "Pessoas", url: "/clientes", icon: Users, roles: ["arena_admin", "funcionario"] },
+  { title: "Professores", url: "/professores", icon: GraduationCap, roles: ["arena_admin", "funcionario"] },
   { title: "Financeiro", url: "/financeiro", icon: DollarSign, roles: ["arena_admin"] },
   { title: "Dashboard Financeiro", url: "/financeiro-dashboard", icon: BarChart3, roles: ["arena_admin"] },
   { title: "Meu Financeiro", url: "/meu-financeiro", icon: Wallet, roles: ["aluno"] },
