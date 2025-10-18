@@ -1,17 +1,32 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Star, MessageSquare, TrendingUp, TrendingDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Star, MessageSquare, TrendingUp, TrendingDown, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function AvaliacoesProfessoresTable() {
+  const queryClient = useQueryClient();
   const [professorFiltro, setProfessorFiltro] = useState<string>("todos");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [avaliacaoToDelete, setAvaliacaoToDelete] = useState<{ aulaAlunoId: string; alunoNome: string } | null>(null);
 
   // Buscar professores
   const { data: professores } = useQuery({
@@ -81,6 +96,7 @@ export function AvaliacoesProfessoresTable() {
       // Achatar dados para lista de avaliações
       const avaliacoesFlat = data?.flatMap((aula: any) =>
         aula.aulas_alunos.map((inscricao: any) => ({
+          aulaAlunoId: inscricao.id,
           aulaId: aula.id,
           aulaTitulo: aula.titulo,
           aulaData: aula.data_aula,
@@ -98,6 +114,44 @@ export function AvaliacoesProfessoresTable() {
     },
   });
 
+  // Mutation para remover avaliação
+  const deleteAvaliacaoMutation = useMutation({
+    mutationFn: async (aulaAlunoId: string) => {
+      const { error } = await supabase
+        .from("aulas_alunos")
+        .update({ 
+          avaliacao: null, 
+          comentario_avaliacao: null 
+        })
+        .eq("id", aulaAlunoId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["avaliacoes-professores"] });
+      queryClient.invalidateQueries({ queryKey: ["professores-lista"] });
+      toast.success("Avaliação removida com sucesso");
+      setDeleteDialogOpen(false);
+      setAvaliacaoToDelete(null);
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao remover avaliação", {
+        description: error.message,
+      });
+    },
+  });
+
+  const handleDeleteAvaliacao = (aulaAlunoId: string, alunoNome: string) => {
+    setAvaliacaoToDelete({ aulaAlunoId, alunoNome });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (avaliacaoToDelete) {
+      deleteAvaliacaoMutation.mutate(avaliacaoToDelete.aulaAlunoId);
+    }
+  };
+
   // Calcular estatísticas
   const stats = avaliacoes?.reduce(
     (acc, av) => {
@@ -111,7 +165,7 @@ export function AvaliacoesProfessoresTable() {
     { total: 0, soma: 0, positivas: 0, negativas: 0, comComentario: 0 }
   );
 
-  const mediaGeral = stats ? (stats.soma / stats.total).toFixed(1) : "0.0";
+  const mediaGeral = stats && stats.total > 0 ? (stats.soma / stats.total).toFixed(1) : "0.0";
 
   const renderStars = (nota: number) => {
     return (
@@ -239,6 +293,7 @@ export function AvaliacoesProfessoresTable() {
                 <TableHead className="text-center">Avaliação</TableHead>
                 <TableHead>Comentário</TableHead>
                 <TableHead>Data</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -284,11 +339,21 @@ export function AvaliacoesProfessoresTable() {
                         {format(new Date(av.dataAvaliacao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                       </div>
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteAvaliacao(av.aulaAlunoId, av.alunoNome)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Nenhuma avaliação encontrada
                   </TableCell>
                 </TableRow>
@@ -297,6 +362,27 @@ export function AvaliacoesProfessoresTable() {
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover avaliação</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover a avaliação de <strong>{avaliacaoToDelete?.alunoNome}</strong>? 
+              Esta ação não pode ser desfeita e afetará a média do professor.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Clock, User, CheckCircle2, XCircle } from "lucide-react";
+import { Calendar, Clock, User, CheckCircle2, XCircle, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,11 +13,20 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { AvaliarAulaDialog } from "@/components/aulas/AvaliarAulaDialog";
 
 export default function MinhasAulas() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [checkinLoading, setCheckinLoading] = useState<string | null>(null);
+  const [avaliarDialogOpen, setAvaliarDialogOpen] = useState(false);
+  const [aulaParaAvaliar, setAulaParaAvaliar] = useState<{
+    inscricaoId: string;
+    aulaTitulo: string;
+    professorNome: string;
+    avaliacaoAtual?: number | null;
+    comentarioAtual?: string | null;
+  } | null>(null);
 
   // Buscar ID do usuário
   const { data: usuario } = useQuery({
@@ -128,6 +137,20 @@ export default function MinhasAulas() {
     }
   };
 
+  const handleAvaliar = (inscricao: any) => {
+    const aula = inscricao.aulas;
+    const professorNome = aula?.professores?.usuarios?.nome_completo || "Professor";
+    
+    setAulaParaAvaliar({
+      inscricaoId: inscricao.id,
+      aulaTitulo: aula?.titulo || "Aula",
+      professorNome,
+      avaliacaoAtual: inscricao.avaliacao,
+      comentarioAtual: inscricao.comentario_avaliacao,
+    });
+    setAvaliarDialogOpen(true);
+  };
+
   const renderAulaCard = (inscricao: any, showPresenca: boolean = false) => {
     const aula = inscricao?.aulas;
     if (!aula) return null;
@@ -143,6 +166,10 @@ export default function MinhasAulas() {
     horarioAula.setHours(parseInt(horaInicio), parseInt(minInicio), 0);
     const horarioCheckin = new Date(horarioAula.getTime() - 30 * 60000); // 30 min antes
     const podeCheckin = !showPresenca && agora >= horarioCheckin && agora <= horarioAula && !inscricao.presenca;
+    
+    // Verificar se pode avaliar (aula realizada e presente)
+    const podeAvaliar = showPresenca && aula.realizada && inscricao.presenca;
+    const jaAvaliou = inscricao.avaliacao !== null;
 
     return (
       <Card key={inscricao.id} className="hover:bg-accent/50 transition-colors">
@@ -220,6 +247,24 @@ export default function MinhasAulas() {
               >
                 {checkinLoading === inscricao.id ? "Fazendo check-in..." : "Fazer Check-in"}
               </Button>
+            )}
+            
+            {podeAvaliar && (
+              <Button
+                variant={jaAvaliou ? "outline" : "default"}
+                className="w-full"
+                onClick={() => handleAvaliar(inscricao)}
+              >
+                <Star className={`mr-2 h-4 w-4 ${jaAvaliou ? "fill-yellow-400 text-yellow-400" : ""}`} />
+                {jaAvaliou ? "Editar Avaliação" : "Avaliar Aula"}
+              </Button>
+            )}
+            
+            {jaAvaliou && (
+              <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <span>Você avaliou com {inscricao.avaliacao} estrelas</span>
+              </div>
             )}
           </div>
         </CardContent>
@@ -321,6 +366,18 @@ export default function MinhasAulas() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {aulaParaAvaliar && (
+        <AvaliarAulaDialog
+          open={avaliarDialogOpen}
+          onOpenChange={setAvaliarDialogOpen}
+          inscricaoId={aulaParaAvaliar.inscricaoId}
+          aulaTitulo={aulaParaAvaliar.aulaTitulo}
+          professorNome={aulaParaAvaliar.professorNome}
+          avaliacaoAtual={aulaParaAvaliar.avaliacaoAtual}
+          comentarioAtual={aulaParaAvaliar.comentarioAtual}
+        />
+      )}
     </Layout>
   );
 }
