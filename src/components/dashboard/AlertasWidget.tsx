@@ -20,7 +20,46 @@ export function AlertasWidget({ arenaId }: AlertasWidgetProps) {
     queryKey: ["alertas-widget", arenaId],
     queryFn: async () => {
       const hoje = new Date().toISOString().split("T")[0];
+      const amanha = new Date();
+      amanha.setDate(amanha.getDate() + 1);
+      const amanhaStr = amanha.toISOString().split("T")[0];
       const alerts = [];
+
+      // Agendamentos hoje
+      const { data: agendamentosHoje } = await supabase
+        .from("agendamentos")
+        .select("id")
+        .eq("arena_id", arenaId)
+        .eq("data_agendamento", hoje)
+        .in("status", ["confirmado", "pendente"]);
+
+      if (agendamentosHoje && agendamentosHoje.length > 0) {
+        alerts.push({
+          tipo: "agendamentos_hoje",
+          icon: Calendar,
+          cor: "text-primary",
+          mensagem: `${agendamentosHoje.length} agendamento${agendamentosHoje.length > 1 ? 's' : ''} hoje`,
+          acao: () => navigate("/agendamentos"),
+        });
+      }
+
+      // Agendamentos amanhã
+      const { data: agendamentosAmanha } = await supabase
+        .from("agendamentos")
+        .select("id")
+        .eq("arena_id", arenaId)
+        .eq("data_agendamento", amanhaStr)
+        .in("status", ["confirmado", "pendente"]);
+
+      if (agendamentosAmanha && agendamentosAmanha.length > 0) {
+        alerts.push({
+          tipo: "agendamentos_amanha",
+          icon: Calendar,
+          cor: "text-blue-500",
+          mensagem: `${agendamentosAmanha.length} agendamento${agendamentosAmanha.length > 1 ? 's' : ''} amanhã`,
+          acao: () => navigate("/agendamentos"),
+        });
+      }
 
       // Pagamentos vencidos
       const { data: mensalidadesVencidas } = await supabase
@@ -48,45 +87,34 @@ export function AlertasWidget({ arenaId }: AlertasWidgetProps) {
         });
       }
 
-      // Agendamentos cancelados hoje
-      const { data: agendamentosCancelados } = await supabase
-        .from("agendamentos")
-        .select("id")
-        .eq("arena_id", arenaId)
-        .eq("data_agendamento", hoje)
-        .eq("status", "cancelado");
-
-      if (agendamentosCancelados && agendamentosCancelados.length > 0) {
-        alerts.push({
-          tipo: "agendamento_cancelado",
-          icon: AlertTriangle,
-          cor: "text-orange-500",
-          mensagem: `${agendamentosCancelados.length} agendamento${agendamentosCancelados.length > 1 ? 's' : ''} cancelado${agendamentosCancelados.length > 1 ? 's' : ''} hoje`,
-          acao: () => navigate("/agendamentos"),
-        });
-      }
-
-      // Torneios próximos (próximos 7 dias)
-      const seteDiasFrente = new Date();
-      seteDiasFrente.setDate(seteDiasFrente.getDate() + 7);
+      // Pagamentos próximos (próximos 3 dias)
+      const tresDiasFrente = new Date();
+      tresDiasFrente.setDate(tresDiasFrente.getDate() + 3);
       
-      const { data: torneiosProximos } = await supabase
-        .from("torneios")
-        .select("id, nome, data_inicio")
-        .eq("arena_id", arenaId)
-        .gte("data_inicio", hoje)
-        .lte("data_inicio", seteDiasFrente.toISOString().split("T")[0]);
+      const { data: mensalidadesProximas } = await supabase
+        .from("mensalidades")
+        .select("id")
+        .eq("status_pagamento", "pendente")
+        .gte("data_vencimento", hoje)
+        .lte("data_vencimento", tresDiasFrente.toISOString().split("T")[0])
+        .limit(1000);
 
-      if (torneiosProximos && torneiosProximos.length > 0) {
-        torneiosProximos.forEach((torneio) => {
-          const diasAte = differenceInDays(new Date(torneio.data_inicio), new Date());
-          alerts.push({
-            tipo: "torneio_proximo",
-            icon: Calendar,
-            cor: "text-blue-500",
-            mensagem: `Torneio "${torneio.nome}" em ${diasAte} dia${diasAte > 1 ? 's' : ''}`,
-            acao: () => navigate("/torneios"),
-          });
+      const mensalidadesProximasArena = mensalidadesProximas?.filter(async (m: any) => {
+        const { data: contrato } = await supabase
+          .from("contratos")
+          .select("arena_id")
+          .eq("id", m.contrato_id)
+          .single();
+        return contrato?.arena_id === arenaId;
+      });
+
+      if (mensalidadesProximasArena && mensalidadesProximasArena.length > 0) {
+        alerts.push({
+          tipo: "pagamento_proximo",
+          icon: DollarSign,
+          cor: "text-orange-500",
+          mensagem: `${mensalidadesProximasArena.length} pagamento${mensalidadesProximasArena.length > 1 ? 's' : ''} vence${mensalidadesProximasArena.length > 1 ? 'm' : ''} em 3 dias`,
+          acao: () => navigate("/financeiro?tab=mensalidades"),
         });
       }
 
@@ -107,10 +135,10 @@ export function AlertasWidget({ arenaId }: AlertasWidgetProps) {
         });
       }
 
-      return alerts.slice(0, 5); // Máximo 5 alertas
+      return alerts.slice(0, 5);
     },
     enabled: !!arenaId,
-    refetchInterval: 60000, // Recarregar a cada 1 minuto
+    refetchInterval: 60000,
   });
 
   if (isLoading) {

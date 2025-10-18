@@ -16,9 +16,18 @@ export function OcupacaoQuadrasWidget({ arenaId }: OcupacaoQuadrasWidgetProps) {
   const { data: ocupacao, isLoading } = useQuery({
     queryKey: ["ocupacao-semanal", arenaId],
     queryFn: async () => {
-      const inicioSemana = startOfWeek(new Date(), { weekStartsOn: 1 }); // Segunda-feira
-      const fimSemana = endOfWeek(new Date(), { weekStartsOn: 1 }); // Domingo
+      const inicioSemana = startOfWeek(new Date(), { weekStartsOn: 1 });
+      const fimSemana = endOfWeek(new Date(), { weekStartsOn: 1 });
       const diasSemana = eachDayOfInterval({ start: inicioSemana, end: fimSemana });
+
+      // Buscar quantidade de quadras ativas
+      const { data: quadrasData } = await supabase
+        .from("quadras")
+        .select("id")
+        .eq("arena_id", arenaId)
+        .eq("status", "ativa");
+
+      const totalQuadras = quadrasData?.length || 1;
 
       // Buscar agendamentos da semana
       const { data: agendamentos, error } = await supabase
@@ -27,7 +36,7 @@ export function OcupacaoQuadrasWidget({ arenaId }: OcupacaoQuadrasWidgetProps) {
         .eq("arena_id", arenaId)
         .gte("data_agendamento", format(inicioSemana, "yyyy-MM-dd"))
         .lte("data_agendamento", format(fimSemana, "yyyy-MM-dd"))
-        .neq("status", "cancelado");
+        .in("status", ["confirmado", "pendente"]);
 
       if (error) throw error;
 
@@ -42,23 +51,23 @@ export function OcupacaoQuadrasWidget({ arenaId }: OcupacaoQuadrasWidgetProps) {
 
       // Calcular ocupação por dia
       const ocupacaoPorDia = diasSemana.map((dia) => {
-        const diaSemana = format(dia, "eeee", { locale: ptBR });
-        const diaFormatado = format(dia, "EEE", { locale: ptBR });
+        const diaSemana = format(dia, "EEEE", { locale: ptBR }).toLowerCase();
+        const diaFormatado = format(dia, "EEEEEE", { locale: ptBR });
         
         // Horário de funcionamento do dia
-        const configDia = horarioFuncionamento?.[diaSemana.toLowerCase()];
+        const configDia = horarioFuncionamento?.[diaSemana];
         if (!configDia || !configDia.aberto) {
           return {
             dia: diaFormatado,
             ocupacao: 0,
             agendamentos: 0,
-            horasDisponiveis: 0,
           };
         }
 
         const [horaInicio, minInicio] = configDia.abertura.split(":").map(Number);
         const [horaFim, minFim] = configDia.fechamento.split(":").map(Number);
-        const horasDisponiveis = (horaFim * 60 + minFim - horaInicio * 60 - minInicio) / 60;
+        const horasDisponiveisPorQuadra = (horaFim * 60 + minFim - horaInicio * 60 - minInicio) / 60;
+        const horasDisponiveisTotal = horasDisponiveisPorQuadra * totalQuadras;
 
         // Contar agendamentos do dia
         const agendamentosDia = (agendamentos || []).filter((ag: any) =>
@@ -73,21 +82,21 @@ export function OcupacaoQuadrasWidget({ arenaId }: OcupacaoQuadrasWidgetProps) {
           return total + duracao;
         }, 0);
 
-        const ocupacaoPercent = horasDisponiveis > 0 
-          ? Math.round((horasOcupadas / horasDisponiveis) * 100)
+        const ocupacaoPercent = horasDisponiveisTotal > 0 
+          ? Math.round((horasOcupadas / horasDisponiveisTotal) * 100)
           : 0;
 
         return {
           dia: diaFormatado,
           ocupacao: Math.min(ocupacaoPercent, 100),
           agendamentos: agendamentosDia.length,
-          horasDisponiveis,
         };
       });
 
       return ocupacaoPorDia;
     },
     enabled: !!arenaId,
+    refetchInterval: 60000, // Atualizar a cada minuto
   });
 
   if (isLoading) {
