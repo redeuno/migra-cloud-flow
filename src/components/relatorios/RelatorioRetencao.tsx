@@ -27,7 +27,7 @@ export function RelatorioRetencao() {
           data_fim,
           data_cancelamento,
           usuario_id,
-          usuarios (
+          usuarios!contratos_usuario_id_fkey (
             nome_completo
           )
         `)
@@ -93,20 +93,42 @@ export function RelatorioRetencao() {
         : 0;
 
       // Clientes em risco (sem agendamento nos últimos 30 dias)
-      const { data: clientesRisco } = await supabase
+      // Buscar usuários que têm agendamentos antigos
+      const { data: todosUsuarios } = await supabase
         .from("usuarios")
         .select(`
           id,
           nome_completo,
-          created_at,
-          agendamentos!inner (
-            id,
-            data_agendamento
-          )
+          created_at
         `)
         .eq("arena_id", userRoles.arena_id)
-        .lt("agendamentos.data_agendamento", trintaDiasAtras.toISOString().split("T")[0])
-        .limit(10);
+        .in("id", Array.from(frequenciaPorCliente.keys()));
+
+      // Buscar último agendamento de cada usuário
+      const clientesComUltimoAgendamento = await Promise.all(
+        (todosUsuarios || []).map(async (usuario) => {
+          const { data: ultimoAgendamento } = await supabase
+            .from("agendamentos")
+            .select("data_agendamento")
+            .eq("cliente_id", usuario.id)
+            .order("data_agendamento", { ascending: false })
+            .limit(1)
+            .single();
+
+          return {
+            ...usuario,
+            agendamentos: ultimoAgendamento ? [ultimoAgendamento] : []
+          };
+        })
+      );
+
+      // Filtrar apenas clientes com último agendamento há mais de 30 dias
+      const clientesRisco = clientesComUltimoAgendamento
+        .filter((cliente) => {
+          if (!cliente.agendamentos[0]) return false;
+          return new Date(cliente.agendamentos[0].data_agendamento) < trintaDiasAtras;
+        })
+        .slice(0, 10);
 
       return {
         contratosAtivos: contratosAtivos.length,

@@ -51,12 +51,23 @@ export function OcupacaoQuadrasWidget({ arenaId }: OcupacaoQuadrasWidgetProps) {
 
       // Calcular ocupação por dia
       const ocupacaoPorDia = diasSemana.map((dia) => {
-        const diaSemana = format(dia, "EEEE", { locale: ptBR }).toLowerCase();
+        // Mapear dias da semana para o formato usado no banco
+        const diasMap: Record<string, string> = {
+          'segunda-feira': 'segunda',
+          'terça-feira': 'terca',
+          'quarta-feira': 'quarta',
+          'quinta-feira': 'quinta',
+          'sexta-feira': 'sexta',
+          'sábado': 'sabado',
+          'domingo': 'domingo'
+        };
+        const diaSemanaCompleto = format(dia, "EEEE", { locale: ptBR }).toLowerCase();
+        const diaSemana = diasMap[diaSemanaCompleto] || diaSemanaCompleto;
         const diaFormatado = format(dia, "EEEEEE", { locale: ptBR });
         
         // Horário de funcionamento do dia
         const configDia = horarioFuncionamento?.[diaSemana];
-        if (!configDia || !configDia.aberto) {
+        if (!configDia || !configDia.inicio || !configDia.fim) {
           return {
             dia: diaFormatado,
             ocupacao: 0,
@@ -64,8 +75,8 @@ export function OcupacaoQuadrasWidget({ arenaId }: OcupacaoQuadrasWidgetProps) {
           };
         }
 
-        const [horaInicio, minInicio] = configDia.abertura.split(":").map(Number);
-        const [horaFim, minFim] = configDia.fechamento.split(":").map(Number);
+        const [horaInicio, minInicio] = configDia.inicio.split(":").map(Number);
+        const [horaFim, minFim] = configDia.fim.split(":").map(Number);
         const horasDisponiveisPorQuadra = (horaFim * 60 + minFim - horaInicio * 60 - minInicio) / 60;
         const horasDisponiveisTotal = horasDisponiveisPorQuadra * totalQuadras;
 
