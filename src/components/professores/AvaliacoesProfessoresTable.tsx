@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,6 +29,10 @@ export function AvaliacoesProfessoresTable() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [avaliacaoToDelete, setAvaliacaoToDelete] = useState<{ aulaAlunoId: string; alunoNome: string } | null>(null);
 
+  // Roles e permissões
+  const { hasRole } = useAuth();
+  const isProfessor = hasRole("professor") && !hasRole("arena_admin") && !hasRole("super_admin");
+  const canDelete = hasRole("arena_admin") || hasRole("super_admin") || hasRole("funcionario");
   // Buscar professores
   const { data: professores } = useQuery({
     queryKey: ["professores-lista"],
@@ -51,68 +56,92 @@ export function AvaliacoesProfessoresTable() {
     },
   });
 
-  // Buscar avaliações detalhadas
-  const { data: avaliacoes, isLoading } = useQuery({
-    queryKey: ["avaliacoes-professores", professorFiltro],
-    queryFn: async () => {
-      const { data: userRoles } = await supabase
-        .from("user_roles")
-        .select("arena_id")
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id || "")
-        .single();
+// Se professor, buscar seu próprio professor_id
+const { data: meuProfessor } = useQuery({
+  queryKey: ["meu-professor-id"],
+  queryFn: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data: usuario } = await supabase
+      .from("usuarios")
+      .select("id")
+      .eq("auth_id", user.id)
+      .single();
+    if (!usuario?.id) return null;
+    const { data: prof } = await supabase
+      .from("professores")
+      .select("id")
+      .eq("usuario_id", usuario.id)
+      .single();
+    return prof;
+  },
+  enabled: isProfessor,
+});
 
-      if (!userRoles?.arena_id) return [];
+// Buscar avaliações detalhadas
+const { data: avaliacoes, isLoading } = useQuery({
+  queryKey: ["avaliacoes-professores", isProfessor ? meuProfessor?.id ?? "aguardando" : professorFiltro],
+  enabled: !isProfessor || !!meuProfessor?.id,
+  queryFn: async () => {
+    const { data: userRoles } = await supabase
+      .from("user_roles")
+      .select("arena_id")
+      .eq("user_id", (await supabase.auth.getUser()).data.user?.id || "")
+      .single();
 
-      // Buscar aulas com avaliações
-      let query = supabase
-        .from("aulas")
-        .select(`
+    if (!userRoles?.arena_id) return [];
+
+    // Buscar aulas com avaliações
+    let query = supabase
+      .from("aulas")
+      .select(`
+        id,
+        titulo,
+        data_aula,
+        professores!aulas_professor_id_fkey(
           id,
-          titulo,
-          data_aula,
-          professores!aulas_professor_id_fkey(
-            id,
-            usuarios(nome_completo)
-          ),
-          aulas_alunos!inner(
-            id,
-            avaliacao,
-            comentario_avaliacao,
-            created_at,
-            usuarios(nome_completo, email)
-          )
-        `)
-        .eq("arena_id", userRoles.arena_id)
-        .not("aulas_alunos.avaliacao", "is", null)
-        .order("data_aula", { ascending: false });
+          usuarios(nome_completo)
+        ),
+        aulas_alunos!inner(
+          id,
+          avaliacao,
+          comentario_avaliacao,
+          created_at,
+          usuarios(nome_completo, email)
+        )
+      `)
+      .eq("arena_id", userRoles.arena_id)
+      .not("aulas_alunos.avaliacao", "is", null)
+      .order("data_aula", { ascending: false });
 
-      if (professorFiltro !== "todos") {
-        query = query.eq("professor_id", professorFiltro);
-      }
+    const filtroId = isProfessor ? meuProfessor?.id : (professorFiltro !== "todos" ? professorFiltro : null);
+    if (filtroId) {
+      query = query.eq("professor_id", filtroId);
+    }
 
-      const { data, error } = await query;
-      if (error) throw error;
+    const { data, error } = await query;
+    if (error) throw error;
 
-      // Achatar dados para lista de avaliações
-      const avaliacoesFlat = data?.flatMap((aula: any) =>
-        aula.aulas_alunos.map((inscricao: any) => ({
-          aulaAlunoId: inscricao.id,
-          aulaId: aula.id,
-          aulaTitulo: aula.titulo,
-          aulaData: aula.data_aula,
-          professorNome: aula.professores?.usuarios?.nome_completo || "N/A",
-          professorId: aula.professores?.id,
-          avaliacao: inscricao.avaliacao,
-          comentario: inscricao.comentario_avaliacao,
-          alunoNome: inscricao.usuarios?.nome_completo || "N/A",
-          alunoEmail: inscricao.usuarios?.email || "",
-          dataAvaliacao: inscricao.created_at,
-        }))
-      );
+    // Achatar dados para lista de avaliações
+    const avaliacoesFlat = data?.flatMap((aula: any) =>
+      aula.aulas_alunos.map((inscricao: any) => ({
+        aulaAlunoId: inscricao.id,
+        aulaId: aula.id,
+        aulaTitulo: aula.titulo,
+        aulaData: aula.data_aula,
+        professorNome: aula.professores?.usuarios?.nome_completo || "N/A",
+        professorId: aula.professores?.id,
+        avaliacao: inscricao.avaliacao,
+        comentario: inscricao.comentario_avaliacao,
+        alunoNome: inscricao.usuarios?.nome_completo || "N/A",
+        alunoEmail: inscricao.usuarios?.email || "",
+        dataAvaliacao: inscricao.created_at,
+      }))
+    );
 
-      return avaliacoesFlat || [];
-    },
-  });
+    return avaliacoesFlat || [];
+  },
+});
 
   // Mutation para remover avaliação
   const deleteAvaliacaoMutation = useMutation({
@@ -252,28 +281,30 @@ export function AvaliacoesProfessoresTable() {
         </Card>
       </div>
 
-      {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtrar Avaliações</CardTitle>
-          <CardDescription>Selecione um professor para ver suas avaliações</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select value={professorFiltro} onValueChange={setProfessorFiltro}>
-            <SelectTrigger className="w-full md:w-[300px]">
-              <SelectValue placeholder="Selecione um professor" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os Professores</SelectItem>
-              {professores?.map((prof: any) => (
-                <SelectItem key={prof.id} value={prof.id}>
-                  {prof.usuarios?.nome_completo} ({prof.total_avaliacoes || 0} avaliações)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+{/* Filtros - oculto para professor */}
+{!isProfessor && (
+  <Card>
+    <CardHeader>
+      <CardTitle>Filtrar Avaliações</CardTitle>
+      <CardDescription>Selecione um professor para ver suas avaliações</CardDescription>
+    </CardHeader>
+    <CardContent>
+      <Select value={professorFiltro} onValueChange={setProfessorFiltro}>
+        <SelectTrigger className="w-full md:w-[300px]">
+          <SelectValue placeholder="Selecione um professor" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="todos">Todos os Professores</SelectItem>
+          {professores?.map((prof: any) => (
+            <SelectItem key={prof.id} value={prof.id}>
+              {prof.usuarios?.nome_completo} ({prof.total_avaliacoes || 0} avaliações)
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </CardContent>
+  </Card>
+)}
 
       {/* Tabela de Avaliações */}
       <Card>
@@ -340,14 +371,16 @@ export function AvaliacoesProfessoresTable() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteAvaliacao(av.aulaAlunoId, av.alunoNome)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+{canDelete && (
+  <Button
+    variant="ghost"
+    size="sm"
+    onClick={() => handleDeleteAvaliacao(av.aulaAlunoId, av.alunoNome)}
+    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+  >
+    <Trash2 className="h-4 w-4" />
+  </Button>
+)}
                     </TableCell>
                   </TableRow>
                 ))
