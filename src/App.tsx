@@ -30,6 +30,9 @@ import SetupArenaAdmin from "./pages/SetupArenaAdmin";
 import AulaPresencas from "./pages/AulaPresencas";
 import ArenaSetup from "./pages/ArenaSetup";
 import Comissoes from "./pages/Comissoes";
+import MeusAlunos from "./pages/MeusAlunos";
+import QuadrasDisponiveis from "./pages/QuadrasDisponiveis";
+import AulasDisponiveis from "./pages/AulasDisponiveis";
 import Professores from "./pages/Professores";
 
 const queryClient = new QueryClient();
@@ -169,8 +172,32 @@ const App = () => (
             <Route
               path="/comissoes"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="professor">
                   <Comissoes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/meus-alunos"
+              element={
+                <ProtectedRoute requiredRole="professor">
+                  <MeusAlunos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/quadras-disponiveis"
+              element={
+                <ProtectedRoute requiredRole="aluno">
+                  <QuadrasDisponiveis />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/aulas-disponiveis"
+              element={
+                <ProtectedRoute requiredRole="aluno">
+                  <AulasDisponiveis />
                 </ProtectedRoute>
               }
             />

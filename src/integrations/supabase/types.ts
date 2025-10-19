@@ -1457,6 +1457,64 @@ export type Database = {
         }
         Relationships: []
       }
+      professor_alunos: {
+        Row: {
+          aluno_id: string
+          arena_id: string
+          ativo: boolean | null
+          created_at: string | null
+          data_vinculo: string | null
+          id: string
+          observacoes: string | null
+          professor_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          aluno_id: string
+          arena_id: string
+          ativo?: boolean | null
+          created_at?: string | null
+          data_vinculo?: string | null
+          id?: string
+          observacoes?: string | null
+          professor_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          aluno_id?: string
+          arena_id?: string
+          ativo?: boolean | null
+          created_at?: string | null
+          data_vinculo?: string | null
+          id?: string
+          observacoes?: string | null
+          professor_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professor_alunos_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professor_alunos_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professor_alunos_professor_id_fkey"
+            columns: ["professor_id"]
+            isOneToOne: false
+            referencedRelation: "professores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professores: {
         Row: {
           arena_id: string
