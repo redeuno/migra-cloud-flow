@@ -10,24 +10,29 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, MapPin } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
-export function ConfiguracoesGerais() {
-  const { arenaId } = useAuth();
+interface ConfiguracoesGeraisProps {
+  arenaId?: string;
+}
+
+export function ConfiguracoesGerais({ arenaId: propArenaId }: ConfiguracoesGeraisProps) {
+  const { arenaId: contextArenaId } = useAuth();
+  const effectiveArenaId = propArenaId || contextArenaId;
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: arena, isLoading } = useQuery({
-    queryKey: ["arena-config", arenaId],
+    queryKey: ["arena-config", effectiveArenaId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("arenas")
         .select("*")
-        .eq("id", arenaId)
+        .eq("id", effectiveArenaId!)
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!arenaId,
+    enabled: !!effectiveArenaId,
   });
 
   const updateMutation = useMutation({
@@ -35,12 +40,12 @@ export function ConfiguracoesGerais() {
       const { error } = await supabase
         .from("arenas")
         .update(formData)
-        .eq("id", arenaId);
+        .eq("id", effectiveArenaId!);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["arena-config", arenaId] });
+      queryClient.invalidateQueries({ queryKey: ["arena-config", effectiveArenaId] });
       toast({
         title: "Configurações atualizadas",
         description: "As informações da arena foram salvas com sucesso.",

@@ -11,24 +11,29 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, CreditCard, Smartphone } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
-export function ConfiguracoesPagamentos() {
-  const { arenaId } = useAuth();
+interface ConfiguracoesPagamentosProps {
+  arenaId?: string;
+}
+
+export function ConfiguracoesPagamentos({ arenaId: propArenaId }: ConfiguracoesPagamentosProps) {
+  const { arenaId: contextArenaId } = useAuth();
+  const effectiveArenaId = propArenaId || contextArenaId;
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: config, isLoading } = useQuery({
-    queryKey: ["arena-config-pagamentos", arenaId],
+    queryKey: ["arena-config-pagamentos", effectiveArenaId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("arenas")
         .select("configuracoes")
-        .eq("id", arenaId)
+        .eq("id", effectiveArenaId!)
         .single();
 
       if (error) throw error;
       return data?.configuracoes || {};
     },
-    enabled: !!arenaId,
+    enabled: !!effectiveArenaId,
   });
 
   const updateMutation = useMutation({
@@ -36,12 +41,12 @@ export function ConfiguracoesPagamentos() {
       const { error } = await supabase
         .from("arenas")
         .update({ configuracoes })
-        .eq("id", arenaId);
+        .eq("id", effectiveArenaId!);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["arena-config-pagamentos", arenaId] });
+      queryClient.invalidateQueries({ queryKey: ["arena-config-pagamentos", effectiveArenaId] });
       toast({
         title: "Configurações atualizadas",
         description: "As configurações de pagamento foram salvas com sucesso.",

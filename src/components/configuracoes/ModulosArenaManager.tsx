@@ -7,23 +7,28 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Lock, Square, icons as lucideIcons } from "lucide-react";
 
-export function ModulosArenaManager() {
-  const { arenaId } = useAuth();
+interface ModulosArenaManagerProps {
+  arenaId?: string;
+}
+
+export function ModulosArenaManager({ arenaId: propArenaId }: ModulosArenaManagerProps) {
+  const { arenaId: contextArenaId } = useAuth();
+  const effectiveArenaId = propArenaId || contextArenaId;
   const queryClient = useQueryClient();
 
   // Buscar plano atual da arena
   const { data: arena, isLoading: loadingArena } = useQuery({
-    queryKey: ["arena-plano", arenaId],
+    queryKey: ["arena-plano", effectiveArenaId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("arenas")
         .select("*, planos_sistema(*)")
-        .eq("id", arenaId!)
+        .eq("id", effectiveArenaId!)
         .single();
       if (error) throw error;
       return data;
     },
-    enabled: !!arenaId,
+    enabled: !!effectiveArenaId,
   });
 
   // Buscar todos os módulos do sistema
@@ -42,16 +47,16 @@ export function ModulosArenaManager() {
 
   // Buscar módulos ativos da arena
   const { data: modulosAtivos, isLoading: loadingAtivos } = useQuery({
-    queryKey: ["arena-modulos", arenaId],
+    queryKey: ["arena-modulos", effectiveArenaId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("arena_modulos")
         .select("modulo_id, ativo")
-        .eq("arena_id", arenaId!);
+        .eq("arena_id", effectiveArenaId!);
       if (error) throw error;
       return data;
     },
-    enabled: !!arenaId,
+    enabled: !!effectiveArenaId,
   });
 
   // Mutation para ativar/desativar módulo
@@ -60,13 +65,13 @@ export function ModulosArenaManager() {
       const { error } = await supabase
         .from("arena_modulos")
         .update({ ativo })
-        .eq("arena_id", arenaId!)
+        .eq("arena_id", effectiveArenaId!)
         .eq("modulo_id", moduloId);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["arena-modulos", arenaId] });
-      queryClient.invalidateQueries({ queryKey: ["arena-modulos-ativos", arenaId] });
+      queryClient.invalidateQueries({ queryKey: ["arena-modulos", effectiveArenaId] });
+      queryClient.invalidateQueries({ queryKey: ["arena-modulos-ativos", effectiveArenaId] });
       toast.success("Módulo atualizado!");
     },
     onError: (error: any) => {

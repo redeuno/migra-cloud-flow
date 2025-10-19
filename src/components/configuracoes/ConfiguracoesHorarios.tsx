@@ -20,24 +20,29 @@ const DIAS_SEMANA = [
   { key: "domingo", label: "Domingo" },
 ];
 
-export function ConfiguracoesHorarios() {
-  const { arenaId } = useAuth();
+interface ConfiguracoesHorariosProps {
+  arenaId?: string;
+}
+
+export function ConfiguracoesHorarios({ arenaId: propArenaId }: ConfiguracoesHorariosProps) {
+  const { arenaId: contextArenaId } = useAuth();
+  const effectiveArenaId = propArenaId || contextArenaId;
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: arena, isLoading } = useQuery({
-    queryKey: ["arena-horarios", arenaId],
+    queryKey: ["arena-horarios", effectiveArenaId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("arenas")
         .select("horario_funcionamento")
-        .eq("id", arenaId)
+        .eq("id", effectiveArenaId!)
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!arenaId,
+    enabled: !!effectiveArenaId,
   });
 
   const updateMutation = useMutation({
@@ -45,12 +50,12 @@ export function ConfiguracoesHorarios() {
       const { error } = await supabase
         .from("arenas")
         .update({ horario_funcionamento: horarios })
-        .eq("id", arenaId);
+        .eq("id", effectiveArenaId!);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["arena-horarios", arenaId] });
+      queryClient.invalidateQueries({ queryKey: ["arena-horarios", effectiveArenaId] });
       toast({
         title: "Horários atualizados",
         description: "Os horários de funcionamento foram salvos com sucesso.",

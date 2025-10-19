@@ -11,25 +11,30 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, TestTube } from "lucide-react";
 
-export function ConfiguracoesEvolution() {
-  const { arenaId } = useAuth();
+interface ConfiguracoesEvolutionProps {
+  arenaId?: string;
+}
+
+export function ConfiguracoesEvolution({ arenaId: propArenaId }: ConfiguracoesEvolutionProps) {
+  const { arenaId: contextArenaId } = useAuth();
+  const effectiveArenaId = propArenaId || contextArenaId;
   const queryClient = useQueryClient();
   const [testando, setTestando] = useState(false);
 
   // Buscar configurações existentes
   const { data: config, isLoading } = useQuery({
-    queryKey: ["config-arena", arenaId],
+    queryKey: ["config-arena", effectiveArenaId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("configuracoes_arena")
         .select("*")
-        .eq("arena_id", arenaId)
+        .eq("arena_id", effectiveArenaId!)
         .maybeSingle();
       
       if (error && error.code !== "PGRST116") throw error;
       return data;
     },
-    enabled: !!arenaId,
+    enabled: !!effectiveArenaId,
   });
 
   const [formData, setFormData] = useState({
@@ -76,12 +81,12 @@ export function ConfiguracoesEvolution() {
         // Insert
         const { error } = await supabase
           .from("configuracoes_arena")
-          .insert({ ...formData, arena_id: arenaId });
+          .insert({ ...formData, arena_id: effectiveArenaId! });
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["config-arena", arenaId] });
+      queryClient.invalidateQueries({ queryKey: ["config-arena", effectiveArenaId] });
       toast.success("Configurações salvas com sucesso!");
     },
     onError: (error: any) => {

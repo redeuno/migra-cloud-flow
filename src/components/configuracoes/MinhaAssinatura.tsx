@@ -12,13 +12,18 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
-export function MinhaAssinatura() {
-  const { arenaId } = useAuth();
+interface MinhaAssinaturaProps {
+  arenaId?: string;
+}
+
+export function MinhaAssinatura({ arenaId: propArenaId }: MinhaAssinaturaProps) {
+  const { arenaId: contextArenaId } = useAuth();
+  const effectiveArenaId = propArenaId || contextArenaId;
 
   const { data: assinatura, isLoading: loadingAssinatura } = useQuery({
-    queryKey: ["minha-assinatura", arenaId],
+    queryKey: ["minha-assinatura", effectiveArenaId],
     queryFn: async () => {
-      if (!arenaId) return null;
+      if (!effectiveArenaId) return null;
 
       const { data, error } = await supabase
         .from("assinaturas_arena")
@@ -30,48 +35,48 @@ export function MinhaAssinatura() {
             modulos_inclusos
           )
         `)
-        .eq("arena_id", arenaId)
+        .eq("arena_id", effectiveArenaId)
         .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!arenaId,
+    enabled: !!effectiveArenaId,
   });
 
   const { data: faturas, isLoading: loadingFaturas } = useQuery({
-    queryKey: ["faturas-assinatura", arenaId],
+    queryKey: ["faturas-assinatura", effectiveArenaId],
     queryFn: async () => {
-      if (!arenaId) return [];
+      if (!effectiveArenaId) return [];
 
       const { data, error } = await supabase
         .from("faturas_sistema")
         .select("*")
-        .eq("arena_id", arenaId)
+        .eq("arena_id", effectiveArenaId)
         .order("data_vencimento", { ascending: false })
         .limit(10);
 
       if (error) throw error;
       return data || [];
     },
-    enabled: !!arenaId && !!assinatura,
+    enabled: !!effectiveArenaId && !!assinatura,
   });
 
   const { data: arena } = useQuery({
-    queryKey: ["arena-info", arenaId],
+    queryKey: ["arena-info", effectiveArenaId],
     queryFn: async () => {
-      if (!arenaId) return null;
+      if (!effectiveArenaId) return null;
 
       const { data, error } = await supabase
         .from("arenas")
         .select("nome, status, data_vencimento")
-        .eq("id", arenaId)
+        .eq("id", effectiveArenaId)
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!arenaId,
+    enabled: !!effectiveArenaId,
   });
 
   const getStatusBadge = (status: string) => {
@@ -102,7 +107,7 @@ export function MinhaAssinatura() {
     return { label: "Pendente", variant: "outline" as const, icon: Calendar, color: "text-muted-foreground" };
   };
 
-  if (!arenaId) {
+  if (!effectiveArenaId) {
     return (
       <EmptyState
         icon={AlertCircle}

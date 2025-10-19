@@ -37,6 +37,7 @@ const superAdminItems = [
   { title: "Setup Arenas", url: "/arena-setup", icon: Settings, roles: ["super_admin"] },
   { title: "Financeiro", url: "/financeiro", icon: DollarSign, roles: ["super_admin"] },
   { title: "Config. Sistema", url: "/configuracoes-sistema", icon: Settings, roles: ["super_admin"] },
+  { title: "Config. Arenas", url: "/configuracoes-arena", icon: Building2, roles: ["super_admin"] },
 ];
 
 // Menu para Arena Admin e Staff (visão da arena)

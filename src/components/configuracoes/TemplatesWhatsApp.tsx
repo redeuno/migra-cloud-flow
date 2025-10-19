@@ -25,8 +25,13 @@ import {
 } from "@/components/ui/select";
 import { TemplateService, TemplateData, TemplateForm } from "@/lib/services/templateService";
 
-export function TemplatesWhatsApp() {
-  const { arenaId } = useAuth();
+interface TemplatesWhatsAppProps {
+  arenaId?: string;
+}
+
+export function TemplatesWhatsApp({ arenaId: propArenaId }: TemplatesWhatsAppProps) {
+  const { arenaId: contextArenaId } = useAuth();
+  const effectiveArenaId = propArenaId || contextArenaId;
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<TemplateData | null>(null);
@@ -39,14 +44,14 @@ export function TemplatesWhatsApp() {
   });
 
   const { data: templates = [], isLoading } = useQuery({
-    queryKey: ["templates-whatsapp", arenaId],
-    queryFn: () => TemplateService.fetchTemplates(arenaId),
-    enabled: !!arenaId,
+    queryKey: ["templates-whatsapp", effectiveArenaId],
+    queryFn: () => TemplateService.fetchTemplates(effectiveArenaId),
+    enabled: !!effectiveArenaId,
   });
 
   const saveMutation = useMutation({
     mutationFn: async (data: TemplateForm) => {
-      await TemplateService.saveTemplate(data, arenaId!, editingTemplate?.id);
+      await TemplateService.saveTemplate(data, effectiveArenaId!, editingTemplate?.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates-whatsapp"] });

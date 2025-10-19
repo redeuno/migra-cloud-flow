@@ -34,6 +34,7 @@ import MeusAlunos from "./pages/MeusAlunos";
 import QuadrasDisponiveis from "./pages/QuadrasDisponiveis";
 import AulasDisponiveis from "./pages/AulasDisponiveis";
 import Professores from "./pages/Professores";
+import ConfiguracoesArena from "./pages/ConfiguracoesArena";
 
 const queryClient = new QueryClient();
 
@@ -150,6 +151,22 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="super_admin">
                   <ConfiguracoesSistema />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/configuracoes-arena"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <ConfiguracoesArena />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/configuracoes-arena/:id"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <ConfiguracoesArena />
                 </ProtectedRoute>
               }
             />

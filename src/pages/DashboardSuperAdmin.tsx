@@ -17,11 +17,13 @@ import { useExportData } from "@/hooks/useExportData";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { ArenaSelector } from "@/components/financeiro/ArenaSelector";
 
 export default function DashboardSuperAdmin() {
   const navigate = useNavigate();
   const { exportToCSV } = useExportData();
   const [periodo, setPeriodo] = useState<"7d" | "30d" | "90d" | "1y">("30d");
+  const [selectedArenaFilter, setSelectedArenaFilter] = useState<string>("all");
 
   // Atalhos de teclado
   useKeyboardShortcuts({
@@ -37,67 +39,76 @@ export default function DashboardSuperAdmin() {
 
   // Query para estatísticas globais
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["super-admin-stats"],
+    queryKey: ["super-admin-stats", selectedArenaFilter],
     queryFn: async () => {
-      // Total de arenas (dados reais em vez de HEAD)
-      const { data: arenasAll, error: arenasAllErr } = await supabase
-        .from("arenas")
-        .select("id");
+      // Filtro de arena
+      const arenaFilter = selectedArenaFilter !== "all" ? selectedArenaFilter : null;
+
+      // Total de arenas
+      let arenasQuery = supabase.from("arenas").select("id");
+      if (arenaFilter) arenasQuery = arenasQuery.eq("id", arenaFilter);
+      const { data: arenasAll, error: arenasAllErr } = await arenasQuery;
       if (arenasAllErr) throw arenasAllErr;
       const totalArenas = arenasAll?.length || 0;
 
-      const { data: arenasAtivasData, error: arenasAtivasErr } = await supabase
-        .from("arenas")
-        .select("id")
-        .eq("status", "ativo");
+      // Arenas ativas
+      let arenasAtivasQuery = supabase.from("arenas").select("id").eq("status", "ativo");
+      if (arenaFilter) arenasAtivasQuery = arenasAtivasQuery.eq("id", arenaFilter);
+      const { data: arenasAtivasData, error: arenasAtivasErr } = await arenasAtivasQuery;
       if (arenasAtivasErr) throw arenasAtivasErr;
       const arenasAtivas = arenasAtivasData?.length || 0;
 
-      const { data: arenasSuspensasData, error: arenasSuspensasErr } = await supabase
-        .from("arenas")
-        .select("id")
-        .eq("status", "suspenso");
+      // Arenas suspensas
+      let arenasSuspensasQuery = supabase.from("arenas").select("id").eq("status", "suspenso");
+      if (arenaFilter) arenasSuspensasQuery = arenasSuspensasQuery.eq("id", arenaFilter);
+      const { data: arenasSuspensasData, error: arenasSuspensasErr } = await arenasSuspensasQuery;
       if (arenasSuspensasErr) throw arenasSuspensasErr;
       const arenasSuspensas = arenasSuspensasData?.length || 0;
 
       // Total de usuários
-      const { data: usuariosAll, error: usuariosErr } = await supabase
-        .from("usuarios")
-        .select("id");
+      let usuariosQuery = supabase.from("usuarios").select("id");
+      if (arenaFilter) usuariosQuery = usuariosQuery.eq("arena_id", arenaFilter);
+      const { data: usuariosAll, error: usuariosErr } = await usuariosQuery;
       if (usuariosErr) throw usuariosErr;
       const totalUsuarios = usuariosAll?.length || 0;
 
       // Total de agendamentos (últimos 30 dias)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const { data: agds, error: agdsErr } = await supabase
+      let agdsQuery = supabase
         .from("agendamentos")
         .select("id")
         .gte("data_agendamento", thirtyDaysAgo.toISOString().split("T")[0]);
+      if (arenaFilter) agdsQuery = agdsQuery.eq("arena_id", arenaFilter);
+      const { data: agds, error: agdsErr } = await agdsQuery;
       if (agdsErr) throw agdsErr;
       const totalAgendamentos = agds?.length || 0;
 
-      // Total de quadras ativas e em manutenção
-      const { data: quadrasData } = await supabase
+      // Total de quadras
+      let quadrasQuery = supabase
         .from("quadras")
         .select("id, status")
         .in("status", ["ativa", "manutencao"]);
-      
+      if (arenaFilter) quadrasQuery = quadrasQuery.eq("arena_id", arenaFilter);
+      const { data: quadrasData } = await quadrasQuery;
       const totalQuadras = quadrasData?.length || 0;
 
-      // Receita recorrente mensal (assinaturas ativas)
-      const { data: assinaturasAtivas } = await supabase
+      // Receita recorrente mensal
+      let assinaturasQuery = supabase
         .from("assinaturas_arena")
         .select("valor_mensal")
         .eq("status", "ativo");
-
+      if (arenaFilter) assinaturasQuery = assinaturasQuery.eq("arena_id", arenaFilter);
+      const { data: assinaturasAtivas } = await assinaturasQuery;
       const receitaRecorrente = assinaturasAtivas?.reduce((sum, a) => sum + Number(a.valor_mensal), 0) || 0;
 
       // Faturas pendentes
-      const { count: faturasPendentes } = await supabase
+      let faturasQuery = supabase
         .from("faturas_sistema")
         .select("*", { count: "exact", head: true })
         .eq("status_pagamento", "pendente");
+      if (arenaFilter) faturasQuery = faturasQuery.eq("arena_id", arenaFilter);
+      const { count: faturasPendentes } = await faturasQuery;
 
       return [
         {
@@ -305,6 +316,10 @@ export default function DashboardSuperAdmin() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <ArenaSelector 
+              value={selectedArenaFilter} 
+              onChange={setSelectedArenaFilter}
+            />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="outline" size="icon" onClick={() => {
