@@ -46,11 +46,29 @@ CREATE TYPE app_role AS ENUM (
 - ✅ Gerenciar planos e módulos do sistema
 - ✅ Visualizar faturas do sistema
 - ✅ Acesso a todas as funcionalidades administrativas
+- ✅ Configurar Evolution API e Asaas de qualquer arena
+- ✅ Dashboard com filtros por arena específica ou visão consolidada
+
+**Configurações Hierárquicas**:
+- `/configuracoes-sistema` - Gerencia PLANOS, MÓDULOS, CATEGORIAS (nível global)
+- `/configuracoes-arena` - Acessa configurações de QUALQUER arena específica:
+  - Evolution API
+  - Pagamentos (Asaas)
+  - Templates WhatsApp
+  - Horários
+  - Módulos ativos
+  - Dados gerais da arena
+
+**Dashboard com Filtros**:
+- Filtro por arena específica ou visão consolidada
+- Métricas dinâmicas por arena
+- Drill-down granular
 
 **Páginas Acessíveis**:
-- `/` - Dashboard
+- `/` - Dashboard consolidado
 - `/arenas` - Gestão de arenas (exclusivo)
-- `/configuracoes` - Configurações
+- `/configuracoes-sistema` - Configurações do sistema (exclusivo)
+- `/configuracoes-arena` - Configurações de qualquer arena (exclusivo)
 - Todas as demais páginas
 
 ---
@@ -144,6 +162,98 @@ CREATE TYPE app_role AS ENUM (
 **Páginas Acessíveis**:
 - `/meu-financeiro` - Portal financeiro pessoal
 - `/agendamentos` - Visualizar seus agendamentos
+
+---
+
+## 🏗️ Hierarquia de Configurações
+
+O sistema implementa uma separação clara entre configurações globais (sistema) e configurações específicas de arena:
+
+### Nível SISTEMA (Super Admin Only)
+
+**Rota**: `/configuracoes-sistema`
+
+**Gerencia**:
+- ✅ Planos do Sistema (valores, recursos)
+- ✅ Módulos do Sistema (disponibilidade global)
+- ✅ Categorias Financeiras (templates)
+- ✅ Templates de Notificações (padrões)
+
+**Descrição**: Configurações que afetam o funcionamento global do SaaS. Apenas o Super Admin tem acesso a essas configurações, pois elas impactam todas as arenas do sistema.
+
+---
+
+### Nível ARENA (Super Admin para qualquer arena / Arena Admin para sua arena)
+
+**Rotas**: 
+- `/configuracoes-arena` (super admin com selector de arena)
+- `/configuracoes-arena/:id` (super admin via URL direta)
+- `/configuracoes` (arena admin - apenas sua própria arena)
+
+**Gerencia**:
+- ✅ Dados Gerais (nome, CNPJ, endereço)
+- ✅ Assinatura e Plano
+- ✅ Módulos Ativos/Inativos
+- ✅ Evolution API (WhatsApp)
+- ✅ Asaas (pagamentos)
+- ✅ Templates customizados
+- ✅ Horários de funcionamento
+
+**Descrição**: Configurações específicas de cada arena. Super Admin pode acessar configurações de qualquer arena através do seletor. Arena Admin só pode acessar configurações da sua própria arena.
+
+---
+
+### Diagrama de Fluxo
+
+```
+SUPER ADMIN
+    ├── /configuracoes-sistema (Nível Global)
+    │   ├── Planos do Sistema
+    │   ├── Módulos do Sistema
+    │   ├── Categorias Financeiras
+    │   └── Templates de Notificações
+    │
+    └── /configuracoes-arena (Qualquer Arena)
+        ├── <ArenaSelector> → escolhe arena
+        └── Configurações da Arena Selecionada
+            ├── Geral
+            ├── Assinatura
+            ├── Módulos Ativos
+            ├── Evolution API
+            ├── Pagamentos (Asaas)
+            ├── Templates
+            └── Horários
+
+ARENA ADMIN
+    └── /configuracoes (Apenas Sua Arena)
+        ├── Geral
+        ├── Assinatura
+        ├── Módulos Ativos
+        ├── Evolution API
+        ├── Pagamentos (Asaas)
+        ├── Templates
+        └── Horários
+```
+
+---
+
+### Componente Compartilhado
+
+As configurações de arena utilizam o componente `ArenaConfigTabs` que centraliza toda a lógica de configuração, evitando duplicação de código:
+
+```typescript
+// src/components/configuracoes/ArenaConfigTabs.tsx
+<ArenaConfigTabs 
+  arenaId={id}              // ID da arena (opcional)
+  showArenaSelector={true}  // Mostrar seletor de arena (super admin)
+/>
+```
+
+**Benefícios**:
+- 📦 DRY: Um único componente para duas páginas
+- 🎨 Consistência visual padronizada
+- 🔧 Manutenção centralizada
+- 🧪 Testes simplificados
 
 ---
 
@@ -375,13 +485,27 @@ SELECT has_role(
 | Inscrever em aulas | ✅ | ✅ | ✅ | ❌ | ✅ |
 | Gerenciar torneios | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Inscrever em torneios | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Configurações | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Config. Sistema | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Config. Arenas (qualquer) | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Config. Arena (própria) | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Evolution API config | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Asaas config | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Dashboard com filtros | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 \* Com restrições (apenas seus próprios dados)
 
 ---
 
 ## 🔄 Histórico de Mudanças
+
+### v2.0.0 (19/10/2025)
+- ✅ Configurações hierárquicas (Sistema → Arena)
+- ✅ Dashboard Super Admin com filtro por arena
+- ✅ Super Admin pode acessar Evolution API e Asaas de qualquer arena
+- ✅ RLS policies atualizadas para super admin
+- ✅ Separação clara entre `/configuracoes-sistema` e `/configuracoes-arena`
+- ✅ Componente compartilhado `ArenaConfigTabs` para padronização
+- ✅ ArenaSelector para super admin escolher arena específica
 
 ### v1.0.0 (06/10/2025)
 - ✅ Unificação completa do sistema de roles
