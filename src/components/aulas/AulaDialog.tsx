@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 const aulaSchema = z.object({
   professor_id: z.string().min(1, "Selecione um professor"),
@@ -35,6 +36,7 @@ const aulaSchema = z.object({
   nivel: z.string().optional(),
   objetivos: z.string().optional(),
   material_necessario: z.string().optional(),
+  alunos_selecionados: z.array(z.string()).optional(),
 });
 
 type AulaFormData = z.infer<typeof aulaSchema>;
@@ -46,7 +48,7 @@ interface AulaDialogProps {
 }
 
 export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
-  const { arenaId } = useAuth();
+  const { arenaId, hasRole } = useAuth();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -58,8 +60,11 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
       max_alunos: 8,
       duracao_minutos: 60,
       valor_por_aluno: 50,
+      alunos_selecionados: [],
     },
   });
+
+  const professorSelecionado = form.watch("professor_id");
 
   // Buscar professores
   const { data: professores } = useQuery({
@@ -91,6 +96,33 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
     enabled: !!arenaId,
   });
 
+  // Buscar alunos vinculados ao professor selecionado
+  const { data: alunosVinculados } = useQuery({
+    queryKey: ["alunos-professor", professorSelecionado],
+    queryFn: async () => {
+      if (!professorSelecionado) return [];
+      
+      const { data, error } = await supabase
+        .from("professor_alunos")
+        .select(`
+          aluno_id,
+          usuarios!professor_alunos_aluno_id_fkey (
+            id,
+            nome_completo
+          )
+        `)
+        .eq("professor_id", professorSelecionado)
+        .eq("ativo", true);
+      
+      if (error) throw error;
+      return data?.map(item => ({
+        id: item.usuarios?.id || "",
+        nome_completo: item.usuarios?.nome_completo || ""
+      })) || [];
+    },
+    enabled: !!professorSelecionado,
+  });
+
   // Buscar aula existente
   const { data: aula } = useQuery({
     queryKey: ["aula", aulaId],
@@ -106,9 +138,26 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
     enabled: !!aulaId && open,
   });
 
+  // Buscar alunos já inscritos na aula (quando editar)
+  const { data: alunosInscritos } = useQuery({
+    queryKey: ["aula-alunos", aulaId],
+    queryFn: async () => {
+      if (!aulaId) return [];
+      
+      const { data, error } = await supabase
+        .from("aulas_alunos")
+        .select("usuario_id")
+        .eq("aula_id", aulaId);
+      
+      if (error) throw error;
+      return data?.map(item => item.usuario_id) || [];
+    },
+    enabled: !!aulaId && open,
+  });
+
   // Preencher form com dados existentes
   useEffect(() => {
-    if (aula) {
+    if (aula && alunosInscritos) {
       form.reset({
         professor_id: aula.professor_id,
         quadra_id: aula.quadra_id || "none",
@@ -125,9 +174,10 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
         nivel: aula.nivel || "",
         objetivos: aula.objetivos || "",
         material_necessario: aula.material_necessario || "",
+        alunos_selecionados: alunosInscritos,
       });
     }
-  }, [aula, form]);
+  }, [aula, alunosInscritos, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: AulaFormData) => {
@@ -155,7 +205,7 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
         objetivos: data.objetivos,
         material_necessario: data.material_necessario,
         status: "agendada",
-      }]).select();
+      }]).select().single();
 
       if (error) {
         console.error("❌ ERRO ao criar aula:", error);
@@ -163,6 +213,27 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
       }
       
       console.log("✅ Aula criada com sucesso:", result);
+
+      // Inserir alunos vinculados
+      if (data.alunos_selecionados && data.alunos_selecionados.length > 0) {
+        const alunosInserts = data.alunos_selecionados.map(alunoId => ({
+          aula_id: result.id,
+          usuario_id: alunoId,
+          valor_pago: data.valor_por_aluno,
+          status_pagamento: "pendente" as const,
+        }));
+
+        const { error: alunosError } = await supabase
+          .from("aulas_alunos")
+          .insert(alunosInserts);
+
+        if (alunosError) {
+          console.error("❌ ERRO ao vincular alunos:", alunosError);
+          throw alunosError;
+        }
+        
+        console.log("✅ Alunos vinculados com sucesso");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["aulas"] });
@@ -213,6 +284,36 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
       }
       
       console.log("✅ Aula atualizada com sucesso");
+
+      // Atualizar alunos vinculados
+      if (data.alunos_selecionados) {
+        // Remover vínculos existentes
+        await supabase
+          .from("aulas_alunos")
+          .delete()
+          .eq("aula_id", aulaId);
+
+        // Inserir novos vínculos
+        if (data.alunos_selecionados.length > 0) {
+          const alunosInserts = data.alunos_selecionados.map(alunoId => ({
+            aula_id: aulaId!,
+            usuario_id: alunoId,
+            valor_pago: data.valor_por_aluno,
+            status_pagamento: "pendente" as const,
+          }));
+
+          const { error: alunosError } = await supabase
+            .from("aulas_alunos")
+            .insert(alunosInserts);
+
+          if (alunosError) {
+            console.error("❌ ERRO ao atualizar alunos:", alunosError);
+            throw alunosError;
+          }
+          
+          console.log("✅ Alunos atualizados com sucesso");
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["aulas"] });
@@ -495,6 +596,34 @@ export function AulaDialog({ open, onOpenChange, aulaId }: AulaDialogProps) {
                 </FormItem>
               )}
             />
+
+            {/* Campo de seleção de alunos - só aparece se professor selecionado */}
+            {professorSelecionado && (hasRole("professor") || hasRole("arena_admin") || hasRole("super_admin")) && (
+              <FormField
+                control={form.control}
+                name="alunos_selecionados"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Alunos Vinculados (Opcional)</FormLabel>
+                    <FormControl>
+                      <MultiSelect
+                        options={
+                          alunosVinculados?.map((aluno) => ({
+                            label: aluno.nome_completo,
+                            value: aluno.id,
+                          })) || []
+                        }
+                        selected={field.value || []}
+                        onChange={field.onChange}
+                        placeholder="Selecione os alunos..."
+                        emptyText="Nenhum aluno vinculado a este professor"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
