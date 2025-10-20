@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Clock, User, CheckCircle2, XCircle, Star } from "lucide-react";
+import { Calendar, Clock, User, CheckCircle2, XCircle, Star, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +14,16 @@ import { ptBR } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { AvaliarAulaDialog } from "@/components/aulas/AvaliarAulaDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function MinhasAulas() {
   const { user } = useAuth();
@@ -27,6 +37,8 @@ export default function MinhasAulas() {
     avaliacaoAtual?: number | null;
     comentarioAtual?: string | null;
   } | null>(null);
+  const [cancelarDialogOpen, setCancelarDialogOpen] = useState(false);
+  const [inscricaoToCancelar, setInscricaoToCancelar] = useState<string>();
 
   // Buscar ID do usuário
   const { data: usuario } = useQuery({
@@ -151,6 +163,38 @@ export default function MinhasAulas() {
     setAvaliarDialogOpen(true);
   };
 
+  const cancelarMutation = useMutation({
+    mutationFn: async (inscricaoId: string) => {
+      const { error } = await supabase
+        .from("aulas_alunos")
+        .delete()
+        .eq("id", inscricaoId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["minhas-aulas-proximas"] });
+      toast.success("Inscrição cancelada com sucesso");
+      setCancelarDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao cancelar inscrição", {
+        description: error.message,
+      });
+    },
+  });
+
+  const handleCancelar = (inscricaoId: string) => {
+    setInscricaoToCancelar(inscricaoId);
+    setCancelarDialogOpen(true);
+  };
+
+  const confirmCancelar = () => {
+    if (inscricaoToCancelar) {
+      cancelarMutation.mutate(inscricaoToCancelar);
+    }
+  };
+
   const renderAulaCard = (inscricao: any, showPresenca: boolean = false) => {
     const aula = inscricao?.aulas;
     if (!aula) return null;
@@ -166,6 +210,9 @@ export default function MinhasAulas() {
     horarioAula.setHours(parseInt(horaInicio), parseInt(minInicio), 0);
     const horarioCheckin = new Date(horarioAula.getTime() - 30 * 60000); // 30 min antes
     const podeCheckin = !showPresenca && agora >= horarioCheckin && agora <= horarioAula && !inscricao.presenca;
+    
+    // Verificar se pode cancelar (até 24h antes)
+    const podeCancelar = !showPresenca && (dataAula.getTime() - agora.getTime()) > 24 * 60 * 60 * 1000;
     
     // Verificar se pode avaliar (aula realizada e presente)
     const podeAvaliar = showPresenca && aula.realizada && inscricao.presenca;
@@ -239,15 +286,28 @@ export default function MinhasAulas() {
               </div>
             )}
             
-            {podeCheckin && (
-              <Button
-                className="w-full"
-                onClick={() => handleCheckin(inscricao.id)}
-                disabled={checkinLoading === inscricao.id}
-              >
-                {checkinLoading === inscricao.id ? "Fazendo check-in..." : "Fazer Check-in"}
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {podeCheckin && (
+                <Button
+                  className="flex-1"
+                  onClick={() => handleCheckin(inscricao.id)}
+                  disabled={checkinLoading === inscricao.id}
+                >
+                  {checkinLoading === inscricao.id ? "Fazendo check-in..." : "Fazer Check-in"}
+                </Button>
+              )}
+              
+              {podeCancelar && (
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => handleCancelar(inscricao.id)}
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Cancelar
+                </Button>
+              )}
+            </div>
             
             {podeAvaliar && (
               <Button
@@ -378,6 +438,24 @@ export default function MinhasAulas() {
           comentarioAtual={aulaParaAvaliar.comentarioAtual}
         />
       )}
+
+      <AlertDialog open={cancelarDialogOpen} onOpenChange={setCancelarDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Inscrição</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar sua inscrição nesta aula? 
+              Esta ação não pode ser desfeita e você precisará se inscrever novamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancelar}>
+              Confirmar Cancelamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 }

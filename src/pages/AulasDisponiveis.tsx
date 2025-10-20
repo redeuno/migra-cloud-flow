@@ -92,10 +92,10 @@ export default function AulasDisponiveis() {
       if (!usuarioData?.id) throw new Error("Usuário não encontrado");
       if (!arenaId) throw new Error("Arena não identificada");
 
-      // Buscar valor da aula
+      // Buscar informações da aula
       const { data: aula, error: aulaError } = await supabase
         .from("aulas")
-        .select("valor_por_aluno, max_alunos, aulas_alunos(id)")
+        .select("valor_por_aluno, max_alunos, data_aula, hora_inicio, hora_fim, aulas_alunos(id)")
         .eq("id", aulaId)
         .single();
 
@@ -105,6 +105,39 @@ export default function AulasDisponiveis() {
       const inscritos = aula.aulas_alunos?.length || 0;
       if (inscritos >= aula.max_alunos) {
         throw new Error("Não há mais vagas disponíveis para esta aula");
+      }
+
+      // Verificar conflitos de horário - buscar outras aulas do aluno no mesmo dia
+      const { data: aulasExistentes, error: conflictError } = await supabase
+        .from("aulas_alunos")
+        .select(`
+          aulas(data_aula, hora_inicio, hora_fim, titulo)
+        `)
+        .eq("usuario_id", usuarioData.id);
+
+      if (conflictError) throw conflictError;
+
+      // Validar conflito de horário
+      const aulaDataHoraInicio = new Date(`${aula.data_aula}T${aula.hora_inicio}`);
+      const aulaDataHoraFim = new Date(`${aula.data_aula}T${aula.hora_fim}`);
+
+      for (const inscricao of aulasExistentes || []) {
+        const aulaExist = inscricao.aulas;
+        if (aulaExist?.data_aula === aula.data_aula) {
+          const existInicio = new Date(`${aulaExist.data_aula}T${aulaExist.hora_inicio}`);
+          const existFim = new Date(`${aulaExist.data_aula}T${aulaExist.hora_fim}`);
+
+          // Verificar sobreposição de horários
+          if (
+            (aulaDataHoraInicio >= existInicio && aulaDataHoraInicio < existFim) ||
+            (aulaDataHoraFim > existInicio && aulaDataHoraFim <= existFim) ||
+            (aulaDataHoraInicio <= existInicio && aulaDataHoraFim >= existFim)
+          ) {
+            throw new Error(
+              `Conflito de horário com a aula "${aulaExist.titulo}" no mesmo dia (${aulaExist.hora_inicio.slice(0, 5)} - ${aulaExist.hora_fim.slice(0, 5)})`
+            );
+          }
+        }
       }
 
       // Inserir inscrição

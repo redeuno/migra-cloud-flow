@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, Users } from "lucide-react";
+import { Plus, Edit, Trash2, Users, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GerenciarInscricoesDialog } from "@/components/aulas/GerenciarInscricoesDialog";
 
 export default function MinhasAulasProfessor() {
   const { user } = useAuth();
@@ -32,6 +33,11 @@ export default function MinhasAulasProfessor() {
   const [selectedAulaId, setSelectedAulaId] = useState<string>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [aulaToDelete, setAulaToDelete] = useState<string>();
+  const [inscricoesDialogOpen, setInscricoesDialogOpen] = useState(false);
+  const [aulaParaGerenciar, setAulaParaGerenciar] = useState<{
+    id: string;
+    titulo: string;
+  } | null>(null);
 
   // Buscar ID do professor
   const { data: professor } = useQuery({
@@ -68,6 +74,7 @@ export default function MinhasAulasProfessor() {
         .select(`
           *,
           quadras(nome, numero),
+          aulas_alunos(id),
           agendamentos!aulas_agendamento_id_fkey(
             id,
             status,
@@ -121,6 +128,14 @@ export default function MinhasAulasProfessor() {
     if (aulaToDelete) {
       deleteMutation.mutate(aulaToDelete);
     }
+  };
+
+  const handleGerenciarInscricoes = (aula: any) => {
+    setAulaParaGerenciar({
+      id: aula.id,
+      titulo: aula.titulo,
+    });
+    setInscricoesDialogOpen(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -180,7 +195,7 @@ export default function MinhasAulasProfessor() {
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
                 {aulasProximas.map((aula) => {
-                  const inscritos = (aula.presencas as any[])?.length || 0;
+                  const inscritos = (aula.aulas_alunos as any[])?.length || 0;
                   const podeEditar = aula.data_aula >= hoje && 
                                     aula.status !== "cancelada" && 
                                     aula.status !== "realizada";
@@ -246,7 +261,14 @@ export default function MinhasAulasProfessor() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="flex-1"
+                            onClick={() => handleGerenciarInscricoes(aula)}
+                          >
+                            <UserCircle className="mr-2 h-4 w-4" />
+                            Alunos
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleEdit(aula.id)}
                             disabled={!podeEditar}
                           >
@@ -256,7 +278,6 @@ export default function MinhasAulasProfessor() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="flex-1"
                             onClick={() => handleDelete(aula.id)}
                             disabled={!podeEditar}
                           >
@@ -292,7 +313,7 @@ export default function MinhasAulasProfessor() {
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
                 {aulasPassadas.map((aula) => {
-                  const inscritos = (aula.presencas as any[])?.length || 0;
+                  const inscritos = (aula.aulas_alunos as any[])?.length || 0;
 
                   return (
                     <Card key={aula.id} className="opacity-75">
@@ -353,6 +374,15 @@ export default function MinhasAulasProfessor() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {aulaParaGerenciar && (
+        <GerenciarInscricoesDialog
+          open={inscricoesDialogOpen}
+          onOpenChange={setInscricoesDialogOpen}
+          aulaId={aulaParaGerenciar.id}
+          aulaTitulo={aulaParaGerenciar.titulo}
+        />
+      )}
     </Layout>
   );
 }
