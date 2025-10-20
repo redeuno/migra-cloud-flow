@@ -19,13 +19,34 @@ interface ArenaConfigTabsProps {
 }
 
 export function ArenaConfigTabs({ arenaId: propArenaId, showArenaSelector = false }: ArenaConfigTabsProps) {
-  const { arenaId: contextArenaId } = useAuth();
+  const { arenaId: contextArenaId, hasRole } = useAuth();
   const [selectedArena, setSelectedArena] = useState<string>(propArenaId || "");
-  const effectiveArenaId = selectedArena || propArenaId || contextArenaId;
+  const isSuperAdmin = hasRole("super_admin");
+  
+  // Super Admin COM showArenaSelector: usa selectedArena OU propArenaId
+  // Arena Admin SEM showArenaSelector: usa APENAS contextArenaId
+  const effectiveArenaId = isSuperAdmin && showArenaSelector 
+    ? (selectedArena || propArenaId) 
+    : contextArenaId;
+  
+  // Validação de segurança: Arena Admin não pode acessar outras arenas
+  if (!isSuperAdmin && propArenaId && propArenaId !== contextArenaId) {
+    return (
+      <Alert>
+        <Settings className="h-4 w-4" />
+        <AlertDescription>
+          Você não tem permissão para acessar as configurações desta arena.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
+  // Forçar showArenaSelector = false se não for super admin
+  const effectiveShowSelector = showArenaSelector && isSuperAdmin;
 
   return (
     <div className="space-y-6">
-      {showArenaSelector && (
+      {effectiveShowSelector && (
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Selecione uma Arena</h2>
@@ -37,7 +58,7 @@ export function ArenaConfigTabs({ arenaId: propArenaId, showArenaSelector = fals
         </div>
       )}
 
-      {!effectiveArenaId && showArenaSelector && (
+      {!effectiveArenaId && effectiveShowSelector && (
         <Alert>
           <Settings className="h-4 w-4" />
           <AlertDescription>

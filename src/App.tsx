@@ -138,6 +138,12 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            {/* ============================================================ */}
+            {/* CONFIGURAÇÕES - 3 ROTAS DISTINTAS */}
+            {/* ============================================================ */}
+            {/* 1. /configuracoes-sistema (Super Admin) - Planos, Módulos globais, Categorias */}
+            {/* 2. /configuracoes-arena (Super Admin) - Config específica de cada arena (com selector) */}
+            {/* 3. /configuracoes (Arena Admin) - Config da própria arena (sem selector) */}
             <Route
               path="/configuracoes"
               element={

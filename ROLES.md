@@ -181,14 +181,17 @@ O sistema implementa uma separação clara entre configurações globais (sistem
 
 **Descrição**: Configurações que afetam o funcionamento global do SaaS. Apenas o Super Admin tem acesso a essas configurações, pois elas impactam todas as arenas do sistema.
 
+**Proteção de Rota**: `<ProtectedRoute requiredRole="super_admin">`
+
 ---
 
 ### Nível ARENA (Super Admin para qualquer arena / Arena Admin para sua arena)
 
+#### Super Admin - Configurações de Qualquer Arena
+
 **Rotas**: 
-- `/configuracoes-arena` (super admin com selector de arena)
-- `/configuracoes-arena/:id` (super admin via URL direta)
-- `/configuracoes` (arena admin - apenas sua própria arena)
+- `/configuracoes-arena` (com `ArenaSelector` visível)
+- `/configuracoes-arena/:id` (acesso direto via URL)
 
 **Gerencia**:
 - ✅ Dados Gerais (nome, CNPJ, endereço)
@@ -198,6 +201,38 @@ O sistema implementa uma separação clara entre configurações globais (sistem
 - ✅ Asaas (pagamentos)
 - ✅ Templates customizados
 - ✅ Horários de funcionamento
+
+**Características**:
+- Exibe `ArenaSelector` no topo da página
+- Pode selecionar e gerenciar qualquer arena ativa
+- Usa `effectiveArenaId = selectedArena || propArenaId`
+- NÃO usa `contextArenaId` (Super Admin não tem arena associada)
+
+**Proteção de Rota**: `<ProtectedRoute requiredRole="super_admin">`
+
+---
+
+#### Arena Admin - Configurações da Própria Arena
+
+**Rota**: 
+- `/configuracoes` (sem `ArenaSelector`, apenas sua arena)
+
+**Gerencia**:
+- ✅ Dados Gerais (nome, CNPJ, endereço)
+- ✅ Assinatura e Plano (visualização)
+- ✅ Módulos Ativos/Inativos
+- ✅ Evolution API (WhatsApp)
+- ✅ Asaas (pagamentos)
+- ✅ Templates customizados
+- ✅ Horários de funcionamento
+
+**Características**:
+- NÃO exibe `ArenaSelector`
+- Usa APENAS `contextArenaId` (arena do usuário autenticado)
+- Validação de segurança impede acesso a outras arenas
+- Se `propArenaId !== contextArenaId`, exibe erro de permissão
+
+**Proteção de Rota**: `<ProtectedRoute requiredRole="arena_admin">` + `<PerfilAccessGuard allowedRoles={["arena_admin"]}>`
 
 **Descrição**: Configurações específicas de cada arena. Super Admin pode acessar configurações de qualquer arena através do seletor. Arena Admin só pode acessar configurações da sua própria arena.
 

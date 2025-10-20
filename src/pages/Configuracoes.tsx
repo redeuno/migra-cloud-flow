@@ -5,7 +5,7 @@ import { ArenaConfigTabs } from "@/components/configuracoes/ArenaConfigTabs";
 export default function Configuracoes() {
   return (
     <Layout>
-      <PerfilAccessGuard allowedRoles={["super_admin", "arena_admin"]}>
+      <PerfilAccessGuard allowedRoles={["arena_admin"]}>
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Configurações</h1>

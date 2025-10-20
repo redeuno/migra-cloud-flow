@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +16,7 @@ export function ModulosArenaManager({ arenaId: propArenaId }: ModulosArenaManage
   const { arenaId: contextArenaId } = useAuth();
   const effectiveArenaId = propArenaId || contextArenaId;
   const queryClient = useQueryClient();
+  const [togglingModulo, setTogglingModulo] = React.useState<string | null>(null);
 
   // Buscar plano atual da arena
   const { data: arena, isLoading: loadingArena } = useQuery({
@@ -62,13 +64,15 @@ export function ModulosArenaManager({ arenaId: propArenaId }: ModulosArenaManage
   // Mutation para ativar/desativar módulo
   const toggleModulo = useMutation({
     mutationFn: async ({ moduloId, ativo }: { moduloId: string; ativo: boolean }) => {
+      setTogglingModulo(moduloId);
+      
       // Verificar se já existe antes de criar
       const { data: existing } = await supabase
         .from("arena_modulos")
         .select("id, ativo")
         .eq("arena_id", effectiveArenaId!)
         .eq("modulo_id", moduloId)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         // Atualizar registro existente
@@ -98,11 +102,13 @@ export function ModulosArenaManager({ arenaId: propArenaId }: ModulosArenaManage
       }
     },
     onSuccess: () => {
+      setTogglingModulo(null);
       queryClient.invalidateQueries({ queryKey: ["arena-modulos", effectiveArenaId] });
       queryClient.invalidateQueries({ queryKey: ["arena-modulos-ativos", effectiveArenaId] });
       toast.success("Módulo atualizado!");
     },
     onError: (error: any) => {
+      setTogglingModulo(null);
       toast.error(error.message || "Erro ao atualizar módulo");
     },
   });
@@ -157,7 +163,7 @@ export function ModulosArenaManager({ arenaId: propArenaId }: ModulosArenaManage
                       onCheckedChange={(checked) =>
                         toggleModulo.mutate({ moduloId: modulo.id, ativo: checked })
                       }
-                      disabled={toggleModulo.isPending}
+                      disabled={toggleModulo.isPending || togglingModulo === modulo.id}
                     />
                   )}
                 </div>
