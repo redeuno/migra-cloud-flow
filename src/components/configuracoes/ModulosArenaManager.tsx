@@ -62,12 +62,40 @@ export function ModulosArenaManager({ arenaId: propArenaId }: ModulosArenaManage
   // Mutation para ativar/desativar módulo
   const toggleModulo = useMutation({
     mutationFn: async ({ moduloId, ativo }: { moduloId: string; ativo: boolean }) => {
-      const { error } = await supabase
+      // Verificar se já existe antes de criar
+      const { data: existing } = await supabase
         .from("arena_modulos")
-        .update({ ativo })
+        .select("id, ativo")
         .eq("arena_id", effectiveArenaId!)
-        .eq("modulo_id", moduloId);
-      if (error) throw error;
+        .eq("modulo_id", moduloId)
+        .single();
+
+      if (existing) {
+        // Atualizar registro existente
+        const { error } = await supabase
+          .from("arena_modulos")
+          .update({ ativo })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        // Criar novo registro se não existe
+        const { error } = await supabase
+          .from("arena_modulos")
+          .insert({
+            arena_id: effectiveArenaId!,
+            modulo_id: moduloId,
+            ativo,
+            data_ativacao: ativo ? new Date().toISOString().split('T')[0] : null,
+          });
+        
+        if (error) {
+          // Tratar erro de duplicata especificamente
+          if (error.code === '23505') {
+            throw new Error("Este módulo já está configurado para esta arena");
+          }
+          throw error;
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["arena-modulos", effectiveArenaId] });
