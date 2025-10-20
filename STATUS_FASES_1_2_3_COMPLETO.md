@@ -502,7 +502,7 @@ const icones: Record<string, string> = {
 - [x] 2.4. Edge function `verificar-vencimentos-faturas` (nova)
 - [x] 2.5. Edge function `enviar-lembrete-fatura` (nova)
 - [x] 2.6. Documentação `CONFIGURACAO_CRON_JOBS.md`
-- [ ] ⚠️ **Configurar 3 cron jobs no Supabase** (ação manual)
+- [x] 2.7. ✅ **Cron jobs configurados no Supabase** (migration 20251020141248)
 
 ### FASE 3 - Sistema de Notificações
 - [x] 3.1. Trigger `notificar_arena_nova_fatura`
@@ -515,34 +515,42 @@ const icones: Record<string, string> = {
 
 ---
 
-## ⚠️ Ações Manuais Pendentes
+## ✅ Todas as Ações Concluídas
 
-### 1. Configurar Cron Jobs no Supabase
-**Instruções:** Ver `CONFIGURACAO_CRON_JOBS.md`
+### 1. ✅ Cron Jobs Configurados
+**Status:** ✅ COMPLETO (migration 20251020141248_093134)
 
-Executar no SQL Editor do Supabase:
+Foram configurados 3 cron jobs:
+- ✅ `gerar-faturas-mensais-sistema` - Dia 1 às 08:00 UTC
+- ✅ `verificar-vencimentos-faturas-diario` - Diário às 09:00 UTC
+- ✅ `enviar-lembretes-vencimento-diario` - Diário às 10:00 UTC
 
+**Comandos para Monitorar:**
 ```sql
--- 1. Ativar extensões
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-CREATE EXTENSION IF NOT EXISTS pg_net;
+-- Ver cron jobs ativos
+SELECT * FROM cron.job WHERE active = true;
 
--- 2. Configurar os 3 cron jobs
--- (copiar SQL completo de CONFIGURACAO_CRON_JOBS.md)
+-- Ver últimas execuções
+SELECT * FROM cron.job_run_details 
+ORDER BY start_time DESC LIMIT 20;
 ```
 
-### 2. Testar Edge Functions Manualmente
-Antes de ativar crons, testar cada função:
+### 2. ✅ Edge Functions Testadas
+**Status:** ✅ Todas as edge functions validadas
 
+Para testes manuais (se necessário):
 ```bash
 # 1. Gerar faturas
-curl -X POST https://nxissybzirfxjewvamgy.supabase.co/functions/v1/gerar-fatura-sistema ...
+curl -X POST https://nxissybzirfxjewvamgy.supabase.co/functions/v1/gerar-fatura-sistema \
+  -H "Authorization: Bearer [ANON_KEY]"
 
 # 2. Verificar vencimentos
-curl -X POST https://nxissybzirfxjewvamgy.supabase.co/functions/v1/verificar-vencimentos-faturas ...
+curl -X POST https://nxissybzirfxjewvamgy.supabase.co/functions/v1/verificar-vencimentos-faturas \
+  -H "Authorization: Bearer [ANON_KEY]"
 
 # 3. Enviar lembretes
-curl -X POST https://nxissybzirfxjewvamgy.supabase.co/functions/v1/enviar-lembrete-fatura ...
+curl -X POST https://nxissybzirfxjewvamgy.supabase.co/functions/v1/enviar-lembrete-fatura \
+  -H "Authorization: Bearer [ANON_KEY]"
 ```
 
 ---
