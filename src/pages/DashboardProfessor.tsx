@@ -10,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckinsProfessor } from "@/components/checkins/CheckinsProfessor";
+import { MinhasAvaliacoes } from "@/components/professores/MinhasAvaliacoes";
+import { HistoricoAtividadesProfessor } from "@/components/professores/HistoricoAtividadesProfessor";
 
 export default function DashboardProfessor() {
   const { user, arenaId } = useAuth();
@@ -136,9 +138,11 @@ export default function DashboardProfessor() {
       </div>
 
       <Tabs defaultValue="visao-geral" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 h-auto">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto">
           <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
           <TabsTrigger value="checkins">Check-ins</TabsTrigger>
+          <TabsTrigger value="avaliacoes">Minhas Avaliações</TabsTrigger>
+          <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao-geral" className="space-y-4">
@@ -259,6 +263,14 @@ export default function DashboardProfessor() {
 
         <TabsContent value="checkins" className="space-y-4">
           <CheckinsProfessor />
+        </TabsContent>
+
+        <TabsContent value="avaliacoes" className="space-y-4">
+          <MinhasAvaliacoes />
+        </TabsContent>
+
+        <TabsContent value="historico" className="space-y-4">
+          <HistoricoAtividadesProfessor />
         </TabsContent>
       </Tabs>
     </div>
