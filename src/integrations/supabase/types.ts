@@ -1990,7 +1990,7 @@ export type Database = {
         Row: {
           aceite_termos: boolean
           arena_id: string | null
-          auth_id: string | null
+          auth_id: string
           cpf: string
           created_at: string | null
           data_cadastro: string
@@ -2007,7 +2007,7 @@ export type Database = {
         Insert: {
           aceite_termos?: boolean
           arena_id?: string | null
-          auth_id?: string | null
+          auth_id: string
           cpf: string
           created_at?: string | null
           data_cadastro?: string
@@ -2024,7 +2024,7 @@ export type Database = {
         Update: {
           aceite_termos?: boolean
           arena_id?: string | null
-          auth_id?: string | null
+          auth_id?: string
           cpf?: string
           created_at?: string | null
           data_cadastro?: string

@@ -140,7 +140,8 @@ export function ProfessorDialog({ open, onOpenChange, professor }: ProfessorDial
           status: data.status,
           aceite_termos: true,
           data_cadastro: new Date().toISOString().split("T")[0],
-        })
+          auth_id: null, // Será preenchido via trigger ou manualmente depois
+        } as any)
         .select()
         .single();
 

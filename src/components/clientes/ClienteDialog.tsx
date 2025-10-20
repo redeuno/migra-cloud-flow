@@ -102,7 +102,8 @@ export function ClienteDialog({ open, onOpenChange, cliente }: ClienteDialogProp
         status: data.status as any,
         aceite_termos: data.aceite_termos,
         data_cadastro: new Date().toISOString().split('T')[0],
-      });
+        auth_id: null, // Será preenchido via trigger ou manualmente depois
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
