@@ -70,12 +70,25 @@ export function NotificationBell() {
     refetchOnWindowFocus: true,
   });
 
-  // Realtime subscription para updates
+  // Realtime subscription para INSERT e UPDATE de notificações
   useEffect(() => {
     if (!usuario?.id) return;
 
     const channel = supabase
-      .channel(`notificacoes-updates-${usuario.id}`)
+      .channel(`notificacoes-realtime-${usuario.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notificacoes",
+          filter: `usuario_id=eq.${usuario.id}`,
+        },
+        () => {
+          // Nova notificação recebida - invalidar queries para atualizar
+          queryClient.invalidateQueries({ queryKey: ["notificacoes"] });
+        }
+      )
       .on(
         "postgres_changes",
         {
@@ -85,6 +98,7 @@ export function NotificationBell() {
           filter: `usuario_id=eq.${usuario.id}`,
         },
         () => {
+          // Notificação atualizada (marcada como lida) - invalidar queries
           queryClient.invalidateQueries({ queryKey: ["notificacoes"] });
         }
       )
@@ -140,15 +154,33 @@ export function NotificationBell() {
 
   const getIconeNotificacao = (tipo: string) => {
     const icones: Record<string, string> = {
+      // Agendamentos
       agendamento_novo: "📅",
       agendamento_cancelado: "❌",
       checkin_realizado: "✅",
+      
+      // Pagamentos e Mensalidades
       pagamento_recebido: "💰",
       pagamento_vencido: "⚠️",
       mensalidade_proxima: "📆",
       contrato_expirando: "⏰",
+      
+      // Sistema e Faturas (FASE 3)
+      fatura_gerada: "💰",
+      lembrete_pagamento: "⏰",
+      assinatura_criada: "🎉",
+      assinatura_cancelada: "❌",
+      arena_suspensa: "🚫",
+      
+      // Aulas e Professor
       aula_confirmada: "📚",
+      novo_aluno: "👤",
+      professor_vinculado: "👨‍🏫",
+      
+      // Torneios
       torneio_inscricao: "🏆",
+      
+      // Sistema
       sistema_alerta: "🔔",
       financeiro_alerta: "💳",
     };
