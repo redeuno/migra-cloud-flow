@@ -44,14 +44,13 @@ export function TemplatesWhatsApp({ arenaId: propArenaId }: TemplatesWhatsAppPro
   });
 
   const { data: templates = [], isLoading } = useQuery({
-    queryKey: ["templates-whatsapp", effectiveArenaId],
-    queryFn: () => TemplateService.fetchTemplates(effectiveArenaId),
-    enabled: !!effectiveArenaId,
+    queryKey: ["templates-whatsapp"],
+    queryFn: () => TemplateService.fetchTemplates(),
   });
 
   const saveMutation = useMutation({
     mutationFn: async (data: TemplateForm) => {
-      await TemplateService.saveTemplate(data, effectiveArenaId!, editingTemplate?.id);
+      await TemplateService.saveTemplate(data, editingTemplate?.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates-whatsapp"] });

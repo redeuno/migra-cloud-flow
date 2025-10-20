@@ -90,23 +90,19 @@ export class TemplateService {
   }
 
   /**
-   * Busca templates de uma arena
+   * Busca todos os templates ativos do sistema
    */
-  static async fetchTemplates(arenaId: string | null): Promise<TemplateData[]> {
-    if (!arenaId) return [];
-    
+  static async fetchTemplates(): Promise<TemplateData[]> {
     try {
-      // @ts-ignore - Evita problema de inferência profunda de tipos do Supabase
-      const result = await supabase
+      const { data, error } = await supabase
         .from("templates_notificacao")
         .select("*")
-        .eq("arena_id", arenaId)
         .eq("ativo", true)
         .order("tipo");
 
-      if (result.error) throw result.error;
+      if (error) throw error;
       
-      return (result.data || []) as TemplateData[];
+      return (data || []) as TemplateData[];
     } catch (error) {
       console.error("Erro ao carregar templates:", error);
       return [];
@@ -116,7 +112,7 @@ export class TemplateService {
   /**
    * Salva ou atualiza um template
    */
-  static async saveTemplate(template: TemplateForm, arenaId: string, templateId?: string) {
+  static async saveTemplate(template: TemplateForm, templateId?: string) {
     if (templateId) {
       const { error } = await supabase
         .from("templates_notificacao")
@@ -126,7 +122,7 @@ export class TemplateService {
     } else {
       const { error } = await supabase
         .from("templates_notificacao")
-        .insert({ ...template, arena_id: arenaId, ativo: true });
+        .insert({ ...template, ativo: true });
       if (error) throw error;
     }
   }
