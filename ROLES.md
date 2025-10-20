@@ -496,7 +496,455 @@ SELECT has_role(
 
 ---
 
+## 🗄️ Estrutura Técnica do Banco de Dados
+
+### Tabelas Principais
+
+#### 1. `auth.users` (Gerenciada pelo Supabase Auth)
+```sql
+-- Tabela do Supabase Auth - não modificamos diretamente
+id uuid PRIMARY KEY
+email text UNIQUE
+encrypted_password text
+raw_user_meta_data jsonb  -- Metadados usados no signup
+created_at timestamptz
+updated_at timestamptz
+```
+
+#### 2. `usuarios` (Tabela de Perfis)
+```sql
+CREATE TABLE usuarios (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  auth_id uuid UNIQUE NOT NULL,  -- ✅ UNIQUE + NOT NULL
+  arena_id uuid REFERENCES arenas(id),
+  tipo_usuario tipo_usuario NOT NULL,
+  nome_completo varchar NOT NULL,
+  email varchar NOT NULL,
+  cpf varchar(14),
+  telefone varchar,
+  data_nascimento date,
+  foto_url text,
+  status status_geral DEFAULT 'ativo',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  
+  -- ✅ Constraints de integridade
+  CONSTRAINT usuarios_auth_id_unique UNIQUE (auth_id),
+  CONSTRAINT usuarios_auth_id_fkey FOREIGN KEY (auth_id) 
+    REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+-- ✅ Indexes para performance
+CREATE INDEX idx_usuarios_auth_id ON usuarios(auth_id);
+CREATE INDEX idx_usuarios_arena_id ON usuarios(arena_id);
+CREATE INDEX idx_usuarios_tipo_usuario ON usuarios(tipo_usuario);
+
+-- ✅ Trigger: Validar arena_id obrigatório para não-super-admins
+CREATE TRIGGER validate_usuario_arena_id_trigger
+  BEFORE INSERT OR UPDATE ON usuarios
+  FOR EACH ROW EXECUTE FUNCTION validate_usuario_arena_id();
+```
+
+**Regras de Validação**:
+- ✅ `auth_id` é **OBRIGATÓRIO** e **ÚNICO** (1:1 com `auth.users`)
+- ✅ `arena_id` é **OBRIGATÓRIO** para todos exceto `super_admin`
+- ✅ `tipo_usuario` determina role padrão no signup
+- ✅ FK com `auth.users` garante integridade referencial
+- ✅ `ON DELETE CASCADE` remove perfil quando usuário deletado
+
+#### 3. `user_roles` (Tabela de Permissões)
+```sql
+CREATE TABLE user_roles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  arena_id uuid REFERENCES arenas(id),  -- NULL apenas para super_admin
+  role app_role NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  
+  -- ✅ Um usuário não pode ter a mesma role duplicada na mesma arena
+  CONSTRAINT user_roles_unique UNIQUE (user_id, role, arena_id)
+);
+
+-- ✅ Indexes para performance de queries RLS
+CREATE INDEX idx_user_roles_arena_id ON user_roles(arena_id);
+CREATE INDEX idx_user_roles_user_arena ON user_roles(user_id, arena_id);
+
+-- ✅ Enum de Roles (fonte única da verdade)
+CREATE TYPE app_role AS ENUM (
+  'super_admin',
+  'arena_admin', 
+  'funcionario',
+  'professor',
+  'aluno'
+);
+```
+
+**Características**:
+- ✅ Um usuário pode ter **múltiplas roles** em **múltiplas arenas**
+- ✅ `arena_id` é **NULL** apenas para `super_admin`
+- ✅ Constraint `UNIQUE (user_id, role, arena_id)` evita duplicatas
+- ✅ Indexes otimizam queries RLS (`has_role()` chamada frequentemente)
+
+#### 4. `professores` (Tabela de Especialização)
+```sql
+CREATE TABLE professores (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id uuid UNIQUE REFERENCES usuarios(id) NOT NULL,
+  arena_id uuid REFERENCES arenas(id) NOT NULL,
+  valor_hora_aula numeric,
+  percentual_comissao_padrao numeric,
+  especialidades jsonb DEFAULT '[]',
+  disponibilidade jsonb DEFAULT '{}',
+  avaliacao_media numeric,
+  total_avaliacoes integer DEFAULT 0,
+  status status_geral DEFAULT 'ativo',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- ✅ Index para joins frequentes
+CREATE INDEX idx_professores_usuario_id ON professores(usuario_id);
+
+-- ✅ Triggers automáticos
+CREATE TRIGGER auto_create_professor_trigger
+  AFTER INSERT OR UPDATE OF tipo_usuario ON usuarios
+  FOR EACH ROW EXECUTE FUNCTION auto_create_professor();
+
+CREATE TRIGGER sync_user_role_professor_trigger
+  AFTER INSERT OR UPDATE OR DELETE ON professores
+  FOR EACH ROW EXECUTE FUNCTION sync_user_role_professor();
+```
+
+#### 5. `funcionarios` (Tabela de Especialização)
+```sql
+CREATE TABLE funcionarios (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id uuid UNIQUE REFERENCES usuarios(id) NOT NULL,
+  arena_id uuid REFERENCES arenas(id) NOT NULL,
+  cargo varchar NOT NULL,
+  salario numeric,
+  data_admissao date NOT NULL,
+  data_demissao date,
+  horario_trabalho jsonb DEFAULT '{}',
+  permissoes jsonb DEFAULT '[]',
+  status status_geral DEFAULT 'ativo',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- ✅ Index para joins frequentes
+CREATE INDEX idx_funcionarios_usuario_id ON funcionarios(usuario_id);
+
+-- ✅ Triggers automáticos (implementados na Migration v2.1.0)
+CREATE TRIGGER auto_create_funcionario_trigger
+  AFTER INSERT OR UPDATE OF tipo_usuario ON usuarios
+  FOR EACH ROW EXECUTE FUNCTION auto_create_funcionario();
+
+CREATE TRIGGER sync_user_role_funcionario_trigger
+  AFTER INSERT OR UPDATE OR DELETE ON funcionarios
+  FOR EACH ROW EXECUTE FUNCTION sync_user_role_funcionario();
+```
+
+---
+
+### Fluxo de Criação de Usuários
+
+#### 1. Signup via Supabase Auth (Frontend)
+```typescript
+// React component
+const { data, error } = await supabase.auth.signUp({
+  email: 'joao@email.com',
+  password: 'senha123',
+  options: {
+    data: {
+      // ✅ Metadados usados pelo trigger handle_new_user()
+      tipo_usuario: 'professor',  // ou 'aluno', 'funcionario', 'arena_admin'
+      arena_id: 'uuid-da-arena',  // obrigatório para não-super-admin
+      nome_completo: 'João Silva',
+      telefone: '11999999999'
+    }
+  }
+});
+```
+
+#### 2. Trigger `handle_new_user()` Executa Automaticamente
+```sql
+-- Trigger em auth.users:
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- O que a função faz:
+1. Extrai metadados de raw_user_meta_data
+2. Cria registro em usuarios com auth_id linkado
+3. Cria role correspondente em user_roles
+4. Se tipo_usuario='professor', dispara auto_create_professor()
+5. Se tipo_usuario='funcionario', dispara auto_create_funcionario()
+```
+
+#### 3. Cascata de Triggers
+```
+INSERT em auth.users
+  └─> handle_new_user()
+      └─> INSERT em usuarios
+          └─> auto_create_professor() OU auto_create_funcionario()
+              └─> INSERT em professores/funcionarios
+                  └─> sync_user_role_*()
+                      └─> INSERT em user_roles
+```
+
+#### 4. Resultado Final (Exemplo: Professor)
+```
+auth.users
+  id: abc-123
+  email: joao@email.com
+  
+usuarios
+  id: def-456
+  auth_id: abc-123  ← FK para auth.users
+  tipo_usuario: 'professor'
+  arena_id: xyz-789
+  
+professores
+  id: ghi-012
+  usuario_id: def-456  ← FK para usuarios
+  arena_id: xyz-789
+  
+user_roles
+  user_id: abc-123  ← FK para auth.users
+  role: 'professor'
+  arena_id: xyz-789
+```
+
+---
+
+### Diagrama ER Simplificado
+
+```
+┌──────────────┐
+│ auth.users   │ (Supabase Auth)
+│ (id, email)  │
+└──────┬───────┘
+       │ FK: auth_id
+       │ (UNIQUE, NOT NULL, CASCADE)
+       ▼
+┌──────────────┐
+│  usuarios    │◄────────┐
+│ (auth_id,    │         │ FK: usuario_id
+│  arena_id,   │         │ (UNIQUE)
+│  tipo)       │         │
+└──────┬───────┘         │
+       │                 │
+       │          ┌──────┴────────┐
+       │          │ professores   │
+       │          │ (valor_hora,  │
+       │          │  comissao)    │
+       │          └───────────────┘
+       │          ┌───────────────┐
+       │          │ funcionarios  │
+       │          │ (cargo,       │
+       │          │  salario)     │
+       │          └───────────────┘
+       │
+       │ FK: user_id
+       ▼
+┌──────────────┐
+│ user_roles   │
+│ (user_id,    │
+│  role,       │
+│  arena_id)   │
+└──────────────┘
+```
+
+---
+
+### Funções de Segurança (Security Definer)
+
+#### 1. `has_role(_user_id, _role)` - Verificação de Permissões
+```sql
+CREATE FUNCTION has_role(_user_id uuid, _role app_role)
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = _user_id AND role = _role
+  )
+$$;
+```
+
+**Uso em RLS Policies**:
+```sql
+-- Exemplo: Apenas admins podem deletar quadras
+CREATE POLICY "Admin can delete quadras"
+ON quadras FOR DELETE
+USING (
+  has_role(auth.uid(), 'super_admin') OR
+  has_role(auth.uid(), 'arena_admin')
+);
+```
+
+**Por que SECURITY DEFINER?**
+- Evita recursão infinita em RLS policies
+- Executa com privilégios da função, não do usuário
+- Permite leitura de `user_roles` mesmo com RLS ativo
+
+#### 2. `validate_usuario_arena_id()` - Validação de Integridade
+```sql
+CREATE FUNCTION validate_usuario_arena_id()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Super admin pode ter arena_id NULL
+  IF EXISTS (
+    SELECT 1 FROM user_roles 
+    WHERE user_id = NEW.auth_id AND role = 'super_admin'
+  ) THEN
+    RETURN NEW;
+  END IF;
+  
+  -- Outros roles precisam de arena_id
+  IF NEW.arena_id IS NULL AND NEW.auth_id IS NOT NULL THEN
+    RAISE EXCEPTION 'arena_id é obrigatório para usuários não-super-admin';
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+-- Aplicado antes de INSERT/UPDATE em usuarios
+CREATE TRIGGER validate_usuario_arena_id_trigger
+  BEFORE INSERT OR UPDATE ON usuarios
+  FOR EACH ROW EXECUTE FUNCTION validate_usuario_arena_id();
+```
+
+#### 3. `auto_create_professor()` - Auto-criação de Professor
+```sql
+CREATE FUNCTION auto_create_professor()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.tipo_usuario = 'professor' THEN
+    INSERT INTO professores (
+      usuario_id, arena_id, valor_hora_aula, 
+      percentual_comissao_padrao, status
+    ) VALUES (
+      NEW.id, NEW.arena_id, 100.00, 30.00, NEW.status
+    )
+    ON CONFLICT (usuario_id) DO NOTHING;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+#### 4. `sync_user_role_professor()` - Sincronização de Roles
+```sql
+CREATE FUNCTION sync_user_role_professor()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_auth_id uuid;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    SELECT auth_id INTO v_auth_id FROM usuarios WHERE id = NEW.usuario_id;
+    INSERT INTO user_roles (user_id, arena_id, role)
+    VALUES (v_auth_id, NEW.arena_id, 'professor')
+    ON CONFLICT DO NOTHING;
+    
+  ELSIF TG_OP = 'UPDATE' THEN
+    -- Atualiza se arena mudou
+    SELECT auth_id INTO v_auth_id FROM usuarios WHERE id = NEW.usuario_id;
+    DELETE FROM user_roles WHERE user_id = v_auth_id AND role = 'professor';
+    INSERT INTO user_roles (user_id, arena_id, role)
+    VALUES (v_auth_id, NEW.arena_id, 'professor')
+    ON CONFLICT DO NOTHING;
+    
+  ELSIF TG_OP = 'DELETE' THEN
+    -- Remove role quando professor deletado
+    SELECT auth_id INTO v_auth_id FROM usuarios WHERE id = OLD.usuario_id;
+    DELETE FROM user_roles 
+    WHERE user_id = v_auth_id AND role = 'professor';
+  END IF;
+  
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+---
+
+### Triggers Implementados (Completos)
+
+| Trigger | Tabela | Função | Evento | Quando |
+|---------|--------|--------|--------|--------|
+| `on_auth_user_created` | `auth.users` | `handle_new_user()` | INSERT | AFTER |
+| `validate_usuario_arena_id_trigger` | `usuarios` | `validate_usuario_arena_id()` | INSERT/UPDATE | BEFORE |
+| `auto_create_professor_trigger` | `usuarios` | `auto_create_professor()` | INSERT/UPDATE | AFTER |
+| `auto_create_funcionario_trigger` | `usuarios` | `auto_create_funcionario()` | INSERT/UPDATE | AFTER |
+| `sync_user_role_professor_trigger` | `professores` | `sync_user_role_professor()` | INSERT/UPDATE/DELETE | AFTER |
+| `sync_user_role_funcionario_trigger` | `funcionarios` | `sync_user_role_funcionario()` | INSERT/UPDATE/DELETE | AFTER |
+| `auto_create_user_role` | `usuarios` | `auto_create_user_role()` | INSERT/UPDATE | AFTER |
+
+**Ordem de Execução (Signup)**:
+1. `INSERT` em `auth.users`
+2. `handle_new_user()` → cria em `usuarios`
+3. `validate_usuario_arena_id()` → valida arena_id
+4. `auto_create_professor/funcionario()` → cria especialização
+5. `sync_user_role_*()` → sincroniza `user_roles`
+6. `auto_create_user_role()` → cria role base
+
+---
+
+### Constraints de Segurança
+
+#### Integridade Referencial
+```sql
+-- ✅ Implementado
+usuarios.auth_id → auth.users.id (FK, UNIQUE, NOT NULL, ON DELETE CASCADE)
+user_roles.user_id → auth.users.id (FK, NOT NULL, ON DELETE CASCADE)
+user_roles.arena_id → arenas.id (FK, NULL para super_admin)
+professores.usuario_id → usuarios.id (FK, UNIQUE)
+funcionarios.usuario_id → usuarios.id (FK, UNIQUE)
+```
+
+#### Validações de Negócio
+- ✅ **Super admin** é o ÚNICO que pode ter `arena_id = NULL`
+- ✅ Não pode haver **roles duplicadas** para mesmo `user_id + role + arena_id`
+- ✅ **Professores/Funcionários** sempre sincronizam com `user_roles`
+- ✅ Deleção em `auth.users` **cascateia** para todas as tabelas filhas
+- ✅ `auth_id` em `usuarios` é **obrigatório e único** (1:1 com `auth.users`)
+
+#### Indexes de Performance
+```sql
+-- ✅ Todos implementados na Migration v2.1.0
+CREATE INDEX idx_usuarios_auth_id ON usuarios(auth_id);
+CREATE INDEX idx_usuarios_arena_id ON usuarios(arena_id);
+CREATE INDEX idx_usuarios_tipo_usuario ON usuarios(tipo_usuario);
+CREATE INDEX idx_user_roles_arena_id ON user_roles(arena_id);
+CREATE INDEX idx_user_roles_user_arena ON user_roles(user_id, arena_id);
+CREATE INDEX idx_professores_usuario_id ON professores(usuario_id);
+CREATE INDEX idx_funcionarios_usuario_id ON funcionarios(usuario_id);
+```
+
+**Benefício**: Queries RLS são executadas em **TODAS** as consultas. Indexes garantem performance escalável.
+
+---
+
 ## 🔄 Histórico de Mudanças
+
+### v2.1.0 (20/01/2025) - 🔧 MIGRATION CRÍTICA
+- ✅ **Correção estrutural completa do sistema de roles**
+- ✅ Adicionado `UNIQUE` constraint em `usuarios.auth_id`
+- ✅ Adicionado `FOREIGN KEY` de `usuarios.auth_id` → `auth.users(id)` com `ON DELETE CASCADE`
+- ✅ Implementado trigger `validate_usuario_arena_id()` para validar arena_id obrigatório
+- ✅ Criados triggers `auto_create_funcionario()` e `sync_user_role_funcionario()`
+- ✅ Implementado `handle_new_user()` funcional para signup automático
+- ✅ Adicionados 7 indexes críticos para performance (auth_id, arena_id, tipo_usuario, user_roles)
+- ✅ Limpeza de dados órfãos e duplicados em `user_roles`
+- ✅ Documentação técnica completa (estrutura de tabelas, triggers, constraints, ER diagram)
+- ✅ Garantia de integridade referencial 1:1 entre `auth.users` ↔ `usuarios`
 
 ### v2.0.0 (19/10/2025)
 - ✅ Configurações hierárquicas (Sistema → Arena)
