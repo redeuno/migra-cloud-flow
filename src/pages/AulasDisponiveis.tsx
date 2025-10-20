@@ -26,6 +26,7 @@ import {
 import { GraduationCap, Users, Calendar, Clock, Search } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
+import { notificarInscricaoAula } from "@/lib/utils/notificarInscricaoAula";
 
 export default function AulasDisponiveis() {
   const { arenaId, user } = useAuth();
@@ -89,19 +90,45 @@ export default function AulasDisponiveis() {
   const inscreverMutation = useMutation({
     mutationFn: async (aulaId: string) => {
       if (!usuarioData?.id) throw new Error("Usuário não encontrado");
+      if (!arenaId) throw new Error("Arena não identificada");
 
+      // Buscar valor da aula
+      const { data: aula, error: aulaError } = await supabase
+        .from("aulas")
+        .select("valor_por_aluno, max_alunos, aulas_alunos(id)")
+        .eq("id", aulaId)
+        .single();
+
+      if (aulaError) throw aulaError;
+
+      // Validar vagas disponíveis
+      const inscritos = aula.aulas_alunos?.length || 0;
+      if (inscritos >= aula.max_alunos) {
+        throw new Error("Não há mais vagas disponíveis para esta aula");
+      }
+
+      // Inserir inscrição
       const { error } = await supabase.from("aulas_alunos").insert({
         aula_id: aulaId,
         usuario_id: usuarioData.id,
-        valor_pago: 0, // Será definido posteriormente
+        valor_pago: aula.valor_por_aluno,
         status_pagamento: "pendente",
       });
 
       if (error) throw error;
+
+      // Enviar notificações
+      await notificarInscricaoAula({
+        aulaId,
+        alunoId: usuarioData.id,
+        arenaId,
+      });
+
+      return aulaId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["aulas-disponiveis"] });
-      toast.success("Inscrição realizada com sucesso!");
+      toast.success("Inscrição realizada com sucesso! Você receberá notificações sobre a aula.");
     },
     onError: (error: any) => {
       toast.error(error.message || "Erro ao se inscrever na aula");
@@ -269,11 +296,13 @@ export default function AulasDisponiveis() {
                     <CardFooter>
                       <Button
                         className="w-full"
-                        disabled={jaInscrito || semVagas}
+                        disabled={jaInscrito || semVagas || inscreverMutation.isPending}
                         onClick={() => inscreverMutation.mutate(aula.id)}
                       >
-                        {jaInscrito
-                          ? "Já inscrito"
+                        {inscreverMutation.isPending
+                          ? "Inscrevendo..."
+                          : jaInscrito
+                          ? "✓ Já inscrito"
                           : semVagas
                           ? "Sem vagas"
                           : "Inscrever-se"}
