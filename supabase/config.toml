@@ -30,5 +30,11 @@ verify_jwt = true
 [functions.verificar-vencimentos-arena]
 verify_jwt = false
 
+[functions.verificar-vencimentos-faturas]
+verify_jwt = false
+
+[functions.enviar-lembrete-fatura]
+verify_jwt = false
+
 [functions.lembretes-pagamento]
 verify_jwt = false
