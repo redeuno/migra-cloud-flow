@@ -7,16 +7,23 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfessoresTable } from "@/components/professores/ProfessoresTable";
 import { ProfessorDialog } from "@/components/professores/ProfessorDialog";
+import { ProfessorDetalhesDialog } from "@/components/professores/ProfessorDetalhesDialog";
 import { VinculosProfessorAlunoManager } from "@/components/professores/VinculosProfessorAlunoManager";
 
 export default function Professores() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [detalhesDialogOpen, setDetalhesDialogOpen] = useState(false);
   const [professorSelecionado, setProfessorSelecionado] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleEdit = (professor: any) => {
     setProfessorSelecionado(professor);
     setDialogOpen(true);
+  };
+
+  const handleViewDetails = (professor: any) => {
+    setProfessorSelecionado(professor);
+    setDetalhesDialogOpen(true);
   };
 
   const handleNew = () => {
@@ -26,6 +33,13 @@ export default function Professores() {
 
   const handleCloseDialog = (open: boolean) => {
     setDialogOpen(open);
+    if (!open) {
+      setProfessorSelecionado(null);
+    }
+  };
+
+  const handleCloseDetalhesDialog = (open: boolean) => {
+    setDetalhesDialogOpen(open);
     if (!open) {
       setProfessorSelecionado(null);
     }
@@ -67,7 +81,7 @@ export default function Professores() {
                 />
               </div>
 
-              <ProfessoresTable onEdit={handleEdit} />
+              <ProfessoresTable onEdit={handleEdit} onViewDetails={handleViewDetails} />
             </TabsContent>
 
             <TabsContent value="vinculos">
@@ -80,6 +94,12 @@ export default function Professores() {
           open={dialogOpen}
           onOpenChange={handleCloseDialog}
           professor={professorSelecionado}
+        />
+
+        <ProfessorDetalhesDialog
+          professor={professorSelecionado}
+          open={detalhesDialogOpen}
+          onOpenChange={handleCloseDetalhesDialog}
         />
       </PerfilAccessGuard>
     </Layout>

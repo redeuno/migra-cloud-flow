@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Edit, Trash2, Star } from "lucide-react";
+import { Edit, Trash2, Star, Eye } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -27,9 +27,10 @@ import { useState } from "react";
 
 interface ProfessoresTableProps {
   onEdit: (professor: any) => void;
+  onViewDetails?: (professor: any) => void;
 }
 
-export function ProfessoresTable({ onEdit }: ProfessoresTableProps) {
+export function ProfessoresTable({ onEdit, onViewDetails }: ProfessoresTableProps) {
   const { arenaId } = useAuth();
   const queryClient = useQueryClient();
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: string | null }>({
@@ -187,10 +188,21 @@ export function ProfessoresTable({ onEdit }: ProfessoresTableProps) {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      {onViewDetails && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onViewDetails(prof)}
+                          title="Ver detalhes"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => onEdit(prof)}
+                        title="Editar"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -198,6 +210,7 @@ export function ProfessoresTable({ onEdit }: ProfessoresTableProps) {
                         variant="ghost"
                         size="sm"
                         onClick={() => setDeleteDialog({ open: true, id: prof.id })}
+                        title="Excluir"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>

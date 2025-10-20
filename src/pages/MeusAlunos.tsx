@@ -27,10 +27,35 @@ import { EmptyState } from "@/components/EmptyState";
 export default function MeusAlunos() {
   const { user } = useAuth();
 
+  // Buscar professor_id do usuário logado
+  const { data: professorData } = useQuery({
+    queryKey: ["professor-current", user?.id],
+    queryFn: async () => {
+      const { data: userData } = await supabase
+        .from("usuarios")
+        .select("id")
+        .eq("auth_id", user?.id)
+        .single();
+
+      if (!userData) return null;
+
+      const { data: professor } = await supabase
+        .from("professores")
+        .select("id")
+        .eq("usuario_id", userData.id)
+        .single();
+
+      return professor;
+    },
+    enabled: !!user?.id,
+  });
+
   // Buscar alunos vinculados ao professor
   const { data: alunos, isLoading } = useQuery({
-    queryKey: ["meus-alunos", user?.id],
+    queryKey: ["meus-alunos", professorData?.id],
     queryFn: async () => {
+      if (!professorData?.id) return [];
+
       const { data, error } = await supabase
         .from("professor_alunos")
         .select(`
@@ -46,13 +71,14 @@ export default function MeusAlunos() {
             status
           )
         `)
+        .eq("professor_id", professorData.id)
         .eq("ativo", true)
         .order("data_vinculo", { ascending: false });
 
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!professorData?.id,
   });
 
   // Estatísticas
