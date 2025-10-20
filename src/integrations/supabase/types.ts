@@ -2144,6 +2144,9 @@ export type Database = {
         | "torneio_inscricao"
         | "sistema_alerta"
         | "financeiro_alerta"
+        | "novo_aluno"
+        | "professor_vinculado"
+        | "inscricao_aula"
       tipo_piso: "areia" | "saibro" | "sintetico" | "concreto" | "grama"
       user_role:
         | "super_admin"
@@ -2358,6 +2361,9 @@ export const Constants = {
         "torneio_inscricao",
         "sistema_alerta",
         "financeiro_alerta",
+        "novo_aluno",
+        "professor_vinculado",
+        "inscricao_aula",
       ],
       tipo_piso: ["areia", "saibro", "sintetico", "concreto", "grama"],
       user_role: [
