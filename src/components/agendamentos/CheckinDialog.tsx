@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QRCodeCheckinDialog } from "./QRCodeCheckinDialog";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { GeolocationChecker } from "@/components/checkins/GeolocationChecker";
 
 interface CheckinDialogProps {
   open: boolean;
@@ -290,24 +291,12 @@ export function CheckinDialog({
                 </Alert>
               )}
 
-              {geoError && arenaTemGeolocalizacao && (
-                <Alert variant="destructive">
-                  <MapPin className="h-4 w-4" />
-                  <AlertDescription>
-                    Erro ao obter localização: {geoError}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {arenaTemGeolocalizacao && distanciaArena !== null && (
-                <Alert variant={dentroDoRaio ? "default" : "destructive"}>
-                  <MapPin className="h-4 w-4" />
-                  <AlertDescription>
-                    {dentroDoRaio
-                      ? `✓ Você está a ${Math.round(distanciaArena)}m da arena`
-                      : `✗ Você está a ${Math.round(distanciaArena)}m da arena (máximo ${agendamento.arenas?.raio_checkin_metros || 100}m)`}
-                  </AlertDescription>
-                </Alert>
+              {arenaTemGeolocalizacao && checkinMethod === "geolocation" && (
+                <GeolocationChecker
+                  targetLatitude={agendamento.arenas.coordenadas_latitude}
+                  targetLongitude={agendamento.arenas.coordenadas_longitude}
+                  radiusMeters={agendamento.arenas.raio_checkin_metros || 100}
+                />
               )}
 
               {/* Métodos de check-in */}
