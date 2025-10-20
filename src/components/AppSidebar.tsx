@@ -32,38 +32,50 @@ import {
 
 // Menu para Super Admin (visão global do sistema)
 const superAdminItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["super_admin"] },
-  { title: "Arenas", url: "/arenas", icon: Building2, roles: ["super_admin"] },
-  { title: "Setup Arenas", url: "/arena-setup", icon: Settings, roles: ["super_admin"] },
-  { title: "Financeiro", url: "/financeiro", icon: DollarSign, roles: ["super_admin"] },
-  { title: "Config. Sistema", url: "/configuracoes-sistema", icon: Settings, roles: ["super_admin"] },
-  { title: "Config. Arenas", url: "/configuracoes-arena", icon: Building2, roles: ["super_admin"] },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Arenas", url: "/arenas", icon: Building2 },
+  { title: "Setup Arenas", url: "/arena-setup", icon: Settings },
+  { title: "Financeiro", url: "/financeiro", icon: DollarSign },
+  { title: "Config. Sistema", url: "/configuracoes-sistema", icon: Settings },
+  { title: "Config. Arenas", url: "/configuracoes-arena", icon: Building2 },
 ];
 
-// Menu para Arena Admin e Staff (visão da arena)
-const arenaNavItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["arena_admin", "funcionario", "aluno", "professor"] },
-  { title: "Quadras", url: "/quadras", icon: SquareActivity, roles: ["arena_admin", "funcionario"] },
-  { title: "Agendamentos", url: "/agendamentos", icon: Calendar, roles: ["arena_admin", "funcionario"] },
-  { title: "Meus Agendamentos", url: "/meus-agendamentos", icon: Calendar, roles: ["aluno"] },
-  { title: "Pessoas", url: "/clientes", icon: Users, roles: ["arena_admin", "funcionario"] },
-  { title: "Professores", url: "/professores", icon: GraduationCap, roles: ["arena_admin", "funcionario"] },
-  { title: "Financeiro", url: "/financeiro", icon: DollarSign, roles: ["arena_admin"] },
-  { title: "Dashboard Financeiro", url: "/financeiro-dashboard", icon: BarChart3, roles: ["arena_admin"] },
-  { title: "Meu Financeiro", url: "/meu-financeiro", icon: Wallet, roles: ["aluno"] },
-  { title: "Aulas", url: "/aulas", icon: GraduationCap, roles: ["arena_admin", "funcionario"] },
-  { title: "Minhas Aulas", url: "/minhas-aulas", icon: BookOpen, roles: ["aluno"] },
-  { title: "Minhas Aulas", url: "/minhas-aulas-professor", icon: GraduationCap, roles: ["professor"] },
-  { title: "Meus Alunos", url: "/meus-alunos", icon: Users, roles: ["professor"] },
-  { title: "Comissões", url: "/comissoes", icon: DollarSign, roles: ["arena_admin", "professor"] },
-  { title: "Quadras Disponíveis", url: "/quadras-disponiveis", icon: SquareActivity, roles: ["aluno"] },
-  { title: "Aulas Disponíveis", url: "/aulas-disponiveis", icon: GraduationCap, roles: ["aluno"] },
-  { title: "Torneios", url: "/torneios", icon: Trophy, roles: ["arena_admin", "funcionario"] },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["arena_admin"] },
+// Menu exclusivo para Alunos
+const alunoNavItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Meus Agendamentos", url: "/meus-agendamentos", icon: Calendar, module: "agendamentos" },
+  { title: "Quadras Disponíveis", url: "/quadras-disponiveis", icon: SquareActivity, module: "quadras" },
+  { title: "Aulas Disponíveis", url: "/aulas-disponiveis", icon: GraduationCap, module: "aulas" },
+  { title: "Minhas Aulas", url: "/minhas-aulas", icon: BookOpen, module: "aulas" },
+  { title: "Meu Financeiro", url: "/meu-financeiro", icon: Wallet, module: "financeiro" },
 ];
 
-const arenaAdminItems = [
-  { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["arena_admin"] },
+// Menu exclusivo para Professores (sem outros roles administrativos)
+const professorNavItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Minhas Aulas", url: "/minhas-aulas-professor", icon: GraduationCap, module: "aulas" },
+  { title: "Meus Alunos", url: "/meus-alunos", icon: Users, module: "aulas" },
+  { title: "Comissões", url: "/comissoes", icon: DollarSign, module: "financeiro" },
+];
+
+// Menu para Arena Admin e Funcionários
+const arenaStaffNavItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Quadras", url: "/quadras", icon: SquareActivity, module: "quadras" },
+  { title: "Agendamentos", url: "/agendamentos", icon: Calendar, module: "agendamentos" },
+  { title: "Pessoas", url: "/clientes", icon: Users, module: "clientes" },
+  { title: "Professores", url: "/professores", icon: GraduationCap, module: "aulas" },
+  { title: "Aulas", url: "/aulas", icon: GraduationCap, module: "aulas" },
+  { title: "Torneios", url: "/torneios", icon: Trophy, module: "torneios" },
+];
+
+// Itens exclusivos para Arena Admin
+const arenaAdminOnlyItems = [
+  { title: "Financeiro", url: "/financeiro", icon: DollarSign, module: "financeiro" },
+  { title: "Dashboard Financeiro", url: "/financeiro-dashboard", icon: BarChart3, module: "financeiro" },
+  { title: "Comissões", url: "/comissoes", icon: DollarSign, module: "financeiro" },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3, module: "relatorios" },
+  { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -72,12 +84,12 @@ export function AppSidebar() {
   const { userRoles, arenaId } = useAuth();
   const collapsed = state === "collapsed";
 
-  const hasAccess = (allowedRoles: string[]) => {
-    return userRoles.some(role => allowedRoles.includes(role));
-  };
-
-  // Determinar qual menu exibir baseado na role
+  // Determinar hierarquia de roles (prioridade)
   const isSuperAdmin = userRoles.includes("super_admin");
+  const isArenaAdmin = userRoles.includes("arena_admin");
+  const isFuncionario = userRoles.includes("funcionario");
+  const isProfessor = userRoles.includes("professor");
+  const isAluno = userRoles.includes("aluno");
 
   // Buscar módulos ativos da arena (apenas para não super admins)
   const { data: modulosAtivos, isLoading: loadingModulosAtivos } = useQuery({
@@ -110,41 +122,44 @@ export function AppSidebar() {
     modulosAtivos?.map((m: any) => m.modulos_sistema?.slug) || []
   );
 
-  // Filtrar itens de navegação baseado em módulos ativos (apenas para não super admins)
-  let filteredNavItems = isSuperAdmin 
-    ? superAdminItems.filter(item => hasAccess(item.roles))
-    : arenaNavItems.filter(item => {
-        // Verificar role
-        if (!hasAccess(item.roles)) return false;
-        
-        // Itens sem módulo aparecem mesmo durante o carregamento
-        // (evitamos sidebar vazia no login)
+  // Função para filtrar por módulos ativos
+  const filterByModule = (items: any[]) => {
+    return items.filter(item => {
+      // Itens sem módulo sempre aparecem
+      if (!item.module) return true;
+      
+      // Durante carregamento, mostrar itens
+      if (!arenaId || loadingModulosAtivos || !modulosAtivos) return true;
+      
+      // Verificar se módulo está ativo
+      return modulosAtivosMap.has(item.module);
+    });
+  };
 
-        
-        // Mapear URLs para slugs de módulos
-        const urlToModuleMap: Record<string, string> = {
-          "/quadras": "quadras",
-          "/agendamentos": "agendamentos",
-          "/clientes": "clientes",
-          "/financeiro": "financeiro",
-          "/aulas": "aulas",
-          "/torneios": "torneios",
-          "/relatorios": "relatorios",
-        };
-        
-        const moduleSlug = urlToModuleMap[item.url];
-        
-        // Se não tem mapeamento de módulo, sempre mostrar (Dashboard, etc)
-        if (!moduleSlug) return true;
+  // Determinar menus baseado em hierarquia de roles
+  let navItems: any[] = [];
+  let adminItems: any[] = [];
 
-        // Enquanto ainda carregamos arenaId ou módulos, mostramos os itens
-        if (!arenaId || loadingModulosAtivos || !modulosAtivos) return true;
-        
-        // Verificar se o módulo está ativo
-        return modulosAtivosMap.has(moduleSlug);
-      });
+  if (isSuperAdmin) {
+    // Super Admin: menu próprio
+    navItems = superAdminItems;
+  } else if (isArenaAdmin) {
+    // Arena Admin: menu staff + itens exclusivos admin
+    navItems = filterByModule(arenaStaffNavItems);
+    adminItems = filterByModule(arenaAdminOnlyItems);
+  } else if (isFuncionario) {
+    // Funcionário: apenas menu staff
+    navItems = filterByModule(arenaStaffNavItems);
+  } else if (isProfessor && !isAluno) {
+    // Professor puro: menu professor
+    navItems = filterByModule(professorNavItems);
+  } else if (isAluno) {
+    // Aluno: menu aluno (prioridade mais baixa)
+    navItems = filterByModule(alunoNavItems);
+  }
 
-  const filteredAdminItems = isSuperAdmin ? [] : arenaAdminItems.filter(item => hasAccess(item.roles));
+  const filteredNavItems = navItems;
+  const filteredAdminItems = adminItems;
 
   const getNavClass = (isActive: boolean) =>
     isActive
