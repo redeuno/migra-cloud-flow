@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, ExternalLink, MessageCircle, Settings, FileText } from "lucide-react";
+import { AlertTriangle, CreditCard, MessageCircle, Settings, FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,8 +38,10 @@ export default function ArenaSuspensa() {
   });
 
   const handlePagarAgora = () => {
-    if (faturaPendente?.asaas_invoice_url) {
-      window.open(faturaPendente.asaas_invoice_url, "_blank");
+    // Priorizar link direto do boleto (PDF)
+    const paymentUrl = faturaPendente?.asaas_bankslip_url || faturaPendente?.asaas_invoice_url;
+    if (paymentUrl) {
+      window.open(paymentUrl, "_blank");
     }
   };
 
@@ -117,10 +119,10 @@ export default function ArenaSuspensa() {
                   className="w-full" 
                   size="lg"
                   onClick={handlePagarAgora}
-                  disabled={!faturaPendente?.asaas_invoice_url}
+                  disabled={!faturaPendente?.asaas_bankslip_url && !faturaPendente?.asaas_invoice_url}
                 >
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Pagar Agora
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Pagar Agora (Boleto)
                 </Button>
                 
                 <div className="grid grid-cols-2 gap-3">

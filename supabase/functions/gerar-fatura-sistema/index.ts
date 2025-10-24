@@ -157,6 +157,7 @@ serve(async (req) => {
           valor: assinatura.valor_mensal,
           status_pagamento: "pendente",
           asaas_payment_id: payment.id,
+          asaas_bankslip_url: payment.bankSlipUrl,
           asaas_invoice_url: payment.invoiceUrl,
           linha_digitavel: payment.identificationField,
           historico_status: [

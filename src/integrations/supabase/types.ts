@@ -959,6 +959,7 @@ export type Database = {
       faturas_sistema: {
         Row: {
           arena_id: string
+          asaas_bankslip_url: string | null
           asaas_invoice_url: string | null
           asaas_payment_id: string | null
           assinatura_arena_id: string
@@ -980,6 +981,7 @@ export type Database = {
         }
         Insert: {
           arena_id: string
+          asaas_bankslip_url?: string | null
           asaas_invoice_url?: string | null
           asaas_payment_id?: string | null
           assinatura_arena_id: string
@@ -1003,6 +1005,7 @@ export type Database = {
         }
         Update: {
           arena_id?: string
+          asaas_bankslip_url?: string | null
           asaas_invoice_url?: string | null
           asaas_payment_id?: string | null
           assinatura_arena_id?: string
